@@ -1,4 +1,4 @@
 import { createRoot } from 'react-dom/client'
-import TrapCounter from './TrapCounter'
+import App from './App'
 
-createRoot(document.getElementById('root')).render(<TrapCounter />)
+createRoot(document.getElementById('root')).render(<App />)
