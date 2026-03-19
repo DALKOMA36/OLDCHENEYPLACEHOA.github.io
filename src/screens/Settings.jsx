@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { colors, loadState, saveState } from '../constants'
+import { colors, loadState, saveState, setTheme, getTheme } from '../constants'
 import { db, auth } from '../db'
 import { isPushSupported, getPermissionState, requestPermission, sendLocalNotification } from '../push'
 
@@ -16,6 +16,7 @@ export default function Settings({ user, updateUser, addMemory }) {
   const [newPin, setNewPin] = useState('')
   const [pinMsg, setPinMsg] = useState('')
   const [pushState, setPushState] = useState(getPermissionState())
+  const [theme, setThemeState] = useState(getTheme())
 
   useEffect(() => {
     db.user.get().then(data => {
@@ -116,6 +117,28 @@ export default function Settings({ user, updateUser, addMemory }) {
               </>
             )}
           </div>
+        </div>
+      </Section>
+
+      {/* Display Mode */}
+      <Section title="DISPLAY MODE">
+        <div style={{ padding: '10px 14px', display: 'flex', gap: 6 }}>
+          {[['auto', 'AUTO'], ['dark', 'DARK'], ['sun', 'SUN']].map(([t, label]) => (
+            <button key={t} onClick={() => { setTheme(t); setThemeState(t); window.location.reload() }} style={{
+              flex: 1, padding: '8px 0',
+              background: theme === t ? colors.primaryDim : 'transparent',
+              border: `1px solid ${theme === t ? colors.primary : colors.border}`,
+              color: theme === t ? colors.primary : colors.textMuted,
+              fontSize: 10, cursor: 'pointer',
+              fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+            }}>{label}</button>
+          ))}
+        </div>
+        <div style={{
+          padding: '4px 14px 10px', color: colors.textMuted, fontSize: 9,
+          fontFamily: "'JetBrains Mono', monospace",
+        }}>
+          Auto detects system preference. Sun mode for outdoor readability.
         </div>
       </Section>
 
