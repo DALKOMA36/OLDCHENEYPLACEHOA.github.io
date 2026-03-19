@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { colors, loadState, saveState } from '../constants'
 import { db } from '../db'
+import { sendLocalNotification, getPermissionState } from '../push'
 
 export default function Reminders({ user, addMemory }) {
   const [reminders, setReminders] = useState([])
@@ -23,6 +24,34 @@ export default function Reminders({ user, addMemory }) {
     if (reminders.length > 0) {
       saveState('reminders', reminders)
     }
+  }, [reminders])
+
+  // Check for due reminders every 30 seconds and send notifications
+  const checkedRef = useRef(new Set())
+  useEffect(() => {
+    if (getPermissionState() !== 'granted') return
+    const check = () => {
+      const now = new Date()
+      const todayStr = now.toISOString().split('T')[0]
+      const nowMins = now.getHours() * 60 + now.getMinutes()
+
+      reminders.forEach(r => {
+        if (r.dismissed || checkedRef.current.has(r.id)) return
+        if (r.date !== todayStr) return
+        const [h, m] = (r.time || '09:00').split(':').map(Number)
+        const reminderMins = h * 60 + m
+        // Notify if within 1 minute of reminder time
+        if (Math.abs(nowMins - reminderMins) <= 1) {
+          checkedRef.current.add(r.id)
+          sendLocalNotification('J.A.R.V.I.S. Reminder', r.text, {
+            tag: `reminder-${r.id}`,
+          })
+        }
+      })
+    }
+    check()
+    const interval = setInterval(check, 30000)
+    return () => clearInterval(interval)
   }, [reminders])
 
   const addReminder = async () => {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jarvis-v2'
+const CACHE_NAME = 'jarvis-v3'
 const STATIC_ASSETS = ['./', './index.html']
 
 self.addEventListener('install', (event) => {
@@ -20,10 +20,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url)
 
-  // Never cache API calls - always go to network
-  if (url.pathname.startsWith('/api/')) {
-    return
-  }
+  // Never cache API calls
+  if (url.pathname.startsWith('/api/')) return
 
   // Network-first for Amtraker API
   if (event.request.url.includes('api-v3.amtraker.com')) {
@@ -39,7 +37,7 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Network-first for HTML (so new deploys take effect immediately)
+  // Network-first for HTML
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -53,7 +51,7 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Cache-first for other static assets (JS, CSS, images)
+  // Cache-first for static assets
   event.respondWith(
     caches.match(event.request).then((cached) => {
       return cached || fetch(event.request).then((response) => {
@@ -63,6 +61,54 @@ self.addEventListener('fetch', (event) => {
         }
         return response
       })
+    })
+  )
+})
+
+// Push notification handler
+self.addEventListener('push', (event) => {
+  let data = { title: 'JARVIS', body: 'New notification', icon: './icon-192.svg' }
+
+  try {
+    if (event.data) {
+      const payload = event.data.json()
+      data = { ...data, ...payload }
+    }
+  } catch {
+    if (event.data) {
+      data.body = event.data.text()
+    }
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: data.icon || './icon-192.svg',
+      badge: './icon-192.svg',
+      tag: data.tag || 'jarvis-notification',
+      data: data.url ? { url: data.url } : undefined,
+      vibrate: [100, 50, 100],
+      actions: data.actions || [],
+    })
+  )
+})
+
+// Notification click handler
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+
+  const url = event.notification.data?.url || '/'
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Focus existing window if open
+      for (const client of windowClients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          return client.focus()
+        }
+      }
+      // Otherwise open new window
+      return clients.openWindow(url)
     })
   )
 })

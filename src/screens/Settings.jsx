@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { colors, loadState, saveState } from '../constants'
 import { db, auth } from '../db'
+import { isPushSupported, getPermissionState, requestPermission, sendLocalNotification } from '../push'
 
 export default function Settings({ user, updateUser, addMemory }) {
   const [editName, setEditName] = useState(false)
@@ -14,6 +15,7 @@ export default function Settings({ user, updateUser, addMemory }) {
   const [currentPin, setCurrentPin] = useState('')
   const [newPin, setNewPin] = useState('')
   const [pinMsg, setPinMsg] = useState('')
+  const [pushState, setPushState] = useState(getPermissionState())
 
   useEffect(() => {
     db.user.get().then(data => {
@@ -275,6 +277,49 @@ export default function Settings({ user, updateUser, addMemory }) {
                 ))
               )}
             </div>
+          )}
+        </div>
+      </Section>
+
+      {/* Notifications */}
+      <Section title="NOTIFICATIONS">
+        <div style={{ padding: '10px 14px' }}>
+          {!isPushSupported() ? (
+            <div style={{ color: colors.textMuted, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
+              Push notifications not supported in this browser
+            </div>
+          ) : pushState === 'granted' ? (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: colors.success, boxShadow: `0 0 6px ${colors.success}` }} />
+                <span style={{ color: colors.success, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1 }}>
+                  NOTIFICATIONS ACTIVE
+                </span>
+              </div>
+              <button onClick={() => {
+                sendLocalNotification('J.A.R.V.I.S.', 'Notification system operational, sir.', { tag: 'test' })
+              }} style={{
+                background: 'transparent', border: `1px solid ${colors.border}`,
+                color: colors.textMuted, fontSize: 10, cursor: 'pointer', padding: '6px 14px',
+                fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+              }}>SEND TEST</button>
+            </div>
+          ) : pushState === 'denied' ? (
+            <div style={{ color: colors.danger, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
+              Notifications blocked. Enable in browser settings.
+            </div>
+          ) : (
+            <button onClick={async () => {
+              const granted = await requestPermission()
+              setPushState(granted ? 'granted' : 'denied')
+              if (granted) sendLocalNotification('J.A.R.V.I.S.', 'Notification system online, sir.')
+            }} style={{
+              width: '100%', padding: 10,
+              background: colors.primaryDim,
+              border: `1px solid ${colors.primary}`,
+              color: colors.primary, fontSize: 11, cursor: 'pointer',
+              fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+            }}>ENABLE NOTIFICATIONS</button>
           )}
         </div>
       </Section>
