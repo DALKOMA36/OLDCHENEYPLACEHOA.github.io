@@ -191,6 +191,8 @@ export const db = {
   ai: {
     chat: (message, conversationHistory, context) =>
       apiFetch('/ai', { method: 'POST', body: { message, conversationHistory, context } }),
+    scan: (text, source) =>
+      apiFetch('/scan', { method: 'POST', body: { text, source } }),
   },
 
   // ---- Sync (migrate localStorage -> D1) ----
