@@ -368,7 +368,7 @@ export default function Settings({ user, updateUser, addMemory }) {
                 placeholder="Current PIN"
                 type="password"
                 inputMode="numeric"
-                style={{ width: '100%', padding: 10, marginBottom: 8, background: colors.surfaceHover, color: colors.text, border: `1px solid ${colors.border}`, fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}
+                style={{ width: '100%', padding: 10, marginBottom: 8, background: colors.surface, color: colors.text, border: `1px solid ${colors.border}`, fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}
               />
               <input
                 value={newPin}
@@ -376,7 +376,7 @@ export default function Settings({ user, updateUser, addMemory }) {
                 placeholder="New PIN (4+ digits)"
                 type="password"
                 inputMode="numeric"
-                style={{ width: '100%', padding: 10, marginBottom: 8, background: colors.surfaceHover, color: colors.text, border: `1px solid ${colors.border}`, fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}
+                style={{ width: '100%', padding: 10, marginBottom: 8, background: colors.surface, color: colors.text, border: `1px solid ${colors.border}`, fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}
                 onKeyDown={e => e.key === 'Enter' && handleChangePin()}
               />
               <div style={{ display: 'flex', gap: 8 }}>
@@ -445,7 +445,7 @@ export default function Settings({ user, updateUser, addMemory }) {
 function Section({ title, children }) {
   return (
     <div style={{
-      background: 'rgba(15, 25, 45, 0.5)',
+      background: colors.surfaceLight,
       border: `1px solid ${colors.border}`,
       marginBottom: 10, overflow: 'hidden',
     }}>
@@ -467,7 +467,7 @@ function Section({ title, children }) {
 
 const inputStyle = {
   padding: '8px 10px',
-  background: 'rgba(10, 18, 32, 0.8)',
+  background: colors.surface,
   border: `1px solid ${colors.border}`,
   color: colors.text,
   fontSize: 12,

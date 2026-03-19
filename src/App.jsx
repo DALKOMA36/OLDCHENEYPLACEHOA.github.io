@@ -333,7 +333,7 @@ export default function App() {
       <header style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '10px 16px',
-        background: 'rgba(10, 14, 23, 0.95)',
+        background: colors.surface,
         borderBottom: `1px solid ${colors.border}`,
         position: 'sticky', top: 0, zIndex: 100,
         backdropFilter: 'blur(12px)',
@@ -381,7 +381,7 @@ export default function App() {
         }} onClick={() => setMenuOpen(false)}>
           <div style={{
             position: 'absolute', top: 0, right: 0, bottom: 0, width: 280,
-            background: 'rgba(10, 14, 23, 0.95)',
+            background: colors.surface,
             borderLeft: `1px solid ${colors.border}`,
             padding: '60px 0 20px', overflowY: 'auto', animation: 'slideIn 0.25s ease',
             backdropFilter: 'blur(20px)',
@@ -457,7 +457,7 @@ export default function App() {
       <nav style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
         display: 'flex',
-        background: 'rgba(10, 14, 23, 0.95)',
+        background: colors.surface,
         borderTop: `1px solid ${colors.border}`,
         zIndex: 50,
         paddingBottom: 'env(safe-area-inset-bottom, 0)',
@@ -518,7 +518,7 @@ const btnStyle = {
 
 const inputStyle = {
   width: '100%', padding: '12px 14px',
-  background: 'rgba(10, 18, 32, 0.8)',
+  background: colors.surface,
   color: colors.text,
   border: `1px solid ${colors.border}`,
   fontSize: 13,

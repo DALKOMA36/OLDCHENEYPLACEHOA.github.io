@@ -130,7 +130,7 @@ export default function Chat({ user, addMemory, navigate }) {
           }}>
             <div style={{
               maxWidth: '85%', padding: '10px 14px',
-              background: msg.role === 'user' ? colors.primaryDim : 'rgba(15, 25, 45, 0.7)',
+              background: msg.role === 'user' ? colors.primaryDim : colors.surfaceLight,
               border: `1px solid ${msg.role === 'user' ? 'rgba(0, 212, 255, 0.3)' : colors.border}`,
             }}>
               {msg.role === 'ai' && (
@@ -162,7 +162,7 @@ export default function Chat({ user, addMemory, navigate }) {
           <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 12 }}>
             <div style={{
               padding: '12px 20px',
-              background: 'rgba(15, 25, 45, 0.7)',
+              background: colors.surfaceLight,
               border: `1px solid ${colors.border}`,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -210,7 +210,7 @@ export default function Chat({ user, addMemory, navigate }) {
           disabled={typing}
           style={{
             flex: 1, padding: '11px 14px',
-            background: 'rgba(10, 18, 32, 0.8)',
+            background: colors.surface,
             border: `1px solid ${colors.border}`,
             color: colors.text, fontSize: 13,
             fontFamily: "'Exo 2', sans-serif",

@@ -236,7 +236,7 @@ export default function Voice({ user, addMemory }) {
             }}>
               <div style={{
                 maxWidth: '85%', padding: '8px 12px',
-                background: msg.role === 'user' ? colors.primaryDim : 'rgba(15, 25, 45, 0.7)',
+                background: msg.role === 'user' ? colors.primaryDim : colors.surfaceLight,
                 border: `1px solid ${msg.role === 'user' ? 'rgba(0, 212, 255, 0.3)' : colors.border}`,
               }}>
                 {msg.role === 'ai' && (

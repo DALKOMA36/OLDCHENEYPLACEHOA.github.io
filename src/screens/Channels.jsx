@@ -144,7 +144,7 @@ export default function Channels({ user, addMemory }) {
               No transmitted messages
             </div>
           ) : sentMessages.map((msg, i) => (
-            <div key={msg.id || i} style={{ padding: '10px 14px', marginBottom: 4, border: `1px solid ${colors.border}`, background: 'rgba(15, 25, 45, 0.5)' }}>
+            <div key={msg.id || i} style={{ padding: '10px 14px', marginBottom: 4, border: `1px solid ${colors.border}`, background: colors.surfaceLight }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                 <span style={{ color: colors.primary, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>TO: {msg.recipient}</span>
                 <span style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace" }}>
@@ -175,7 +175,7 @@ export default function Channels({ user, addMemory }) {
               No incoming transmissions
             </div>
           ) : inboundMessages.map((msg, i) => (
-            <div key={msg.id || i} style={{ padding: '10px 14px', marginBottom: 4, border: `1px solid ${colors.border}`, background: 'rgba(15, 25, 45, 0.5)' }}>
+            <div key={msg.id || i} style={{ padding: '10px 14px', marginBottom: 4, border: `1px solid ${colors.border}`, background: colors.surfaceLight }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                 <span style={{ color: colors.success, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>FROM: {msg.recipient}</span>
                 <span style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace" }}>INBOUND</span>
@@ -200,7 +200,7 @@ const labelStyle = {
 
 const inputStyle = {
   width: '100%', padding: '10px 12px',
-  background: 'rgba(10, 18, 32, 0.8)',
+  background: colors.surface,
   border: `1px solid ${colors.border}`,
   color: colors.text, fontSize: 13,
   fontFamily: "'Exo 2', sans-serif",

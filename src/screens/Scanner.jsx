@@ -138,7 +138,7 @@ export default function Scanner({ user, addMemory }) {
             placeholder="Paste an email, flyer, recipe, message, or any text here..."
             style={{
               width: '100%', minHeight: 120, padding: 12,
-              background: 'rgba(10, 18, 32, 0.8)',
+              background: colors.surface,
               border: `1px solid ${colors.border}`,
               color: colors.text, fontSize: 13, fontFamily: "'Exo 2', sans-serif",
               resize: 'vertical',
@@ -199,7 +199,7 @@ export default function Scanner({ user, addMemory }) {
 
       {/* Results */}
       {result && !scanning && (
-        <div style={{ marginTop: 16, border: `1px solid ${colors.border}`, background: 'rgba(15, 25, 45, 0.5)' }}>
+        <div style={{ marginTop: 16, border: `1px solid ${colors.border}`, background: colors.surfaceLight }}>
           <div style={{
             padding: '8px 14px', borderBottom: `1px solid ${colors.border}`,
             background: colors.primaryDim, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
