@@ -203,8 +203,8 @@ export const db = {
 
   // ---- SMS ----
   sms: {
-    send: (to, message, carrier) =>
-      apiFetch('/sms', { method: 'POST', body: { to, message, carrier } }),
+    send: (to, message) =>
+      apiFetch('/sms', { method: 'POST', body: { to, message } }),
   },
 
   // ---- Sync (migrate localStorage -> D1) ----
