@@ -172,7 +172,7 @@ export default function Settings({ user, updateUser, addMemory }) {
       <Section title="AI MEMORY">
         <div style={{ padding: '10px 14px' }}>
           <p style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 10 }}>
-            Aegis learns your preferences and routines over time. {user.memory.length} memories stored.
+            Jarvis learns your preferences and routines over time. {user.memory.length} memories stored.
           </p>
           <button onClick={() => setShowMemory(!showMemory)} style={{
             background: 'none', border: `1px solid ${colors.border}`, borderRadius: 8,
@@ -213,9 +213,9 @@ export default function Settings({ user, updateUser, addMemory }) {
 
       {/* About */}
       <div style={{ textAlign: 'center', padding: '24px 0 40px', color: colors.textMuted, fontSize: 11 }}>
-        <div style={{ marginBottom: 4 }}>Aegis AI v1.0</div>
+        <div style={{ marginBottom: 4 }}>Jarvis v1.0</div>
         <div>Your Personal AI Life Manager</div>
-        <div style={{ marginTop: 4 }}>Inspired by Ohai + Martin AI</div>
+        <div style={{ marginTop: 4 }}>Your AI, your way.</div>
       </div>
     </div>
   )

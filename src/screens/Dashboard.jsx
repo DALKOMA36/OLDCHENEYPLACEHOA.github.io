@@ -180,7 +180,7 @@ export default function Dashboard({ user, navigate, addMemory }) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
           <span style={{ color: colors.primary }}>◉</span>
-          <span style={{ color: colors.primaryLight, fontSize: 12, fontWeight: 600 }}>AEGIS TIP</span>
+          <span style={{ color: colors.primaryLight, fontSize: 12, fontWeight: 600 }}>JARVIS TIP</span>
         </div>
         <p style={{ color: colors.textSecondary, fontSize: 13 }}>{tip}</p>
       </div>

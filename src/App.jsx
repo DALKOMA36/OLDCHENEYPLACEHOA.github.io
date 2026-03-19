@@ -56,12 +56,12 @@ export { colors }
 // Persistent storage helpers
 const loadState = (key, fallback) => {
   try {
-    const v = localStorage.getItem('aegis_' + key)
+    const v = localStorage.getItem('jarvis_' + key)
     return v ? JSON.parse(v) : fallback
   } catch { return fallback }
 }
 const saveState = (key, value) => {
-  try { localStorage.setItem('aegis_' + key, JSON.stringify(value)) } catch {}
+  try { localStorage.setItem('jarvis_' + key, JSON.stringify(value)) } catch {}
 }
 
 export { loadState, saveState }
@@ -109,7 +109,7 @@ export default function App() {
           {onboardStep === 0 && (
             <div style={{ animation: 'fadeIn 0.6s ease' }}>
               <div style={{ fontSize: 64, marginBottom: 24 }}>◉</div>
-              <h1 style={{ color: colors.text, fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Aegis AI</h1>
+              <h1 style={{ color: colors.text, fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Jarvis</h1>
               <p style={{ color: colors.primaryLight, fontSize: 18, marginBottom: 8 }}>Your Personal AI Life Manager</p>
               <p style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 1.6, marginBottom: 32 }}>
                 Calendar, tasks, meals, messaging, travel, and more — all managed by AI that learns you.
@@ -176,7 +176,7 @@ export default function App() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 22, color: colors.primary }}>◉</span>
-          <span style={{ color: colors.text, fontSize: 16, fontWeight: 600 }}>Aegis</span>
+          <span style={{ color: colors.text, fontSize: 16, fontWeight: 600 }}>Jarvis</span>
         </div>
         <div style={{ color: colors.textSecondary, fontSize: 13 }}>
           {SCREENS[screen]?.label}

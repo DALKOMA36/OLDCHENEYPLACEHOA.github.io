@@ -47,7 +47,7 @@ export default function Reminders({ user, addMemory }) {
         <div>
           <div style={{ color: colors.warning, fontSize: 11, fontWeight: 600 }}>SMART REMINDERS</div>
           <div style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>
-            Aegis nudges you before things become urgent, sends day-of prompts, and follows up on lingering items.
+            Jarvis nudges you before things become urgent, sends day-of prompts, and follows up on lingering items.
           </div>
         </div>
       </div>

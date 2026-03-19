@@ -49,7 +49,7 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]
 
 export default function Chat({ user, addMemory }) {
   const [messages, setMessages] = useState(() => loadState('chatMessages', [
-    { role: 'ai', text: `Hi ${user.name}! I'm Aegis, your personal AI assistant. I can help with your calendar, tasks, meals, travel, messaging, and much more. What can I do for you?`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
+    { role: 'ai', text: `Hi ${user.name}! I'm Jarvis, your personal AI assistant. I can help with your calendar, tasks, meals, travel, messaging, and much more. What can I do for you?`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
   ]))
   const [input, setInput] = useState('')
   const [typing, setTyping] = useState(false)
@@ -94,7 +94,7 @@ export default function Chat({ user, addMemory }) {
               {msg.role === 'ai' && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                   <span style={{ color: colors.primary, fontSize: 12 }}>◉</span>
-                  <span style={{ color: colors.primaryLight, fontSize: 11, fontWeight: 600 }}>Aegis</span>
+                  <span style={{ color: colors.primaryLight, fontSize: 11, fontWeight: 600 }}>Jarvis</span>
                 </div>
               )}
               <p style={{ color: '#fff', fontSize: 14, lineHeight: 1.5, margin: 0 }}>{msg.text}</p>
@@ -137,7 +137,7 @@ export default function Chat({ user, addMemory }) {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && send()}
-          placeholder="Message Aegis..."
+          placeholder="Message Jarvis..."
           style={{
             flex: 1, padding: '12px 16px', background: colors.surfaceLight,
             border: `1px solid ${colors.border}`, borderRadius: 24,

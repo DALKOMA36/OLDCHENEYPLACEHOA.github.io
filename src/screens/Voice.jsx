@@ -67,7 +67,7 @@ export default function Voice({ user, addMemory }) {
     <div style={{ padding: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 'calc(100vh - 200px)' }}>
       <h2 style={{ color: colors.text, fontSize: 20, fontWeight: 700, marginBottom: 4, alignSelf: 'flex-start' }}>Voice Assistant</h2>
       <p style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 24, alignSelf: 'flex-start' }}>
-        Talk to Aegis hands-free. {mode === 'push' ? 'Hold the button to speak.' : 'Aegis is always listening.'}
+        Talk to Jarvis hands-free. {mode === 'push' ? 'Hold the button to speak.' : 'Jarvis is always listening.'}
       </p>
 
       {/* Mode Toggle */}
@@ -138,7 +138,7 @@ export default function Voice({ user, addMemory }) {
                 border: msg.role === 'ai' ? `1px solid ${colors.border}` : 'none',
               }}>
                 {msg.role === 'ai' && (
-                  <div style={{ color: colors.primaryLight, fontSize: 10, fontWeight: 600, marginBottom: 4 }}>AEGIS</div>
+                  <div style={{ color: colors.primaryLight, fontSize: 10, fontWeight: 600, marginBottom: 4 }}>JARVIS</div>
                 )}
                 <p style={{ color: '#fff', fontSize: 13, margin: 0, lineHeight: 1.4 }}>{msg.text}</p>
               </div>

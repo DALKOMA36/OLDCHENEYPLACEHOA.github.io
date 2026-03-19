@@ -85,7 +85,7 @@ export default function Channels({ user, addMemory }) {
         <span style={{ fontSize: 18, color: colors.accent }}>◉</span>
         <div>
           <div style={{ color: colors.accent, fontSize: 11, fontWeight: 600 }}>PROXY ACTIONS</div>
-          <div style={{ color: colors.textSecondary, fontSize: 12 }}>Aegis can send texts, emails, and make calls on your behalf. You approve before anything is sent.</div>
+          <div style={{ color: colors.textSecondary, fontSize: 12 }}>Jarvis can send texts, emails, and make calls on your behalf. You approve before anything is sent.</div>
         </div>
       </div>
 
