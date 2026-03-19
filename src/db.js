@@ -201,6 +201,12 @@ export const db = {
       apiFetch('/ai-app', { method: 'POST', body: { description } }),
   },
 
+  // ---- SMS ----
+  sms: {
+    send: (to, message, carrier) =>
+      apiFetch('/sms', { method: 'POST', body: { to, message, carrier } }),
+  },
+
   // ---- Sync (migrate localStorage -> D1) ----
   sync: (data) => apiFetch('/sync', { method: 'POST', body: data }),
 }
