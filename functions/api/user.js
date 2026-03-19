@@ -1,10 +1,10 @@
-import { json, error, parseBody, USER_ID } from './_helpers'
+import { json, error, parseBody } from './_helpers'
 
-export async function onRequestGet({ env }) {
-  const row = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(USER_ID).first()
+export async function onRequestGet({ env, data }) {
+  const row = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(data.userId).first()
   if (!row) {
-    await env.DB.prepare('INSERT INTO users (id) VALUES (?)').bind(USER_ID).run()
-    return json({ id: USER_ID, name: 'Friend', preferences: {}, integrations: {}, circle: [], memory: [], onboarded: false, briefing_time: '07:00', briefing_days: ['Monday','Tuesday','Wednesday','Thursday','Friday'], diet: '' })
+    await env.DB.prepare('INSERT INTO users (id) VALUES (?)').bind(data.userId).run()
+    return json({ id: data.userId, name: 'Friend', preferences: {}, integrations: {}, circle: [], memory: [], onboarded: false, briefing_time: '07:00', briefing_days: ['Monday','Tuesday','Wednesday','Thursday','Friday'], diet: '' })
   }
   return json({
     ...row,
@@ -17,7 +17,7 @@ export async function onRequestGet({ env }) {
   })
 }
 
-export async function onRequestPut({ env, request }) {
+export async function onRequestPut({ env, request, data }) {
   const body = await parseBody(request)
   const fields = []
   const values = []
@@ -41,10 +41,10 @@ export async function onRequestPut({ env, request }) {
   fields.push("updated_at = datetime('now')")
 
   // Upsert: try update first, insert if no rows affected
-  const result = await env.DB.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`).bind(...values, USER_ID).run()
+  const result = await env.DB.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`).bind(...values).run()
   if (result.meta.changes === 0) {
-    await env.DB.prepare('INSERT INTO users (id) VALUES (?)').bind(USER_ID).run()
-    await env.DB.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`).bind(...values, USER_ID).run()
+    await env.DB.prepare('INSERT INTO users (id) VALUES (?)').bind(data.userId).run()
+    await env.DB.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`).bind(...values).run()
   }
 
   return json({ success: true })

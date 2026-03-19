@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jarvis-v1'
+const CACHE_NAME = 'jarvis-v2'
 const STATIC_ASSETS = ['./', './index.html']
 
 self.addEventListener('install', (event) => {
@@ -18,7 +18,14 @@ self.addEventListener('activate', (event) => {
 })
 
 self.addEventListener('fetch', (event) => {
-  // Network-first for API calls
+  const url = new URL(event.request.url)
+
+  // Never cache API calls - always go to network
+  if (url.pathname.startsWith('/api/')) {
+    return
+  }
+
+  // Network-first for Amtraker API
   if (event.request.url.includes('api-v3.amtraker.com')) {
     event.respondWith(
       fetch(event.request)
@@ -32,7 +39,21 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Cache-first for static assets
+  // Network-first for HTML (so new deploys take effect immediately)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const clone = response.clone()
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
+          return response
+        })
+        .catch(() => caches.match(event.request))
+    )
+    return
+  }
+
+  // Cache-first for other static assets (JS, CSS, images)
   event.respondWith(
     caches.match(event.request).then((cached) => {
       return cached || fetch(event.request).then((response) => {

@@ -1,10 +1,10 @@
-import { json, error, parseBody, USER_ID } from './_helpers'
+import { json, error, parseBody } from './_helpers'
 
 // GET /api/meals - returns meal plan as { slot: meal } map
-export async function onRequestGet({ env }) {
+export async function onRequestGet({ env, data }) {
   const { results } = await env.DB.prepare(
     'SELECT * FROM meal_plans WHERE user_id = ?'
-  ).bind(USER_ID).all()
+  ).bind(data.userId).all()
 
   const mealPlan = {}
   for (const row of results) {
@@ -20,7 +20,7 @@ export async function onRequestGet({ env }) {
 }
 
 // POST /api/meals - upsert a meal slot
-export async function onRequestPost({ env, request }) {
+export async function onRequestPost({ env, request, data }) {
   const body = await parseBody(request)
   if (!body.slot || !body.name) return error('slot and name required')
 
@@ -29,7 +29,7 @@ export async function onRequestPost({ env, request }) {
      VALUES (?, ?, ?, ?, ?, ?)
      ON CONFLICT (user_id, slot) DO UPDATE SET name = ?, time = ?, cal = ?, ingredients = ?`
   ).bind(
-    USER_ID, body.slot, body.name, body.time || '', body.cal || 0, JSON.stringify(body.ingredients || []),
+    data.userId, body.slot, body.name, body.time || '', body.cal || 0, JSON.stringify(body.ingredients || []),
     body.name, body.time || '', body.cal || 0, JSON.stringify(body.ingredients || [])
   ).run()
 
@@ -37,7 +37,7 @@ export async function onRequestPost({ env, request }) {
 }
 
 // PUT /api/meals - bulk upsert entire meal plan
-export async function onRequestPut({ env, request }) {
+export async function onRequestPut({ env, request, data }) {
   const mealPlan = await parseBody(request)
 
   const stmts = []
@@ -48,7 +48,7 @@ export async function onRequestPut({ env, request }) {
          VALUES (?, ?, ?, ?, ?, ?)
          ON CONFLICT (user_id, slot) DO UPDATE SET name = ?, time = ?, cal = ?, ingredients = ?`
       ).bind(
-        USER_ID, slot, meal.name || '', meal.time || '', meal.cal || 0, JSON.stringify(meal.ingredients || []),
+        data.userId, slot, meal.name || '', meal.time || '', meal.cal || 0, JSON.stringify(meal.ingredients || []),
         meal.name || '', meal.time || '', meal.cal || 0, JSON.stringify(meal.ingredients || [])
       )
     )
@@ -58,14 +58,14 @@ export async function onRequestPut({ env, request }) {
   return json({ success: true })
 }
 
-export async function onRequestDelete({ env, request }) {
+export async function onRequestDelete({ env, request, data }) {
   const url = new URL(request.url)
   const slot = url.searchParams.get('slot')
 
   if (slot) {
-    await env.DB.prepare('DELETE FROM meal_plans WHERE user_id = ? AND slot = ?').bind(USER_ID, slot).run()
+    await env.DB.prepare('DELETE FROM meal_plans WHERE user_id = ? AND slot = ?').bind(data.userId, slot).run()
   } else {
-    await env.DB.prepare('DELETE FROM meal_plans WHERE user_id = ?').bind(USER_ID).run()
+    await env.DB.prepare('DELETE FROM meal_plans WHERE user_id = ?').bind(data.userId).run()
   }
   return json({ success: true })
 }

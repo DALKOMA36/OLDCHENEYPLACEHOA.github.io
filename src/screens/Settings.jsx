@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { colors, loadState, saveState } from '../App'
-import { db } from '../db'
+import { colors, loadState, saveState } from '../constants'
+import { db, auth } from '../db'
 
 export default function Settings({ user, updateUser, addMemory }) {
   const [editName, setEditName] = useState(false)
@@ -10,6 +10,10 @@ export default function Settings({ user, updateUser, addMemory }) {
   const [newMember, setNewMember] = useState({ name: '', phone: '', role: 'family' })
   const [briefingTime, setBriefingTime] = useState(() => loadState('briefingTime', '07:00'))
   const [briefingDays, setBriefingDays] = useState(() => loadState('briefingDays', ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']))
+  const [showChangePin, setShowChangePin] = useState(false)
+  const [currentPin, setCurrentPin] = useState('')
+  const [newPin, setNewPin] = useState('')
+  const [pinMsg, setPinMsg] = useState('')
 
   useEffect(() => {
     db.user.get().then(data => {
@@ -41,6 +45,21 @@ export default function Settings({ user, updateUser, addMemory }) {
     updateUser({ circle: user.circle.filter(m => m.id !== id) })
   }
 
+  const handleChangePin = async () => {
+    setPinMsg('')
+    if (!currentPin || currentPin.length < 4) { setPinMsg('Enter your current PIN'); return }
+    if (!newPin || newPin.length < 4) { setPinMsg('New PIN must be at least 4 digits'); return }
+    try {
+      await auth.changePin(currentPin, newPin)
+      setPinMsg('PIN updated!')
+      setCurrentPin('')
+      setNewPin('')
+      setTimeout(() => { setPinMsg(''); setShowChangePin(false) }, 1500)
+    } catch (err) {
+      setPinMsg(err.message)
+    }
+  }
+
   const clearAllData = () => {
     if (confirm('This will delete all your data. Are you sure?')) {
       localStorage.clear()
@@ -49,38 +68,48 @@ export default function Settings({ user, updateUser, addMemory }) {
   }
 
   const integrations = [
-    { key: 'google', name: 'Google Calendar', desc: 'Sync events from Google', icon: '📅' },
-    { key: 'apple', name: 'Apple Calendar', desc: 'Sync iCloud Calendar', icon: '🍎' },
-    { key: 'outlook', name: 'Outlook', desc: 'Microsoft calendar & email', icon: '📧' },
-    { key: 'slack', name: 'Slack', desc: 'Workspace messaging', icon: '⊶' },
-    { key: 'whatsapp', name: 'WhatsApp', desc: 'Chat messaging', icon: '📱' },
-    { key: 'instacart', name: 'Instacart', desc: 'Grocery delivery', icon: '🛒' },
+    { key: 'google', name: 'Google Calendar', desc: 'Sync events from Google', icon: 'GC' },
+    { key: 'apple', name: 'Apple Calendar', desc: 'Sync iCloud Calendar', icon: 'AC' },
+    { key: 'outlook', name: 'Outlook', desc: 'Microsoft calendar & email', icon: 'OL' },
+    { key: 'slack', name: 'Slack', desc: 'Workspace messaging', icon: 'SL' },
+    { key: 'whatsapp', name: 'WhatsApp', desc: 'Chat messaging', icon: 'WA' },
+    { key: 'instacart', name: 'Instacart', desc: 'Grocery delivery', icon: 'IC' },
   ]
 
   return (
     <div style={{ padding: 16 }}>
-      <h2 style={{ color: colors.text, fontSize: 20, fontWeight: 700, marginBottom: 20 }}>Settings</h2>
+      <h2 style={{
+        color: colors.primary, fontSize: 12, fontWeight: 600, marginBottom: 20,
+        fontFamily: "'JetBrains Mono', monospace",
+        letterSpacing: 3, textTransform: 'uppercase',
+      }}>System Configuration</h2>
 
       {/* Profile */}
-      <Section title="PROFILE">
+      <Section title="USER PROFILE">
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 14 }}>
           <div style={{
-            width: 48, height: 48, borderRadius: '50%', background: colors.gradient1,
+            width: 44, height: 44,
+            border: `1px solid ${colors.primary}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontSize: 20, fontWeight: 700,
+            color: colors.primary, fontSize: 16, fontWeight: 600,
+            fontFamily: "'JetBrains Mono', monospace",
+            boxShadow: colors.glow,
           }}>{(user.name || 'U')[0].toUpperCase()}</div>
           <div style={{ flex: 1 }}>
             {editName ? (
               <div style={{ display: 'flex', gap: 8 }}>
                 <input value={name} onChange={e => setName(e.target.value)} style={{ ...inputStyle, marginBottom: 0, flex: 1 }} autoFocus
                   onKeyDown={e => e.key === 'Enter' && saveName()} />
-                <button onClick={saveName} style={smBtn}>Save</button>
+                <button onClick={saveName} style={smBtn}>SAVE</button>
               </div>
             ) : (
               <>
-                <div style={{ color: colors.text, fontSize: 16, fontWeight: 600 }}>{user.name}</div>
-                <button onClick={() => setEditName(true)} style={{ background: 'none', border: 'none', color: colors.primaryLight, fontSize: 12, cursor: 'pointer' }}>
-                  Edit name
+                <div style={{ color: colors.text, fontSize: 15, fontWeight: 500, fontFamily: "'Exo 2', sans-serif" }}>{user.name}</div>
+                <button onClick={() => setEditName(true)} style={{
+                  background: 'none', border: 'none', color: colors.textMuted, fontSize: 10, cursor: 'pointer',
+                  fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+                }}>
+                  MODIFY
                 </button>
               </>
             )}
@@ -89,10 +118,13 @@ export default function Settings({ user, updateUser, addMemory }) {
       </Section>
 
       {/* Circle / Family */}
-      <Section title="YOUR CIRCLE">
+      <Section title="TRUSTED CONTACTS">
         <div style={{ padding: '8px 14px' }}>
-          <p style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 12 }}>
-            Add people to delegate tasks and share calendars. They get notified via SMS.
+          <p style={{
+            color: colors.textMuted, fontSize: 11, marginBottom: 12,
+            fontFamily: "'JetBrains Mono', monospace",
+          }}>
+            Add personnel to delegate tasks and share calendars.
           </p>
           {user.circle.map(member => (
             <div key={member.id} style={{
@@ -100,17 +132,24 @@ export default function Settings({ user, updateUser, addMemory }) {
               borderBottom: `1px solid ${colors.border}`,
             }}>
               <div style={{
-                width: 32, height: 32, borderRadius: '50%', background: `${colors.secondary}30`,
+                width: 30, height: 30,
+                border: `1px solid ${colors.primary}40`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: colors.secondary, fontSize: 14, fontWeight: 600,
+                color: colors.primary, fontSize: 12, fontWeight: 600,
+                fontFamily: "'JetBrains Mono', monospace",
               }}>{member.name[0]}</div>
               <div style={{ flex: 1 }}>
-                <div style={{ color: colors.text, fontSize: 13 }}>{member.name}</div>
-                <div style={{ color: colors.textMuted, fontSize: 11 }}>{member.phone} · {member.role}</div>
+                <div style={{ color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif" }}>{member.name}</div>
+                <div style={{
+                  color: colors.textMuted, fontSize: 10,
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}>{member.phone} / {member.role}</div>
               </div>
               <button onClick={() => removeCircleMember(member.id)} style={{
-                background: 'none', border: 'none', color: colors.textMuted, fontSize: 14, cursor: 'pointer',
-              }}>✕</button>
+                background: 'none', border: `1px solid ${colors.border}`,
+                color: colors.textMuted, fontSize: 11, cursor: 'pointer',
+                padding: '2px 6px', fontFamily: "'JetBrains Mono', monospace",
+              }}>X</button>
             </div>
           ))}
           <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
@@ -118,16 +157,20 @@ export default function Settings({ user, updateUser, addMemory }) {
               placeholder="Name" style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
             <input value={newMember.phone} onChange={e => setNewMember({ ...newMember, phone: e.target.value })}
               placeholder="Phone" style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
-            <button onClick={addCircleMember} style={smBtn}>Add</button>
+            <button onClick={addCircleMember} style={smBtn}>ADD</button>
           </div>
         </div>
       </Section>
 
       {/* Morning Briefing */}
-      <Section title="MORNING BRIEFING">
+      <Section title="BRIEFING SCHEDULE">
         <div style={{ padding: '10px 14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            <span style={{ color: colors.textSecondary, fontSize: 13 }}>Time:</span>
+            <span style={{
+              color: colors.textMuted, fontSize: 10,
+              fontFamily: "'JetBrains Mono', monospace",
+              letterSpacing: 1,
+            }}>TIME:</span>
             <input type="time" value={briefingTime} onChange={e => { setBriefingTime(e.target.value); saveState('briefingTime', e.target.value); db.user.update({ briefing_time: e.target.value }).catch(() => {}) }}
               style={{ ...inputStyle, marginBottom: 0, width: 'auto' }} />
           </div>
@@ -139,11 +182,14 @@ export default function Settings({ user, updateUser, addMemory }) {
                 saveState('briefingDays', updated)
                 db.user.update({ briefing_days: updated }).catch(() => {})
               }} style={{
-                padding: '6px 10px', borderRadius: 6,
-                background: briefingDays.includes(day) ? colors.primary : colors.surfaceLight,
+                padding: '5px 10px',
+                background: briefingDays.includes(day) ? colors.primaryDim : 'transparent',
                 border: `1px solid ${briefingDays.includes(day) ? colors.primary : colors.border}`,
-                color: briefingDays.includes(day) ? '#fff' : colors.textSecondary,
-                fontSize: 11, cursor: 'pointer', fontFamily: 'inherit',
+                color: briefingDays.includes(day) ? colors.primary : colors.textMuted,
+                fontSize: 10, cursor: 'pointer',
+                fontFamily: "'JetBrains Mono', monospace",
+                letterSpacing: 0.5,
+                transition: 'all 0.15s ease',
               }}>{day}</button>
             ))}
           </div>
@@ -151,26 +197,39 @@ export default function Settings({ user, updateUser, addMemory }) {
       </Section>
 
       {/* Integrations */}
-      <Section title="INTEGRATIONS">
+      <Section title="EXTERNAL LINKS">
         {integrations.map(int => (
           <div key={int.key} style={{
-            display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+            display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px',
             borderBottom: `1px solid ${colors.border}`,
           }}>
-            <span style={{ fontSize: 18 }}>{int.icon}</span>
+            <span style={{
+              fontSize: 10, width: 24, textAlign: 'center',
+              fontFamily: "'JetBrains Mono', monospace",
+              color: colors.textMuted, fontWeight: 600,
+            }}>{int.icon}</span>
             <div style={{ flex: 1 }}>
-              <div style={{ color: colors.text, fontSize: 13 }}>{int.name}</div>
-              <div style={{ color: colors.textMuted, fontSize: 11 }}>{int.desc}</div>
+              <div style={{ color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif" }}>{int.name}</div>
+              <div style={{
+                color: colors.textMuted, fontSize: 10,
+                fontFamily: "'JetBrains Mono', monospace",
+              }}>{int.desc}</div>
             </div>
             <button onClick={() => toggleIntegration(int.key)} style={{
-              width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
-              background: user.integrations?.[int.key] ? colors.success : colors.surfaceHover,
+              width: 40, height: 20, border: 'none', cursor: 'pointer',
+              background: user.integrations?.[int.key]
+                ? `linear-gradient(90deg, ${colors.primary}40, ${colors.primary})`
+                : `rgba(255,255,255,0.05)`,
               position: 'relative', transition: 'background 0.2s',
+              outline: `1px solid ${user.integrations?.[int.key] ? colors.primary : colors.border}`,
             }}>
               <span style={{
-                position: 'absolute', top: 2, left: user.integrations?.[int.key] ? 22 : 2,
-                width: 20, height: 20, borderRadius: '50%', background: '#fff',
+                position: 'absolute', top: 2,
+                left: user.integrations?.[int.key] ? 22 : 2,
+                width: 16, height: 16,
+                background: user.integrations?.[int.key] ? colors.primary : colors.textMuted,
                 transition: 'left 0.2s',
+                boxShadow: user.integrations?.[int.key] ? `0 0 6px ${colors.primary}` : 'none',
               }} />
             </button>
           </div>
@@ -178,26 +237,37 @@ export default function Settings({ user, updateUser, addMemory }) {
       </Section>
 
       {/* AI Memory */}
-      <Section title="AI MEMORY">
+      <Section title="MEMORY BANK">
         <div style={{ padding: '10px 14px' }}>
-          <p style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 10 }}>
-            Jarvis learns your preferences and routines over time. {user.memory.length} memories stored.
+          <p style={{
+            color: colors.textMuted, fontSize: 10, marginBottom: 10,
+            fontFamily: "'JetBrains Mono', monospace",
+          }}>
+            System learns preferences and routines. {user.memory.length} entries stored.
           </p>
           <button onClick={() => setShowMemory(!showMemory)} style={{
-            background: 'none', border: `1px solid ${colors.border}`, borderRadius: 8,
-            padding: '6px 14px', color: colors.primaryLight, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit',
+            background: 'transparent',
+            border: `1px solid ${colors.border}`,
+            padding: '6px 14px', color: colors.textSecondary, fontSize: 10, cursor: 'pointer',
+            fontFamily: "'JetBrains Mono', monospace",
+            letterSpacing: 1,
+            transition: 'all 0.15s ease',
           }}>
-            {showMemory ? 'Hide' : 'View'} Memories
+            {showMemory ? 'COLLAPSE' : 'EXPAND'} LOG
           </button>
           {showMemory && (
             <div style={{ marginTop: 10, maxHeight: 200, overflowY: 'auto' }}>
               {user.memory.length === 0 ? (
-                <div style={{ color: colors.textMuted, fontSize: 12 }}>No memories yet. Use the app and I'll learn!</div>
+                <div style={{
+                  color: colors.textMuted, fontSize: 10,
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}>No entries. System will learn from usage.</div>
               ) : (
                 user.memory.map((m, i) => (
                   <div key={i} style={{
-                    padding: '6px 0', borderBottom: `1px solid ${colors.border}`,
-                    fontSize: 11, color: colors.textSecondary,
+                    padding: '5px 0', borderBottom: `1px solid ${colors.border}`,
+                    fontSize: 10, color: colors.textSecondary,
+                    fontFamily: "'JetBrains Mono', monospace",
                   }}>
                     <span style={{ color: colors.textMuted }}>{new Date(m.date).toLocaleDateString()}</span>
                     {' '}{m.text}
@@ -209,22 +279,96 @@ export default function Settings({ user, updateUser, addMemory }) {
         </div>
       </Section>
 
+      {/* Security */}
+      <Section title="ACCESS CONTROL">
+        <div style={{ padding: '10px 14px' }}>
+          {!showChangePin ? (
+            <button onClick={() => setShowChangePin(true)} style={{
+              width: '100%', padding: 10,
+              background: 'transparent',
+              border: `1px solid ${colors.border}`,
+              color: colors.text, fontSize: 11, cursor: 'pointer',
+              fontFamily: "'JetBrains Mono', monospace",
+              letterSpacing: 1,
+              transition: 'all 0.15s ease',
+            }}>CHANGE ACCESS CODE</button>
+          ) : (
+            <div>
+              <input
+                value={currentPin}
+                onChange={e => setCurrentPin(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                placeholder="Current PIN"
+                type="password"
+                inputMode="numeric"
+                style={{ width: '100%', padding: 10, marginBottom: 8, background: colors.surfaceHover, color: colors.text, border: `1px solid ${colors.border}`, fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}
+              />
+              <input
+                value={newPin}
+                onChange={e => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                placeholder="New PIN (4+ digits)"
+                type="password"
+                inputMode="numeric"
+                style={{ width: '100%', padding: 10, marginBottom: 8, background: colors.surfaceHover, color: colors.text, border: `1px solid ${colors.border}`, fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}
+                onKeyDown={e => e.key === 'Enter' && handleChangePin()}
+              />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={handleChangePin} style={{
+                  flex: 1, padding: 10,
+                  background: colors.primaryDim,
+                  color: colors.primary,
+                  border: `1px solid ${colors.primary}`,
+                  fontSize: 11, cursor: 'pointer',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  letterSpacing: 1,
+                }}>CONFIRM</button>
+                <button onClick={() => { setShowChangePin(false); setCurrentPin(''); setNewPin(''); setPinMsg('') }} style={{
+                  padding: '10px 16px',
+                  background: 'transparent',
+                  color: colors.textMuted,
+                  border: `1px solid ${colors.border}`,
+                  fontSize: 11, cursor: 'pointer',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  letterSpacing: 1,
+                }}>ABORT</button>
+              </div>
+              {pinMsg && <p style={{
+                color: pinMsg === 'PIN updated!' ? colors.success : colors.danger,
+                fontSize: 10, marginTop: 8,
+                fontFamily: "'JetBrains Mono', monospace",
+              }}>{pinMsg}</p>}
+            </div>
+          )}
+        </div>
+      </Section>
+
       {/* Danger Zone */}
-      <Section title="DATA">
+      <Section title="SYSTEM RESET">
         <div style={{ padding: '10px 14px' }}>
           <button onClick={clearAllData} style={{
-            width: '100%', padding: 12, background: 'transparent',
-            border: `1px solid ${colors.danger}40`, borderRadius: 8,
-            color: colors.danger, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
-          }}>Reset All Data</button>
+            width: '100%', padding: 10,
+            background: 'transparent',
+            border: `1px solid ${colors.danger}30`,
+            color: colors.danger, fontSize: 11, cursor: 'pointer',
+            fontFamily: "'JetBrains Mono', monospace",
+            letterSpacing: 1,
+            transition: 'all 0.15s ease',
+          }}>PURGE ALL DATA</button>
         </div>
       </Section>
 
       {/* About */}
-      <div style={{ textAlign: 'center', padding: '24px 0 40px', color: colors.textMuted, fontSize: 11 }}>
-        <div style={{ marginBottom: 4 }}>Jarvis v1.0</div>
-        <div>Your Personal AI Life Manager</div>
-        <div style={{ marginTop: 4 }}>Your AI, your way.</div>
+      <div style={{
+        textAlign: 'center', padding: '24px 0 40px',
+        color: colors.textMuted, fontSize: 10,
+        fontFamily: "'JetBrains Mono', monospace",
+        letterSpacing: 1,
+      }}>
+        <div style={{ marginBottom: 4 }}>J.A.R.V.I.S. v1.0</div>
+        <div>Just A Rather Very Intelligent System</div>
+        <div style={{
+          marginTop: 8, width: 30, height: 1,
+          background: colors.border, margin: '8px auto 0',
+        }} />
       </div>
     </div>
   )
@@ -233,11 +377,20 @@ export default function Settings({ user, updateUser, addMemory }) {
 function Section({ title, children }) {
   return (
     <div style={{
-      background: colors.surfaceLight, border: `1px solid ${colors.border}`,
-      borderRadius: 12, marginBottom: 12, overflow: 'hidden',
+      background: 'rgba(15, 25, 45, 0.5)',
+      border: `1px solid ${colors.border}`,
+      marginBottom: 10, overflow: 'hidden',
     }}>
-      <div style={{ padding: '10px 14px', borderBottom: `1px solid ${colors.border}` }}>
-        <h3 style={{ color: colors.textSecondary, fontSize: 11, fontWeight: 600, letterSpacing: 0.5 }}>{title}</h3>
+      <div style={{
+        padding: '8px 14px',
+        borderBottom: `1px solid ${colors.border}`,
+        background: colors.primaryDim,
+      }}>
+        <h3 style={{
+          color: colors.textMuted, fontSize: 9, fontWeight: 600,
+          letterSpacing: 2,
+          fontFamily: "'JetBrains Mono', monospace",
+        }}>{title}</h3>
       </div>
       {children}
     </div>
@@ -245,12 +398,21 @@ function Section({ title, children }) {
 }
 
 const inputStyle = {
-  padding: '8px 10px', background: colors.surfaceHover,
-  border: `1px solid ${colors.border}`, borderRadius: 8, color: colors.text,
-  fontSize: 13, fontFamily: 'inherit', marginBottom: 0,
+  padding: '8px 10px',
+  background: 'rgba(10, 18, 32, 0.8)',
+  border: `1px solid ${colors.border}`,
+  color: colors.text,
+  fontSize: 12,
+  fontFamily: "'JetBrains Mono', monospace",
+  marginBottom: 0,
+  transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
 }
 const smBtn = {
-  padding: '8px 14px', background: colors.primary, color: '#fff',
-  border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit',
-  whiteSpace: 'nowrap',
+  padding: '8px 14px',
+  background: colors.primaryDim,
+  color: colors.primary,
+  border: `1px solid ${colors.primary}`,
+  fontSize: 10, cursor: 'pointer',
+  fontFamily: "'JetBrains Mono', monospace",
+  whiteSpace: 'nowrap', letterSpacing: 1,
 }

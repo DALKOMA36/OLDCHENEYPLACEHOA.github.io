@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { colors } from '../App'
+import { colors } from '../constants'
 
 const VOICE_RESPONSES = [
   { transcript: "What's on my schedule today?", response: "You have 3 events today. A team standup at 10am, lunch with Sarah at noon, and a dentist appointment at 3pm." },

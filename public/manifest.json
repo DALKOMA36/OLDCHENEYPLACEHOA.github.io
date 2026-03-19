@@ -1,11 +1,11 @@
 {
-  "name": "Jarvis - AI Life Manager",
-  "short_name": "Jarvis",
+  "name": "J.A.R.V.I.S. Interface",
+  "short_name": "JARVIS",
   "description": "Your personal AI life manager with calendar, tasks, train tracking, meals, and more.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#0a0a1a",
-  "theme_color": "#6c5ce7",
+  "background_color": "#0a0e17",
+  "theme_color": "#00d4ff",
   "orientation": "portrait",
   "icons": [
     {

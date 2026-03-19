@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { colors, loadState, saveState } from '../App'
+import { colors, loadState, saveState } from '../constants'
 import { db } from '../db'
 
 const AI_RESPONSES = {

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { colors, loadState, saveState } from '../App'
+import { colors, loadState, saveState } from '../constants'
 import { db } from '../db'
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']

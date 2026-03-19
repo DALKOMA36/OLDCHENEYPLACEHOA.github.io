@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { colors, loadState, saveState } from '../App'
+import { colors, loadState, saveState } from '../constants'
 import { db } from '../db'
 
 const API_BASE = 'https://api-v3.amtraker.com/v3/trains'

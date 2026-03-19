@@ -1,9 +1,9 @@
-import { json, error, parseBody, USER_ID } from './_helpers'
+import { json, error, parseBody } from './_helpers'
 
-export async function onRequestGet({ env }) {
+export async function onRequestGet({ env, data }) {
   const { results } = await env.DB.prepare(
     'SELECT * FROM trips WHERE user_id = ? ORDER BY created_at DESC'
-  ).bind(USER_ID).all()
+  ).bind(data.userId).all()
   return json(results.map(r => ({
     ...r,
     interests: JSON.parse(r.interests || '[]'),
@@ -11,14 +11,14 @@ export async function onRequestGet({ env }) {
   })))
 }
 
-export async function onRequestPost({ env, request }) {
+export async function onRequestPost({ env, request, data }) {
   const body = await parseBody(request)
   if (!body.destination) return error('destination required')
 
   const result = await env.DB.prepare(
     'INSERT INTO trips (user_id, destination, start_date, end_date, travelers, style, interests, budget, status, itinerary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
-    USER_ID, body.destination, body.startDate || body.start_date || null, body.endDate || body.end_date || null,
+    data.userId, body.destination, body.startDate || body.start_date || null, body.endDate || body.end_date || null,
     body.travelers || 1, body.style || 'mixed', JSON.stringify(body.interests || []),
     body.budget || 'moderate', body.status || 'planned', JSON.stringify(body.itinerary || {})
   ).run()
@@ -26,7 +26,7 @@ export async function onRequestPost({ env, request }) {
   return json({ id: result.meta.last_row_id, ...body }, 201)
 }
 
-export async function onRequestPut({ env, request }) {
+export async function onRequestPut({ env, request, data }) {
   const body = await parseBody(request)
   if (!body.id) return error('id required')
 
@@ -36,17 +36,17 @@ export async function onRequestPut({ env, request }) {
     body.destination, body.startDate || body.start_date || null, body.endDate || body.end_date || null,
     body.travelers || 1, body.style || 'mixed', JSON.stringify(body.interests || []),
     body.budget || 'moderate', body.status || 'planned', JSON.stringify(body.itinerary || {}),
-    body.id, USER_ID
+    body.id
   ).run()
 
   return json({ success: true })
 }
 
-export async function onRequestDelete({ env, request }) {
+export async function onRequestDelete({ env, request, data }) {
   const url = new URL(request.url)
   const id = url.searchParams.get('id')
   if (!id) return error('id required')
 
-  await env.DB.prepare('DELETE FROM trips WHERE id = ? AND user_id = ?').bind(id, USER_ID).run()
+  await env.DB.prepare('DELETE FROM trips WHERE id = ? AND user_id = ?').bind(id).run()
   return json({ success: true })
 }

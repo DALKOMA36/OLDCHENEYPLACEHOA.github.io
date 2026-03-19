@@ -3,18 +3,90 @@
 
 const API_BASE = '/api'
 
+// Auth token management
+export function getToken() {
+  return localStorage.getItem('jarvis_token')
+}
+export function setToken(token) {
+  localStorage.setItem('jarvis_token', token)
+}
+export function clearToken() {
+  localStorage.removeItem('jarvis_token')
+  localStorage.removeItem('jarvis_sync_code')
+}
+export function getSyncCode() {
+  return localStorage.getItem('jarvis_sync_code')
+}
+export function setSyncCode(code) {
+  localStorage.setItem('jarvis_sync_code', code)
+}
+
 async function apiFetch(path, options = {}) {
   const url = `${API_BASE}${path}`
+  const token = getToken()
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
   const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     ...options,
     body: options.body ? JSON.stringify(options.body) : undefined,
   })
+  if (res.status === 401) {
+    clearToken()
+    throw new Error('Session expired')
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }))
     throw new Error(err.error || `API error ${res.status}`)
   }
   return res.json()
+}
+
+// Auth API (no token needed for these)
+async function authFetch(body) {
+  const res = await fetch(`${API_BASE}/auth`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }))
+    throw new Error(err.error || `Auth error ${res.status}`)
+  }
+  return res.json()
+}
+
+export const auth = {
+  register: async (name, phone, pin) => {
+    const result = await authFetch({ action: 'register', name, phone, pin })
+    setToken(result.token)
+    return result
+  },
+  login: async (phone, pin) => {
+    const result = await authFetch({ action: 'login', phone, pin })
+    setToken(result.token)
+    return result
+  },
+  verify: async () => {
+    const token = getToken()
+    if (!token) return null
+    try {
+      return await authFetch({ action: 'verify', token })
+    } catch {
+      clearToken()
+      return null
+    }
+  },
+  changePin: async (currentPin, newPin) => {
+    const token = getToken()
+    if (!token) throw new Error('Not logged in')
+    return authFetch({ action: 'change_pin', token, currentPin, newPin })
+  },
+  logout: () => {
+    clearToken()
+  },
+  isLoggedIn: () => !!getToken(),
 }
 
 // ---- User ----
