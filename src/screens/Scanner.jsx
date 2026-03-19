@@ -1,5 +1,6 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { colors, loadState, saveState } from '../App'
+import { db } from '../db'
 
 const DEMO_EXTRACTIONS = [
   {
@@ -28,14 +29,26 @@ const DEMO_EXTRACTIONS = [
 ]
 
 export default function Scanner({ user, addMemory }) {
-  const [scannedDocs, setScannedDocs] = useState(() => loadState('scannedDocs', []))
+  const [scannedDocs, setScannedDocs] = useState([])
   const [scanning, setScanning] = useState(false)
   const [result, setResult] = useState(null)
   const [textInput, setTextInput] = useState('')
   const [mode, setMode] = useState('upload') // upload, text, camera
   const fileRef = useRef(null)
 
-  const save = (d) => { setScannedDocs(d); saveState('scannedDocs', d) }
+  useEffect(() => {
+    db.scanner.list().then(setScannedDocs).catch(() => setScannedDocs(loadState('scannedDocs', [])))
+  }, [])
+
+  const save = async (d) => {
+    setScannedDocs(d)
+    try {
+      // Save the newest doc (first element) to db
+      await db.scanner.save(d[0])
+    } catch {
+      saveState('scannedDocs', d)
+    }
+  }
 
   const simulateScan = (source) => {
     setScanning(true)
@@ -62,17 +75,27 @@ export default function Scanner({ user, addMemory }) {
     }
   }
 
-  const addToCalendar = (item) => {
-    const events = loadState('events', [])
-    events.push({ id: Date.now(), title: item.title, date: item.date || new Date().toISOString().split('T')[0], time: item.time || '09:00', location: item.location || '', calendar: 'personal', color: colors.primary })
-    saveState('events', events)
+  const addToCalendar = async (item) => {
+    const event = { id: Date.now(), title: item.title, date: item.date || new Date().toISOString().split('T')[0], time: item.time || '09:00', location: item.location || '', calendar: 'personal', color: colors.primary }
+    try {
+      await db.events.create(event)
+    } catch {
+      const events = loadState('events', [])
+      events.push(event)
+      saveState('events', events)
+    }
     addMemory(`Added from scan: ${item.title}`)
   }
 
-  const addToTasks = (item) => {
-    const tasks = loadState('tasks', [])
-    tasks.push({ id: Date.now(), title: item.title, priority: item.priority || 'medium', assignee: '', dueDate: item.date || '', recurring: false, category: 'personal', completed: false, createdAt: new Date().toISOString() })
-    saveState('tasks', tasks)
+  const addToTasks = async (item) => {
+    const task = { id: Date.now(), title: item.title, priority: item.priority || 'medium', assignee: '', dueDate: item.date || '', recurring: false, category: 'personal', completed: false, createdAt: new Date().toISOString() }
+    try {
+      await db.tasks.create(task)
+    } catch {
+      const tasks = loadState('tasks', [])
+      tasks.push(task)
+      saveState('tasks', tasks)
+    }
     addMemory(`Task from scan: ${item.title}`)
   }
 

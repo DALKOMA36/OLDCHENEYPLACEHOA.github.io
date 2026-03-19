@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { colors, loadState, saveState } from '../App'
+import { db } from '../db'
 
 const greetings = (name) => {
   const h = new Date().getHours()
@@ -25,12 +26,27 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 export default function Dashboard({ user, navigate, addMemory }) {
   const [briefing, setBriefing] = useState(null)
-  const [events] = useState(() => loadState('events', []))
-  const [tasks] = useState(() => loadState('tasks', []))
-  const [reminders] = useState(() => loadState('reminders', []))
+  const [events, setEvents] = useState(() => loadState('events', []))
+  const [tasks, setTasks] = useState(() => loadState('tasks', []))
+  const [reminders, setReminders] = useState(() => loadState('reminders', []))
   const [tip] = useState(() => tips[Math.floor(Math.random() * tips.length)])
   const [trainData, setTrainData] = useState(null)
-  const [trainSchedule] = useState(() => loadState('trainSchedule', []))
+  const [trainSchedule, setTrainSchedule] = useState(() => loadState('trainSchedule', []))
+
+  // Load from D1
+  useEffect(() => {
+    Promise.all([
+      db.events.list().catch(() => null),
+      db.tasks.list().catch(() => null),
+      db.reminders.list().catch(() => null),
+      db.trains.list().catch(() => null),
+    ]).then(([dbEvents, dbTasks, dbReminders, dbTrains]) => {
+      if (dbEvents?.length) setEvents(dbEvents)
+      if (dbTasks?.length) setTasks(dbTasks)
+      if (dbReminders?.length) setReminders(dbReminders)
+      if (dbTrains?.length) setTrainSchedule(dbTrains)
+    })
+  }, [])
 
   // Fetch quick train status for dashboard
   useEffect(() => {

@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { colors, loadState, saveState } from '../App'
+import { db } from '../db'
 
 const TEMPLATES = [
   {
@@ -73,6 +74,12 @@ export default function AppBuilder({ user, addMemory }) {
   const [customPrompt, setCustomPrompt] = useState('')
   const [appName, setAppName] = useState('')
   const [entries, setEntries] = useState({})
+
+  useEffect(() => {
+    db.apps.list().then(data => {
+      if (data.length > 0) { setApps(data); saveState('customApps', data) }
+    }).catch(() => {})
+  }, [])
 
   const save = (a) => { setApps(a); saveState('customApps', a) }
 

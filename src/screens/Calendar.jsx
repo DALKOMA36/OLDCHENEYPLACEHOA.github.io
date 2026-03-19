@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { colors, loadState, saveState } from '../App'
+import { db } from '../db'
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -12,7 +13,21 @@ export default function Calendar({ user, addMemory }) {
   const [newEvent, setNewEvent] = useState({ title: '', time: '09:00', location: '', calendar: 'personal', color: colors.primary })
   const [view, setView] = useState('month') // month or week
 
-  const save = (evts) => { setEvents(evts); saveState('events', evts) }
+  // Load events from D1 on mount, fall back to localStorage
+  useEffect(() => {
+    let cancelled = false
+    db.events.list().then(dbEvents => {
+      if (!cancelled) {
+        setEvents(dbEvents)
+        saveState('events', dbEvents)
+      }
+    }).catch(() => {
+      // D1 unavailable, keep localStorage data
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  const save = useCallback((evts) => { setEvents(evts); saveState('events', evts) }, [])
 
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
@@ -31,17 +46,35 @@ export default function Calendar({ user, addMemory }) {
     return events.filter(e => e.date === selectedDate).sort((a, b) => a.time.localeCompare(b.time))
   }, [events, selectedDate])
 
-  const addEvent = () => {
+  const addEvent = async () => {
     if (!newEvent.title.trim()) return
     const evt = { ...newEvent, id: Date.now(), date: selectedDate }
+    // Optimistic update
     save([...events, evt])
     addMemory(`Added event: ${newEvent.title} on ${selectedDate}`)
     setNewEvent({ title: '', time: '09:00', location: '', calendar: 'personal', color: colors.primary })
     setShowAdd(false)
+    try {
+      const created = await db.events.create(evt)
+      // Replace optimistic entry with server-confirmed entry (may have different id)
+      setEvents(prev => {
+        const updated = prev.map(e => e.id === evt.id ? { ...evt, ...created } : e)
+        saveState('events', updated)
+        return updated
+      })
+    } catch {
+      // D1 unavailable, localStorage fallback already saved
+    }
   }
 
-  const deleteEvent = (id) => {
+  const deleteEvent = async (id) => {
+    // Optimistic update
     save(events.filter(e => e.id !== id))
+    try {
+      await db.events.delete(id)
+    } catch {
+      // D1 unavailable, localStorage fallback already saved
+    }
   }
 
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1))

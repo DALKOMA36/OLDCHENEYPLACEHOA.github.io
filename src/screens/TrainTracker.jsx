@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { colors, loadState, saveState } from '../App'
+import { db } from '../db'
 
 const API_BASE = 'https://api-v3.amtraker.com/v3/trains'
 
@@ -98,7 +99,21 @@ export default function TrainTracker({ user, addMemory }) {
   const [showEditSchedule, setShowEditSchedule] = useState(false)
   const [editItem, setEditItem] = useState(null)
 
-  const saveSchedule = (s) => { setSchedule(s); saveState('trainSchedule', s) }
+  useEffect(() => {
+    db.trains.list().then(data => {
+      if (data.length > 0) { setSchedule(data); saveState('trainSchedule', data) }
+    }).catch(() => {})
+  }, [])
+
+  const saveSchedule = (s) => {
+    setSchedule(s)
+    saveState('trainSchedule', s)
+    // Sync to D1 - delete all then re-add
+    Promise.all(s.map(item => {
+      if (item._new) { delete item._new; return db.trains.add(item).catch(() => {}) }
+      return db.trains.update(item).catch(() => {})
+    })).catch(() => {})
+  }
 
   const fetchTrains = useCallback(async () => {
     setLoading(true)

@@ -1,0 +1,8 @@
+name = "jarvis-app"
+compatibility_date = "2024-12-01"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "jarvis-db"
+database_id = "06bd4a27-f8e8-4135-84da-fee2462b23f3"

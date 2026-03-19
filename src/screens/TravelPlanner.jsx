@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { colors, loadState, saveState } from '../App'
+import { db } from '../db'
 
 const SAMPLE_ITINERARIES = {
   beach: {
@@ -50,7 +51,16 @@ export default function TravelPlanner({ user, addMemory }) {
     style: 'mixed', interests: [], budget: 'moderate',
   })
 
-  const save = (t) => { setTrips(t); saveState('trips', t) }
+  useEffect(() => {
+    db.trips.list().then(data => {
+      if (data.length > 0) { setTrips(data); saveState('trips', data) }
+    }).catch(() => {})
+  }, [])
+
+  const save = (t) => {
+    setTrips(t)
+    saveState('trips', t)
+  }
 
   const INTERESTS = ['Beach', 'Hiking', 'Food', 'Culture', 'Nightlife', 'Shopping', 'Adventure', 'Relaxation']
 

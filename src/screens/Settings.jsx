@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { colors, loadState, saveState } from '../App'
+import { db } from '../db'
 
 export default function Settings({ user, updateUser, addMemory }) {
   const [editName, setEditName] = useState(false)
@@ -9,6 +10,13 @@ export default function Settings({ user, updateUser, addMemory }) {
   const [newMember, setNewMember] = useState({ name: '', phone: '', role: 'family' })
   const [briefingTime, setBriefingTime] = useState(() => loadState('briefingTime', '07:00'))
   const [briefingDays, setBriefingDays] = useState(() => loadState('briefingDays', ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']))
+
+  useEffect(() => {
+    db.user.get().then(data => {
+      if (data.briefing_time) setBriefingTime(data.briefing_time)
+      if (data.briefing_days) setBriefingDays(data.briefing_days)
+    }).catch(() => {})
+  }, [])
 
   const saveName = () => {
     updateUser({ name: name || 'Friend' })
@@ -120,7 +128,7 @@ export default function Settings({ user, updateUser, addMemory }) {
         <div style={{ padding: '10px 14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             <span style={{ color: colors.textSecondary, fontSize: 13 }}>Time:</span>
-            <input type="time" value={briefingTime} onChange={e => { setBriefingTime(e.target.value); saveState('briefingTime', e.target.value) }}
+            <input type="time" value={briefingTime} onChange={e => { setBriefingTime(e.target.value); saveState('briefingTime', e.target.value); db.user.update({ briefing_time: e.target.value }).catch(() => {}) }}
               style={{ ...inputStyle, marginBottom: 0, width: 'auto' }} />
           </div>
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
@@ -129,6 +137,7 @@ export default function Settings({ user, updateUser, addMemory }) {
                 const updated = briefingDays.includes(day) ? briefingDays.filter(d => d !== day) : [...briefingDays, day]
                 setBriefingDays(updated)
                 saveState('briefingDays', updated)
+                db.user.update({ briefing_days: updated }).catch(() => {})
               }} style={{
                 padding: '6px 10px', borderRadius: 6,
                 background: briefingDays.includes(day) ? colors.primary : colors.surfaceLight,

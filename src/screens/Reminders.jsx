@@ -1,28 +1,63 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { colors, loadState, saveState } from '../App'
+import { db } from '../db'
 
 export default function Reminders({ user, addMemory }) {
-  const [reminders, setReminders] = useState(() => loadState('reminders', []))
+  const [reminders, setReminders] = useState([])
   const [showAdd, setShowAdd] = useState(false)
   const [newReminder, setNewReminder] = useState({ text: '', date: '', time: '09:00', repeat: 'none', priority: 'normal' })
 
-  const save = (r) => { setReminders(r); saveState('reminders', r) }
+  // Load reminders from D1 on mount, fall back to localStorage
+  useEffect(() => {
+    let cancelled = false
+    db.reminders.list()
+      .then(data => { if (!cancelled) setReminders(data) })
+      .catch(() => {
+        if (!cancelled) setReminders(loadState('reminders', []))
+      })
+    return () => { cancelled = true }
+  }, [])
 
-  const addReminder = () => {
+  // Persist to localStorage as fallback whenever reminders change
+  useEffect(() => {
+    if (reminders.length > 0) {
+      saveState('reminders', reminders)
+    }
+  }, [reminders])
+
+  const addReminder = async () => {
     if (!newReminder.text.trim()) return
     const reminder = { ...newReminder, id: Date.now(), dismissed: false, createdAt: new Date().toISOString() }
-    save([reminder, ...reminders])
+    try {
+      const created = await db.reminders.create(reminder)
+      setReminders(prev => [created, ...prev])
+    } catch {
+      // Fallback: use local state only
+      setReminders(prev => [reminder, ...prev])
+    }
     addMemory(`Set reminder: ${newReminder.text}`)
     setNewReminder({ text: '', date: '', time: '09:00', repeat: 'none', priority: 'normal' })
     setShowAdd(false)
   }
 
-  const dismiss = (id) => {
-    save(reminders.map(r => r.id === id ? { ...r, dismissed: true } : r))
+  const dismiss = async (id) => {
+    const updated = reminders.map(r => r.id === id ? { ...r, dismissed: true } : r)
+    setReminders(updated)
+    const target = updated.find(r => r.id === id)
+    try {
+      if (target) await db.reminders.update(target)
+    } catch {
+      // localStorage fallback already handled by the effect
+    }
   }
 
-  const deleteReminder = (id) => {
-    save(reminders.filter(r => r.id !== id))
+  const deleteReminder = async (id) => {
+    setReminders(prev => prev.filter(r => r.id !== id))
+    try {
+      await db.reminders.delete(id)
+    } catch {
+      // localStorage fallback already handled by the effect
+    }
   }
 
   const active = reminders.filter(r => !r.dismissed)

@@ -1,29 +1,65 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { colors, loadState, saveState } from '../App'
+import { db } from '../db'
 
 export default function Tasks({ user, addMemory }) {
-  const [tasks, setTasks] = useState(() => loadState('tasks', []))
+  const [tasks, setTasks] = useState([])
   const [showAdd, setShowAdd] = useState(false)
   const [filter, setFilter] = useState('all') // all, pending, completed, delegated
   const [newTask, setNewTask] = useState({ title: '', priority: 'medium', assignee: '', dueDate: '', recurring: false, category: 'personal' })
 
-  const save = (t) => { setTasks(t); saveState('tasks', t) }
+  // Load tasks from D1 on mount, fall back to localStorage
+  useEffect(() => {
+    let cancelled = false
+    db.tasks.list()
+      .then(data => { if (!cancelled) setTasks(data) })
+      .catch(() => { if (!cancelled) setTasks(loadState('tasks', [])) })
+    return () => { cancelled = true }
+  }, [])
 
-  const addTask = () => {
+  const addTask = async () => {
     if (!newTask.title.trim()) return
-    const task = { ...newTask, id: Date.now(), completed: false, createdAt: new Date().toISOString() }
-    save([task, ...tasks])
+    const taskData = { ...newTask, completed: false, createdAt: new Date().toISOString() }
+    try {
+      const created = await db.tasks.create(taskData)
+      const updated = [created, ...tasks]
+      setTasks(updated)
+      saveState('tasks', updated)
+    } catch {
+      // Fallback: create locally with timestamp id
+      const task = { ...taskData, id: Date.now() }
+      const updated = [task, ...tasks]
+      setTasks(updated)
+      saveState('tasks', updated)
+    }
     addMemory(`Added task: ${newTask.title}${newTask.assignee ? ` (assigned to ${newTask.assignee})` : ''}`)
     setNewTask({ title: '', priority: 'medium', assignee: '', dueDate: '', recurring: false, category: 'personal' })
     setShowAdd(false)
   }
 
-  const toggle = (id) => {
-    save(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t))
+  const toggle = async (id) => {
+    const target = tasks.find(t => t.id === id)
+    if (!target) return
+    const toggled = { ...target, completed: !target.completed }
+    const updated = tasks.map(t => t.id === id ? toggled : t)
+    setTasks(updated)
+    try {
+      await db.tasks.update(toggled)
+      saveState('tasks', updated)
+    } catch {
+      saveState('tasks', updated)
+    }
   }
 
-  const deleteTask = (id) => {
-    save(tasks.filter(t => t.id !== id))
+  const deleteTask = async (id) => {
+    const updated = tasks.filter(t => t.id !== id)
+    setTasks(updated)
+    try {
+      await db.tasks.delete(id)
+      saveState('tasks', updated)
+    } catch {
+      saveState('tasks', updated)
+    }
   }
 
   const filtered = tasks.filter(t => {

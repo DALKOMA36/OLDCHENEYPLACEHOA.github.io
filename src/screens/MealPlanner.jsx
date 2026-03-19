@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { colors, loadState, saveState } from '../App'
+import { db } from '../db'
 
 const MEAL_DB = {
   breakfast: [
@@ -35,13 +36,40 @@ export default function MealPlanner({ user, addMemory }) {
   const [showPicker, setShowPicker] = useState(null) // { day, mealType }
   const [diet, setDiet] = useState(() => loadState('diet', 'none'))
 
-  const savePlan = (p) => { setMealPlan(p); saveState('mealPlan', p) }
-  const saveGrocery = (g) => { setGroceryList(g); saveState('groceryList', g) }
+  // Load data from D1 on mount, falling back to localStorage defaults already in state
+  useEffect(() => {
+    db.meals.get().then(data => {
+      if (data && Object.keys(data).length > 0) {
+        setMealPlan(data)
+        saveState('mealPlan', data)
+      }
+    }).catch(() => {})
+
+    db.grocery.list().then(data => {
+      if (data && data.length > 0) {
+        setGroceryList(data)
+        saveState('groceryList', data)
+      }
+    }).catch(() => {})
+  }, [])
+
+  const savePlan = (p) => {
+    setMealPlan(p)
+    saveState('mealPlan', p)
+    db.meals.bulkSet(p).catch(() => {})
+  }
+
+  const saveGrocery = (g) => {
+    setGroceryList(g)
+    saveState('groceryList', g)
+  }
 
   const setMeal = (day, mealType, meal) => {
     const key = `${day}_${mealType}`
     const updated = { ...mealPlan, [key]: meal }
-    savePlan(updated)
+    setMealPlan(updated)
+    saveState('mealPlan', updated)
+    db.meals.set(key, meal).catch(() => {})
     addMemory(`Planned ${mealType}: ${meal.name} for ${day}`)
     setShowPicker(null)
   }
@@ -70,14 +98,24 @@ export default function MealPlanner({ user, addMemory }) {
     const list = Object.entries(allIngredients).map(([name, count]) => ({
       name, count, checked: false, id: Date.now() + Math.random(),
     }))
-    saveGrocery(list)
+    setGroceryList(list)
+    saveState('groceryList', list)
+    // Sync each item to D1
+    list.forEach(item => {
+      db.grocery.add({ name: item.name, count: item.count }).catch(() => {})
+    })
     setView('grocery')
     addMemory('Generated grocery list from meal plan')
   }
 
   const toggleGrocery = (id) => {
     const updated = groceryList.map(g => g.id === id ? { ...g, checked: !g.checked } : g)
-    saveGrocery(updated)
+    setGroceryList(updated)
+    saveState('groceryList', updated)
+    const toggled = updated.find(g => g.id === id)
+    if (toggled) {
+      db.grocery.update({ id: toggled.id, name: toggled.name, count: toggled.count, checked: toggled.checked }).catch(() => {})
+    }
   }
 
   const getMeal = (day, type) => mealPlan[`${day}_${type}`]

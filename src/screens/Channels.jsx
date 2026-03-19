@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { colors, loadState, saveState } from '../App'
+import { db } from '../db'
 
 const CHANNELS = [
   { id: 'sms', name: 'SMS', icon: '💬', color: colors.success, desc: 'Send & receive texts' },
@@ -38,17 +39,26 @@ export default function Channels({ user, addMemory }) {
   const [activeChannel, setActiveChannel] = useState(null)
   const [compose, setCompose] = useState(false)
   const [composeData, setComposeData] = useState({ to: '', message: '', channel: 'sms' })
-  const [drafts, setDrafts] = useState(() => loadState('drafts', []))
-  const [sentMessages, setSentMessages] = useState(() => loadState('sentMessages', []))
+  const [drafts, setDrafts] = useState([])
+  const [sentMessages, setSentMessages] = useState([])
+
+  useEffect(() => {
+    db.channels.getSent().then(setSentMessages).catch(() => setSentMessages(loadState('sentMessages', [])))
+    db.channels.getDrafts().then(setDrafts).catch(() => setDrafts(loadState('drafts', [])))
+  }, [])
 
   const totalUnread = Object.values(DEMO_MESSAGES).reduce((sum, msgs) => sum + msgs.filter(m => m.unread).length, 0)
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!composeData.to.trim() || !composeData.message.trim()) return
     const msg = { ...composeData, id: Date.now(), sentAt: new Date().toISOString() }
     const updated = [msg, ...sentMessages]
     setSentMessages(updated)
-    saveState('sentMessages', updated)
+    try {
+      await db.channels.send(msg)
+    } catch {
+      saveState('sentMessages', updated)
+    }
     addMemory(`Sent ${composeData.channel} to ${composeData.to}: ${composeData.message.slice(0, 50)}`)
     setComposeData({ to: '', message: '', channel: 'sms' })
     setCompose(false)

@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { colors, loadState, saveState } from '../App'
+import { db } from '../db'
 
 const AI_RESPONSES = {
   greeting: [
@@ -47,22 +48,90 @@ const getResponse = (msg) => {
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]
 
+const defaultGreeting = (name) => ({
+  role: 'ai',
+  text: `Hi ${name}! I'm Jarvis, your personal AI assistant. I can help with your calendar, tasks, meals, travel, messaging, and much more. What can I do for you?`,
+  time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+})
+
 export default function Chat({ user, addMemory }) {
-  const [messages, setMessages] = useState(() => loadState('chatMessages', [
-    { role: 'ai', text: `Hi ${user.name}! I'm Jarvis, your personal AI assistant. I can help with your calendar, tasks, meals, travel, messaging, and much more. What can I do for you?`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
-  ]))
+  const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [typing, setTyping] = useState(false)
+  const [loaded, setLoaded] = useState(false)
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
 
-  useEffect(() => { saveState('chatMessages', messages.slice(-50)) }, [messages])
+  // Load messages from D1 on mount, fall back to localStorage
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      try {
+        const rows = await db.chat.list(50)
+        if (!cancelled) {
+          if (rows && rows.length > 0) {
+            setMessages(rows)
+          } else {
+            // No messages in D1 yet — check localStorage fallback then show greeting
+            const cached = loadState('chatMessages', [])
+            if (cached.length > 0) {
+              setMessages(cached)
+              // Migrate localStorage messages to D1 in background
+              for (const msg of cached.slice(-50)) {
+                db.chat.send({ role: msg.role, text: msg.text, time: msg.time }).catch(() => {})
+              }
+            } else {
+              const greeting = defaultGreeting(user.name)
+              setMessages([greeting])
+              db.chat.send(greeting).catch(() => {})
+            }
+          }
+          setLoaded(true)
+        }
+      } catch (err) {
+        console.error('D1 chat load failed, falling back to localStorage:', err)
+        if (!cancelled) {
+          const cached = loadState('chatMessages', [])
+          if (cached.length > 0) {
+            setMessages(cached)
+          } else {
+            setMessages([defaultGreeting(user.name)])
+          }
+          setLoaded(true)
+        }
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [user.name])
+
+  // Persist to localStorage as fallback whenever messages change (keep last 50)
+  useEffect(() => {
+    if (loaded && messages.length > 0) {
+      saveState('chatMessages', messages.slice(-50))
+    }
+  }, [messages, loaded])
+
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, typing])
+
+  const persistMessage = useCallback(async (msg) => {
+    try {
+      await db.chat.send({ role: msg.role, text: msg.text, time: msg.time })
+    } catch (err) {
+      console.error('D1 chat save failed:', err)
+    }
+  }, [])
+
+  const trimAndPersist = useCallback((prev, newMsg) => {
+    const updated = [...prev, newMsg].slice(-50)
+    persistMessage(newMsg)
+    return updated
+  }, [persistMessage])
 
   const send = () => {
     if (!input.trim()) return
     const userMsg = { role: 'user', text: input.trim(), time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
-    setMessages(prev => [...prev, userMsg])
+    setMessages(prev => trimAndPersist(prev, userMsg))
     addMemory(`User said: ${input.trim().slice(0, 100)}`)
     const query = input.trim()
     setInput('')
@@ -70,7 +139,8 @@ export default function Chat({ user, addMemory }) {
 
     setTimeout(() => {
       const response = getResponse(query)
-      setMessages(prev => [...prev, { role: 'ai', text: response, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])
+      const aiMsg = { role: 'ai', text: response, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+      setMessages(prev => trimAndPersist(prev, aiMsg))
       setTyping(false)
     }, 800 + Math.random() * 1200)
   }
@@ -93,7 +163,7 @@ export default function Chat({ user, addMemory }) {
             }}>
               {msg.role === 'ai' && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                  <span style={{ color: colors.primary, fontSize: 12 }}>◉</span>
+                  <span style={{ color: colors.primary, fontSize: 12 }}>&#9673;</span>
                   <span style={{ color: colors.primaryLight, fontSize: 11, fontWeight: 600 }}>Jarvis</span>
                 </div>
               )}
@@ -148,7 +218,7 @@ export default function Chat({ user, addMemory }) {
           width: 44, height: 44, borderRadius: '50%', background: input.trim() ? colors.gradient1 : colors.surfaceLight,
           border: 'none', color: '#fff', fontSize: 18, cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>↑</button>
+        }}>&#8593;</button>
       </div>
 
       <style>{`

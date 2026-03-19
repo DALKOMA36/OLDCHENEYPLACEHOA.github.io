@@ -12,6 +12,7 @@ import AppBuilder from './screens/AppBuilder'
 import Settings from './screens/Settings'
 import Reminders from './screens/Reminders'
 import TrainTracker from './screens/TrainTracker'
+import { db, needsMigration, migrateLocalStorageToD1 } from './db'
 
 const SCREENS = {
   dashboard: { label: 'Home', icon: '⌂', component: Dashboard },
@@ -71,19 +72,57 @@ export { loadState, saveState }
 export default function App() {
   const [screen, setScreen] = useState('dashboard')
   const [menuOpen, setMenuOpen] = useState(false)
-  const [user, setUser] = useState(() => loadState('user', {
+  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState({
     name: '',
     preferences: {},
     memory: [],
     integrations: { google: false, apple: false, outlook: false, slack: false, whatsapp: false },
     circle: [],
-  }))
+  })
 
-  const [onboarded, setOnboarded] = useState(() => loadState('onboarded', false))
+  const [onboarded, setOnboarded] = useState(false)
   const [onboardStep, setOnboardStep] = useState(0)
   const [onboardName, setOnboardName] = useState('')
 
-  useEffect(() => { saveState('user', user) }, [user])
+  // Load user from D1 on mount, migrate localStorage if needed
+  useEffect(() => {
+    (async () => {
+      try {
+        // Migrate localStorage to D1 if needed
+        if (needsMigration()) {
+          await migrateLocalStorageToD1()
+        }
+        const userData = await db.user.get()
+        setUser({
+          name: userData.name || '',
+          preferences: userData.preferences || {},
+          memory: userData.memory || [],
+          integrations: userData.integrations || { google: false, apple: false, outlook: false, slack: false, whatsapp: false },
+          circle: userData.circle || [],
+        })
+        setOnboarded(!!userData.onboarded)
+      } catch (err) {
+        console.warn('D1 unavailable, falling back to localStorage:', err)
+        const stored = loadState('user', null)
+        if (stored) setUser(stored)
+        setOnboarded(loadState('onboarded', false))
+      }
+      setLoading(false)
+    })()
+  }, [])
+
+  // Persist user changes to D1 (debounced)
+  const userRef = useRef(user)
+  const saveTimer = useRef(null)
+  useEffect(() => {
+    userRef.current = user
+    if (loading) return
+    clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => {
+      db.user.update(userRef.current).catch(() => saveState('user', userRef.current))
+    }, 500)
+  }, [user, loading])
 
   const navigate = useCallback((s) => { setScreen(s); setMenuOpen(false) }, [])
 
@@ -99,9 +138,23 @@ export default function App() {
   }, [])
 
   const completeOnboarding = () => {
-    updateUser({ name: onboardName || 'Friend' })
+    const name = onboardName || 'Friend'
+    updateUser({ name })
     setOnboarded(true)
-    saveState('onboarded', true)
+    db.user.update({ name, onboarded: true }).catch(() => {
+      saveState('onboarded', true)
+    })
+  }
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', background: colors.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 48, color: colors.primary, marginBottom: 16 }}>◉</div>
+          <div style={{ color: colors.textSecondary, fontSize: 14 }}>Loading...</div>
+        </div>
+      </div>
+    )
   }
 
   if (!onboarded) {
