@@ -1,7 +1,114 @@
 import { json, error, parseBody } from './_helpers'
 
-// POST /api/ai - Send message to Claude and get response
-// Also provides context from user's app data
+// Tools JARVIS can use to take real actions
+const TOOLS = [
+  {
+    name: 'create_task',
+    description: 'Create a new task for the user',
+    input_schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Task title' },
+        priority: { type: 'string', enum: ['low', 'medium', 'high'], description: 'Task priority' },
+        dueDate: { type: 'string', description: 'Due date in YYYY-MM-DD format' },
+        category: { type: 'string', enum: ['personal', 'work', 'family', 'home'], description: 'Task category' },
+      },
+      required: ['title'],
+    },
+  },
+  {
+    name: 'create_event',
+    description: 'Create a calendar event',
+    input_schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Event title' },
+        date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
+        time: { type: 'string', description: 'Time like 2:00 PM or 14:00' },
+        location: { type: 'string', description: 'Event location' },
+      },
+      required: ['title', 'date'],
+    },
+  },
+  {
+    name: 'create_reminder',
+    description: 'Set a reminder for the user',
+    input_schema: {
+      type: 'object',
+      properties: {
+        text: { type: 'string', description: 'Reminder text' },
+        date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
+        time: { type: 'string', description: 'Time in HH:MM format (24h)' },
+        priority: { type: 'string', enum: ['normal', 'important', 'urgent'] },
+      },
+      required: ['text', 'date'],
+    },
+  },
+  {
+    name: 'add_grocery_item',
+    description: 'Add an item to the grocery list',
+    input_schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Item name' },
+        count: { type: 'number', description: 'Quantity' },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'complete_task',
+    description: 'Mark a task as completed',
+    input_schema: {
+      type: 'object',
+      properties: {
+        taskTitle: { type: 'string', description: 'Title of the task to complete (partial match OK)' },
+      },
+      required: ['taskTitle'],
+    },
+  },
+]
+
+// Execute a tool action against D1
+async function executeTool(toolName, input, userId, env) {
+  switch (toolName) {
+    case 'create_task': {
+      const result = await env.DB.prepare(
+        'INSERT INTO tasks (user_id, title, priority, due_date, category, completed) VALUES (?, ?, ?, ?, ?, 0)'
+      ).bind(userId, input.title, input.priority || 'medium', input.dueDate || null, input.category || 'personal').run()
+      return { success: true, id: result.meta.last_row_id, message: `Task "${input.title}" created` }
+    }
+    case 'create_event': {
+      const result = await env.DB.prepare(
+        'INSERT INTO events (user_id, title, date, time, location, calendar) VALUES (?, ?, ?, ?, ?, ?)'
+      ).bind(userId, input.title, input.date, input.time || '', input.location || '', 'personal').run()
+      return { success: true, id: result.meta.last_row_id, message: `Event "${input.title}" on ${input.date} created` }
+    }
+    case 'create_reminder': {
+      const result = await env.DB.prepare(
+        'INSERT INTO reminders (user_id, text, date, time, priority, dismissed) VALUES (?, ?, ?, ?, ?, 0)'
+      ).bind(userId, input.text, input.date, input.time || '09:00', input.priority || 'normal').run()
+      return { success: true, id: result.meta.last_row_id, message: `Reminder set: "${input.text}" on ${input.date}` }
+    }
+    case 'add_grocery_item': {
+      const result = await env.DB.prepare(
+        'INSERT INTO grocery_items (user_id, name, count, checked) VALUES (?, ?, ?, 0)'
+      ).bind(userId, input.name, input.count || 1).run()
+      return { success: true, id: result.meta.last_row_id, message: `Added "${input.name}" to grocery list` }
+    }
+    case 'complete_task': {
+      const task = await env.DB.prepare(
+        "SELECT id, title FROM tasks WHERE user_id = ? AND completed = 0 AND title LIKE ? LIMIT 1"
+      ).bind(userId, `%${input.taskTitle}%`).first()
+      if (!task) return { success: false, message: `No pending task matching "${input.taskTitle}" found` }
+      await env.DB.prepare('UPDATE tasks SET completed = 1 WHERE id = ?').bind(task.id).run()
+      return { success: true, message: `Task "${task.title}" marked as complete` }
+    }
+    default:
+      return { success: false, message: `Unknown tool: ${toolName}` }
+  }
+}
+
 export async function onRequestPost({ env, request, data }) {
   const body = await parseBody(request)
   const { message, conversationHistory, context } = body
@@ -10,16 +117,14 @@ export async function onRequestPost({ env, request, data }) {
 
   const apiKey = env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    return json({ response: "I'm not fully connected yet. My AI core needs an API key to be configured.", error: 'no_api_key' })
+    return json({ response: "AI core needs configuration. API key required.", error: 'no_api_key' })
   }
 
-  // Build system prompt with user context
-  const systemPrompt = buildSystemPrompt(data.userId, context)
+  const systemPrompt = buildSystemPrompt(context)
 
-  // Build messages array
   const messages = []
   if (conversationHistory?.length) {
-    for (const msg of conversationHistory.slice(-20)) { // last 20 messages for context
+    for (const msg of conversationHistory.slice(-20)) {
       messages.push({
         role: msg.role === 'ai' ? 'assistant' : 'user',
         content: msg.text,
@@ -29,7 +134,8 @@ export async function onRequestPost({ env, request, data }) {
   messages.push({ role: 'user', content: message })
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    // First call - may include tool use
+    let response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -40,6 +146,7 @@ export async function onRequestPost({ env, request, data }) {
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1024,
         system: systemPrompt,
+        tools: TOOLS,
         messages,
       }),
     })
@@ -47,54 +154,98 @@ export async function onRequestPost({ env, request, data }) {
     if (!response.ok) {
       const err = await response.text()
       console.error('Claude API error:', err)
-      return json({ response: "I'm having trouble connecting to my AI core. Please try again.", error: 'api_error' })
+      return json({ response: "Connection to AI core interrupted. Please try again.", error: 'api_error' })
     }
 
-    const result = await response.json()
-    const aiText = result.content?.[0]?.text || "I couldn't generate a response."
+    let result = await response.json()
+    const actions = []
 
-    return json({ response: aiText })
+    // Handle tool use - execute actions and feed results back
+    while (result.stop_reason === 'tool_use') {
+      const toolBlocks = result.content.filter(b => b.type === 'tool_use')
+      const toolResults = []
+
+      for (const block of toolBlocks) {
+        const toolResult = await executeTool(block.name, block.input, data.userId, env)
+        actions.push({ tool: block.name, input: block.input, result: toolResult })
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: block.id,
+          content: JSON.stringify(toolResult),
+        })
+      }
+
+      // Send tool results back to get final response
+      messages.push({ role: 'assistant', content: result.content })
+      messages.push({ role: 'user', content: toolResults })
+
+      response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1024,
+          system: systemPrompt,
+          tools: TOOLS,
+          messages,
+        }),
+      })
+
+      if (!response.ok) break
+      result = await response.json()
+    }
+
+    // Extract text response
+    const textBlocks = result.content?.filter(b => b.type === 'text') || []
+    const aiText = textBlocks.map(b => b.text).join('\n') || "Action completed."
+
+    return json({ response: aiText, actions })
   } catch (err) {
     console.error('AI request failed:', err)
     return json({ response: "Connection to AI core interrupted. Please try again.", error: 'network_error' })
   }
 }
 
-function buildSystemPrompt(userId, context) {
-  let prompt = `You are J.A.R.V.I.S. — Just A Rather Very Intelligent System. You are a personal AI life manager, inspired by Tony Stark's AI assistant.
+function buildSystemPrompt(context) {
+  let prompt = `You are J.A.R.V.I.S. — Just A Rather Very Intelligent System. You are a personal AI life manager inspired by Tony Stark's AI assistant.
 
 Your personality:
 - Professional, efficient, and subtly witty (like the movie JARVIS)
 - Address the user respectfully, occasionally with dry humor
 - Be concise — give direct answers, not essays
-- When helping with tasks, events, meals, etc., be specific and actionable
-- You can reference the user's data when relevant
+- When the user asks you to do something, USE YOUR TOOLS to actually do it
 
-You have access to the user's personal data to help them:`
+You have tools to take REAL actions:
+- create_task: Create tasks with title, priority, due date, category
+- create_event: Create calendar events with title, date, time, location
+- create_reminder: Set reminders with text, date, time
+- add_grocery_item: Add items to the grocery list
+- complete_task: Mark a task as done
+
+IMPORTANT: When the user asks you to create, add, set, or do something — USE THE TOOLS. Don't just say you'll do it. Actually call the tool. For example:
+- "Add milk to my grocery list" → use add_grocery_item
+- "Remind me to call the doctor tomorrow" → use create_reminder with tomorrow's date
+- "Create a task to review the budget" → use create_task
+- "I finished the laundry" → use complete_task
+
+Today's date is ${new Date().toISOString().split('T')[0]}.`
 
   if (context) {
-    if (context.userName) {
-      prompt += `\n\nUser's name: ${context.userName}`
-    }
+    if (context.userName) prompt += `\n\nUser's name: ${context.userName}`
     if (context.todayEvents?.length) {
-      prompt += `\n\nToday's events:\n${context.todayEvents.map(e => `- ${e.title} at ${e.time || 'unspecified time'}${e.location ? ` (${e.location})` : ''}`).join('\n')}`
+      prompt += `\n\nToday's events:\n${context.todayEvents.map(e => `- ${e.title} at ${e.time || 'unspecified'}${e.location ? ` (${e.location})` : ''}`).join('\n')}`
     }
     if (context.pendingTasks?.length) {
-      prompt += `\n\nPending tasks:\n${context.pendingTasks.map(t => `- ${t.title} [${t.priority}]${t.dueDate ? ` due ${t.dueDate}` : ''}`).join('\n')}`
+      prompt += `\n\nPending tasks:\n${context.pendingTasks.map(t => `- ${t.title} [${t.priority}]${t.due_date ? ` due ${t.due_date}` : ''}`).join('\n')}`
     }
     if (context.upcomingReminders?.length) {
       prompt += `\n\nUpcoming reminders:\n${context.upcomingReminders.map(r => `- ${r.text} on ${r.date} at ${r.time}`).join('\n')}`
     }
-    if (context.trainSchedule?.length) {
-      prompt += `\n\nTrain commute schedule:\n${context.trainSchedule.map(s => `- Train ${s.train} ${s.direction} from ${s.boardStation} on ${s.days?.join(', ')}`).join('\n')}`
-    }
   }
-
-  prompt += `\n\nImportant rules:
-- Keep responses concise (2-4 sentences unless asked for detail)
-- If asked to create events, tasks, or reminders, confirm what you'd create but note that automatic creation will be available soon
-- If asked about something outside your data, be helpful but honest about limitations
-- Never make up data you don't have — say "I don't have that information" instead`
 
   return prompt
 }
