@@ -187,6 +187,12 @@ export const db = {
     deleteEntry: (entryId) => apiFetch(`/apps?entry_id=${entryId}`, { method: 'DELETE' }),
   },
 
+  // ---- AI ----
+  ai: {
+    chat: (message, conversationHistory, context) =>
+      apiFetch('/ai', { method: 'POST', body: { message, conversationHistory, context } }),
+  },
+
   // ---- Sync (migrate localStorage -> D1) ----
   sync: (data) => apiFetch('/sync', { method: 'POST', body: data }),
 }
