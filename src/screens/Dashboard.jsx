@@ -21,12 +21,31 @@ const tips = [
 
 const weatherIcons = { sunny: '☀', cloudy: '☁', rainy: '⛆', snowy: '❄' }
 
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
 export default function Dashboard({ user, navigate, addMemory }) {
   const [briefing, setBriefing] = useState(null)
   const [events] = useState(() => loadState('events', []))
   const [tasks] = useState(() => loadState('tasks', []))
   const [reminders] = useState(() => loadState('reminders', []))
   const [tip] = useState(() => tips[Math.floor(Math.random() * tips.length)])
+  const [trainData, setTrainData] = useState(null)
+  const [trainSchedule] = useState(() => loadState('trainSchedule', []))
+
+  // Fetch quick train status for dashboard
+  useEffect(() => {
+    const todayDay = DAYS[new Date().getDay()]
+    const todayTrains = trainSchedule.filter(s => s.days.includes(todayDay))
+    if (todayTrains.length === 0) return
+
+    const trainNums = [...new Set(todayTrains.map(s => s.train))]
+    Promise.all(trainNums.map(n => fetch(`https://api-v3.amtraker.com/v3/trains/${n}`).then(r => r.json()).catch(() => null)))
+      .then(results => {
+        const data = {}
+        trainNums.forEach((num, i) => { if (results[i]?.[num]) data[num] = results[i][num] })
+        setTrainData({ todayTrains, data })
+      })
+  }, [trainSchedule])
 
   useEffect(() => {
     const today = new Date()
@@ -83,15 +102,62 @@ export default function Dashboard({ user, navigate, addMemory }) {
         )}
       </div>
 
+      {/* Train Status Widget */}
+      {trainData && trainData.todayTrains.length > 0 && (
+        <button onClick={() => navigate('trains')} style={{
+          width: '100%', padding: 14, background: colors.surfaceLight, border: `1px solid ${colors.border}`,
+          borderRadius: 12, marginBottom: 16, cursor: 'pointer', textAlign: 'left',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <span style={{ fontSize: 16 }}>🚂</span>
+            <span style={{ color: colors.text, fontSize: 13, fontWeight: 600 }}>YOUR TRAINS TODAY</span>
+          </div>
+          {trainData.todayTrains.map(s => {
+            const instances = trainData.data[s.train]
+            let statusText = 'No data'
+            let statusColor = colors.textMuted
+            if (instances && instances.length > 0) {
+              const inst = instances[0]
+              const stationList = inst.stations ? (Array.isArray(inst.stations) ? inst.stations : Object.values(inst.stations)) : []
+              const myStation = stationList.find(st => st.code === s.boardStation)
+              if (myStation) {
+                if (myStation.arr && myStation.schArr) {
+                  const delay = Math.round((new Date(myStation.arr).getTime() - new Date(myStation.schArr).getTime()) / 60000)
+                  if (delay <= 0) { statusText = 'On time'; statusColor = colors.success }
+                  else if (delay < 60) { statusText = `${delay}m late`; statusColor = delay < 30 ? colors.warning : '#e67e22' }
+                  else { statusText = `${Math.floor(delay/60)}h ${delay%60}m late`; statusColor = colors.danger }
+                } else if (myStation.status) {
+                  statusText = myStation.status
+                  statusColor = myStation.status === 'Enroute' ? colors.warning : myStation.status === 'Departed' ? colors.textMuted : colors.success
+                }
+              }
+              const current = stationList.find(st => st.status === 'Enroute') || stationList.find(st => st.status === 'Station')
+              if (current) statusText += ` · Now: ${current.name}`
+            }
+            return (
+              <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
+                <span style={{
+                  color: s.train === '5' ? colors.secondary : colors.accent,
+                  fontSize: 14, fontWeight: 700, width: 28,
+                }}>#{s.train}</span>
+                <span style={{ color: colors.textSecondary, fontSize: 12 }}>{s.boardStation}</span>
+                <span style={{ color: statusColor, fontSize: 12, fontWeight: 500 }}>{statusText}</span>
+              </div>
+            )
+          })}
+          <div style={{ color: colors.primaryLight, fontSize: 11, marginTop: 6 }}>Tap for full details →</div>
+        </button>
+      )}
+
       {/* Quick Actions */}
       <div style={{ marginBottom: 20 }}>
         <h3 style={{ color: colors.text, fontSize: 14, fontWeight: 600, marginBottom: 12 }}>QUICK ACTIONS</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
           {[
+            ['🚂', 'Trains', 'trains', colors.warning],
             ['◉', 'Chat', 'chat', colors.primary],
             ['◎', 'Voice', 'voice', colors.secondary],
             ['⊞', 'Scan', 'scanner', colors.accent],
-            ['➤', 'Travel', 'travel', colors.warning],
           ].map(([icon, label, target, col]) => (
             <button
               key={target}

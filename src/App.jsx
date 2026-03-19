@@ -11,9 +11,11 @@ import TravelPlanner from './screens/TravelPlanner'
 import AppBuilder from './screens/AppBuilder'
 import Settings from './screens/Settings'
 import Reminders from './screens/Reminders'
+import TrainTracker from './screens/TrainTracker'
 
 const SCREENS = {
   dashboard: { label: 'Home', icon: '⌂', component: Dashboard },
+  trains: { label: 'Trains', icon: '🚂', component: TrainTracker },
   chat: { label: 'Chat', icon: '◉', component: Chat },
   calendar: { label: 'Calendar', icon: '▦', component: Calendar },
   tasks: { label: 'Tasks', icon: '✓', component: Tasks },
@@ -27,7 +29,7 @@ const SCREENS = {
   settings: { label: 'Settings', icon: '⚙', component: Settings },
 }
 
-const NAV_ITEMS = ['dashboard', 'chat', 'calendar', 'tasks', 'settings']
+const NAV_ITEMS = ['dashboard', 'trains', 'chat', 'tasks', 'settings']
 const MENU_ITEMS = ['meals', 'scanner', 'channels', 'voice', 'travel', 'builder', 'reminders']
 
 const colors = {
