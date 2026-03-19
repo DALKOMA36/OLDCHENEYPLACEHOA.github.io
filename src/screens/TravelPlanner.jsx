@@ -64,26 +64,49 @@ export default function TravelPlanner({ user, addMemory }) {
 
   const INTERESTS = ['Beach', 'Hiking', 'Food', 'Culture', 'Nightlife', 'Shopping', 'Adventure', 'Relaxation']
 
-  const generateTrip = () => {
+  const generateTrip = async () => {
     setGenerating(true)
-    setTimeout(() => {
-      const styles = Object.keys(SAMPLE_ITINERARIES)
-      const style = styles[Math.floor(Math.random() * styles.length)]
-      const sample = SAMPLE_ITINERARIES[style]
+    try {
+      const itinerary = await db.ai.travel({
+        destination: tripForm.destination,
+        startDate: tripForm.startDate,
+        endDate: tripForm.endDate,
+        travelers: tripForm.travelers,
+        style: tripForm.style,
+        interests: tripForm.interests,
+        budget: tripForm.budget,
+      })
+
+      if (itinerary.error) throw new Error(itinerary.error)
+
       const trip = {
         id: Date.now(),
         ...tripForm,
-        destination: tripForm.destination || sample.destination,
-        itinerary: sample,
+        destination: itinerary.destination || tripForm.destination,
+        itinerary,
         createdAt: new Date().toISOString(),
         status: 'planned',
       }
       save([trip, ...trips])
+      db.trips.create(trip).catch(() => {})
       setActiveTrip(trip)
-      setGenerating(false)
       setPlanning(false)
-      addMemory(`Planned trip to ${trip.destination}`)
-    }, 2000)
+      addMemory(`AI planned trip to ${trip.destination}`)
+    } catch {
+      // Fallback to sample
+      const styles = Object.keys(SAMPLE_ITINERARIES)
+      const style = styles[Math.floor(Math.random() * styles.length)]
+      const sample = SAMPLE_ITINERARIES[style]
+      const trip = {
+        id: Date.now(), ...tripForm,
+        destination: tripForm.destination || sample.destination,
+        itinerary: sample, createdAt: new Date().toISOString(), status: 'planned',
+      }
+      save([trip, ...trips])
+      setActiveTrip(trip)
+      setPlanning(false)
+    }
+    setGenerating(false)
   }
 
   const toggleInterest = (interest) => {

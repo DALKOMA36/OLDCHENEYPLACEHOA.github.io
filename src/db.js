@@ -193,6 +193,12 @@ export const db = {
       apiFetch('/ai', { method: 'POST', body: { message, conversationHistory, context } }),
     scan: (text, source) =>
       apiFetch('/scan', { method: 'POST', body: { text, source } }),
+    mealPlan: (diet, days, preferences) =>
+      apiFetch('/ai-meal', { method: 'POST', body: { diet, days, preferences } }),
+    travel: (tripData) =>
+      apiFetch('/ai-travel', { method: 'POST', body: tripData }),
+    appBuilder: (description) =>
+      apiFetch('/ai-app', { method: 'POST', body: { description } }),
   },
 
   // ---- Sync (migrate localStorage -> D1) ----

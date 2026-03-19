@@ -267,16 +267,28 @@ export default function AppBuilder({ user, addMemory }) {
             placeholder="Describe your app..."
             style={{ ...inputStyle, marginBottom: 0, flex: 1 }}
           />
-          <button onClick={() => {
+          <button onClick={async () => {
             if (customPrompt.trim()) {
-              setSelectedTemplate({ name: customPrompt.trim().slice(0, 30), icon: '⬡', desc: customPrompt, fields: [
-                { label: 'Name', type: 'text' },
-                { label: 'Details', type: 'text' },
-                { label: 'Date', type: 'date' },
-                { label: 'Status', type: 'select', options: ['Active', 'Done', 'Archived'] },
-              ]})
+              try {
+                const result = await db.ai.appBuilder(customPrompt.trim())
+                if (result.name && result.fields && !result.error) {
+                  setSelectedTemplate({ ...result, desc: customPrompt })
+                  setAppName(result.name)
+                } else {
+                  setSelectedTemplate({ name: customPrompt.trim().slice(0, 30), icon: '⬡', desc: customPrompt, fields: [
+                    { label: 'Name', type: 'text' }, { label: 'Details', type: 'text' },
+                    { label: 'Date', type: 'date' }, { label: 'Status', type: 'select', options: ['Active', 'Done', 'Archived'] },
+                  ]})
+                  setAppName(customPrompt.trim().slice(0, 30))
+                }
+              } catch {
+                setSelectedTemplate({ name: customPrompt.trim().slice(0, 30), icon: '⬡', desc: customPrompt, fields: [
+                  { label: 'Name', type: 'text' }, { label: 'Details', type: 'text' },
+                  { label: 'Date', type: 'date' }, { label: 'Status', type: 'select', options: ['Active', 'Done', 'Archived'] },
+                ]})
+                setAppName(customPrompt.trim().slice(0, 30))
+              }
               setBuilding(true)
-              setAppName(customPrompt.trim().slice(0, 30))
               setCustomPrompt('')
             }
           }} style={{

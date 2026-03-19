@@ -74,16 +74,38 @@ export default function MealPlanner({ user, addMemory }) {
     setShowPicker(null)
   }
 
-  const generateWeek = () => {
-    const plan = {}
-    DAYS.forEach(day => {
-      ['breakfast', 'lunch', 'dinner'].forEach(type => {
-        const meals = MEAL_DB[type]
-        plan[`${day}_${type}`] = meals[Math.floor(Math.random() * meals.length)]
+  const [generating, setGenerating] = useState(false)
+
+  const generateWeek = async () => {
+    setGenerating(true)
+    try {
+      const result = await db.ai.mealPlan(diet, 'Mon through Sun', '')
+      if (result.meals && !result.error) {
+        savePlan(result.meals)
+        addMemory('AI generated weekly meal plan')
+      } else {
+        // Fallback to random from MEAL_DB
+        const plan = {}
+        DAYS.forEach(day => {
+          ['breakfast', 'lunch', 'dinner'].forEach(type => {
+            const meals = MEAL_DB[type]
+            plan[`${day}_${type}`] = meals[Math.floor(Math.random() * meals.length)]
+          })
+        })
+        savePlan(plan)
+      }
+    } catch {
+      // Fallback
+      const plan = {}
+      DAYS.forEach(day => {
+        ['breakfast', 'lunch', 'dinner'].forEach(type => {
+          const meals = MEAL_DB[type]
+          plan[`${day}_${type}`] = meals[Math.floor(Math.random() * meals.length)]
+        })
       })
-    })
-    savePlan(plan)
-    addMemory('Generated weekly meal plan')
+      savePlan(plan)
+    }
+    setGenerating(false)
   }
 
   const generateGroceryList = () => {
@@ -139,13 +161,18 @@ export default function MealPlanner({ user, addMemory }) {
       {view === 'plan' && (
         <>
           {/* AI Generate */}
-          <button onClick={generateWeek} style={{
-            width: '100%', padding: 14, background: colors.gradient1, color: '#fff',
-            border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 600,
-            cursor: 'pointer', marginBottom: 16, fontFamily: 'inherit',
+          <button onClick={generateWeek} disabled={generating} style={{
+            width: '100%', padding: 12,
+            background: generating ? 'transparent' : colors.primaryDim,
+            color: colors.primary,
+            border: `1px solid ${colors.primary}`,
+            fontSize: 11, fontWeight: 600,
+            cursor: generating ? 'wait' : 'pointer', marginBottom: 16,
+            fontFamily: "'JetBrains Mono', monospace",
+            letterSpacing: 2,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}>
-            <span>◉</span> Generate Weekly Plan with AI
+            {generating ? 'AI GENERATING...' : 'GENERATE MEAL PLAN'}
           </button>
 
           {/* Day selector */}
