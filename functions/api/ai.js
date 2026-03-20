@@ -67,6 +67,18 @@ const TOOLS = [
       required: ['taskTitle'],
     },
   },
+  {
+    name: 'send_sms',
+    description: 'Send a text message (SMS) to a phone number',
+    input_schema: {
+      type: 'object',
+      properties: {
+        to: { type: 'string', description: 'Phone number to text' },
+        message: { type: 'string', description: 'Message to send (160 char max)' },
+      },
+      required: ['to', 'message'],
+    },
+  },
 ]
 
 // Execute a tool action against D1
@@ -103,6 +115,31 @@ async function executeTool(toolName, input, userId, env) {
       if (!task) return { success: false, message: `No pending task matching "${input.taskTitle}" found` }
       await env.DB.prepare('UPDATE tasks SET completed = 1 WHERE id = ?').bind(task.id).run()
       return { success: true, message: `Task "${task.title}" marked as complete` }
+    }
+    case 'send_sms': {
+      const telnyxKey = env.TELNYX_API_KEY
+      const fromNum = env.TELNYX_PHONE_NUMBER
+      if (!telnyxKey || !fromNum) return { success: false, message: 'SMS not configured' }
+
+      let phone = input.to.replace(/\D/g, '')
+      if (phone.length === 10) phone = '1' + phone
+      if (!phone.startsWith('+')) phone = '+' + phone
+
+      const sendRes = await fetch('https://api.telnyx.com/v2/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${telnyxKey}` },
+        body: JSON.stringify({ from: fromNum, to: phone, text: input.message.slice(0, 160) }),
+      })
+
+      if (!sendRes.ok) {
+        const err = await sendRes.json().catch(() => ({}))
+        return { success: false, message: err.errors?.[0]?.detail || 'SMS send failed' }
+      }
+
+      await env.DB.prepare('INSERT INTO sent_messages (user_id, recipient, message, channel, sent_at) VALUES (?, ?, ?, ?, ?)')
+        .bind(userId, input.to, input.message, 'sms', new Date().toISOString()).run()
+
+      return { success: true, message: `SMS sent to ${input.to}` }
     }
     default:
       return { success: false, message: `Unknown tool: ${toolName}` }

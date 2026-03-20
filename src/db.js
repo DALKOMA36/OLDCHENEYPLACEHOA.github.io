@@ -199,6 +199,8 @@ export const db = {
       apiFetch('/ai-travel', { method: 'POST', body: tripData }),
     appBuilder: (description) =>
       apiFetch('/ai-app', { method: 'POST', body: { description } }),
+    email: (action, emailData) =>
+      apiFetch('/ai-email', { method: 'POST', body: { action, ...emailData } }),
   },
 
   // ---- Calendar Sync ----
