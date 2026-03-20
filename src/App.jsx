@@ -12,6 +12,7 @@ import AppBuilder from './screens/AppBuilder'
 import Settings from './screens/Settings'
 import Reminders from './screens/Reminders'
 import TrainTracker from './screens/TrainTracker'
+import Reader from './screens/Reader'
 import { db, auth } from './db'
 import { colors, loadState, saveState } from './constants'
 
@@ -25,6 +26,7 @@ const SCREENS = {
   scanner: { label: 'Scan', icon: 'SC', component: Scanner },
   channels: { label: 'Channels', icon: 'CH', component: Channels },
   voice: { label: 'Voice', icon: 'VC', component: Voice },
+  reader: { label: 'Reader', icon: 'RD', component: Reader },
   travel: { label: 'Travel', icon: 'TV', component: TravelPlanner },
   builder: { label: 'Builder', icon: 'BD', component: AppBuilder },
   reminders: { label: 'Remind', icon: 'RM', component: Reminders },
@@ -32,7 +34,7 @@ const SCREENS = {
 }
 
 const NAV_ITEMS = ['dashboard', 'trains', 'chat', 'tasks', 'settings']
-const MENU_ITEMS = ['meals', 'scanner', 'channels', 'voice', 'travel', 'builder', 'reminders']
+const MENU_ITEMS = ['meals', 'scanner', 'channels', 'voice', 'reader', 'travel', 'builder', 'reminders']
 
 export { colors, loadState, saveState }
 
