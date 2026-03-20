@@ -9,16 +9,7 @@ const greetings = (name) => {
   return `Good evening, ${name || 'sir'}.`
 }
 
-const tips = [
-  "Try asking me to plan your week",
-  "I can scan a school flyer and add events",
-  "Set up your circle to delegate tasks",
-  "Connect your calendar in Settings",
-  "I can plan meals based on your diet",
-  "Try the Voice feature for hands-free control",
-  "Build a custom app with the App Builder",
-  "I can help plan your next trip",
-]
+// No more static tips — AI generates a real briefing
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -27,7 +18,8 @@ export default function Dashboard({ user, navigate, addMemory }) {
   const [events, setEvents] = useState(() => loadState('events', []))
   const [tasks, setTasks] = useState(() => loadState('tasks', []))
   const [reminders, setReminders] = useState(() => loadState('reminders', []))
-  const [tip] = useState(() => tips[Math.floor(Math.random() * tips.length)])
+  const [aiBriefing, setAiBriefing] = useState(null)
+  const [loadingBriefing, setLoadingBriefing] = useState(false)
   const [trainData, setTrainData] = useState(null)
   const [trainSchedule, setTrainSchedule] = useState(() => loadState('trainSchedule', []))
 
@@ -77,6 +69,34 @@ export default function Dashboard({ user, navigate, addMemory }) {
       pendingTasks: pendingTasks.slice(0, 3),
     })
   }, [events, tasks, reminders])
+
+  // AI briefing — generate once per session
+  useEffect(() => {
+    if (!briefing || aiBriefing || loadingBriefing) return
+    const lastBriefing = loadState('lastBriefingDate', '')
+    const today = new Date().toISOString().split('T')[0]
+    // Only auto-generate once per day
+    if (lastBriefing === today) {
+      setAiBriefing(loadState('lastBriefingText', null))
+      return
+    }
+    if (briefing.events === 0 && briefing.tasks === 0 && briefing.reminders === 0) return
+    setLoadingBriefing(true)
+    db.ai.chat(
+      'Give me a brief morning briefing. Summarize my day — events, tasks, and reminders. Keep it to 2-3 sentences, like JARVIS would.',
+      [],
+      {
+        userName: user.name,
+        todayEvents: briefing.todayEvents,
+        pendingTasks: tasks.filter(t => !t.completed),
+        upcomingReminders: reminders.filter(r => !r.dismissed),
+      }
+    ).then(result => {
+      setAiBriefing(result.response)
+      saveState('lastBriefingDate', today)
+      saveState('lastBriefingText', result.response)
+    }).catch(() => {}).finally(() => setLoadingBriefing(false))
+  }, [briefing])
 
   if (!briefing) return null
 
@@ -364,36 +384,41 @@ export default function Dashboard({ user, navigate, addMemory }) {
         </div>
       </div>
 
-      {/* System Tip */}
-      <div style={{
-        padding: 14,
-        background: colors.primaryDim,
-        border: `1px solid ${colors.border}`,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-          <div style={{
-            width: 4, height: 4, borderRadius: '50%',
-            background: colors.primary,
-            boxShadow: `0 0 4px ${colors.primary}`,
-          }} />
-          <span style={{
-            color: colors.primary, fontSize: 9,
-            fontFamily: "'JetBrains Mono', monospace",
-            fontWeight: 600, letterSpacing: 2,
-          }}>SYSTEM NOTE</span>
+      {/* AI Briefing */}
+      {(aiBriefing || loadingBriefing) && (
+        <div style={{
+          padding: 14,
+          background: colors.primaryDim,
+          border: `1px solid ${colors.border}`,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <div style={{
+              width: 6, height: 6, borderRadius: '50%',
+              background: colors.primary,
+              boxShadow: `0 0 6px ${colors.primary}`,
+              animation: loadingBriefing ? 'pulse 1s ease-in-out infinite' : 'none',
+            }} />
+            <span style={{
+              color: colors.primary, fontSize: 9,
+              fontFamily: "'JetBrains Mono', monospace",
+              fontWeight: 600, letterSpacing: 2,
+            }}>JARVIS BRIEFING</span>
+          </div>
+          <p style={{
+            color: colors.textSecondary, fontSize: 12,
+            fontFamily: "'Exo 2', sans-serif", lineHeight: 1.6,
+          }}>{loadingBriefing ? 'Compiling briefing...' : aiBriefing}</p>
         </div>
-        <p style={{
-          color: colors.textSecondary, fontSize: 12,
-          fontFamily: "'Exo 2', sans-serif",
-        }}>{tip}</p>
-      </div>
+      )}
+
+      <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }`}</style>
     </div>
   )
 }
 
 const cardStyle = {
   padding: 14,
-  background: 'rgba(15, 25, 45, 0.6)',
+  background: colors.surfaceLight,
   border: `1px solid ${colors.border}`,
   marginBottom: 6,
 }
