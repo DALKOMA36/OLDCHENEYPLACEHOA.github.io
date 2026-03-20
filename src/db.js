@@ -201,6 +201,11 @@ export const db = {
       apiFetch('/ai-app', { method: 'POST', body: { description } }),
   },
 
+  // ---- Calendar Sync ----
+  ics: {
+    import: (url) => apiFetch('/ics', { method: 'POST', body: { url } }),
+  },
+
   // ---- Email ----
   email: {
     accounts: () => apiFetch('/email?action=accounts'),

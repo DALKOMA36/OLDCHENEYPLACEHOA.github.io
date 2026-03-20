@@ -191,6 +191,9 @@ export default function Settings({ user, updateUser, addMemory }) {
       </Section>
 
       {/* Morning Briefing */}
+      {/* Calendar Sync */}
+      <CalendarSync />
+
       <Section title="BRIEFING SCHEDULE">
         <div style={{ padding: '10px 14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
@@ -442,6 +445,56 @@ export default function Settings({ user, updateUser, addMemory }) {
         }} />
       </div>
     </div>
+  )
+}
+
+function CalendarSync() {
+  const [icsUrl, setIcsUrl] = useState(loadState('icsUrl', ''))
+  const [syncing, setSyncing] = useState(false)
+  const [syncResult, setSyncResult] = useState('')
+
+  const syncCalendar = async () => {
+    if (!icsUrl.trim()) return
+    setSyncing(true)
+    setSyncResult('')
+    try {
+      const result = await db.ics.import(icsUrl.trim())
+      if (result.success) {
+        saveState('icsUrl', icsUrl.trim())
+        setSyncResult(`Imported ${result.imported} new events (${result.total} total in feed)`)
+      } else {
+        setSyncResult(result.error || 'Sync failed')
+      }
+    } catch (err) {
+      setSyncResult(err.message)
+    }
+    setSyncing(false)
+  }
+
+  return (
+    <Section title="CALENDAR SYNC">
+      <div style={{ padding: '10px 14px' }}>
+        <div style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8, lineHeight: 1.6 }}>
+          Paste an ICS calendar URL from Outlook, Google, or Apple to import events.
+          Find it in your calendar's sharing/publish settings.
+        </div>
+        <input
+          value={icsUrl}
+          onChange={e => setIcsUrl(e.target.value)}
+          placeholder="https://outlook.office365.com/owa/calendar/..."
+          style={{ ...inputStyle, width: '100%', marginBottom: 6 }}
+        />
+        <button onClick={syncCalendar} disabled={!icsUrl.trim() || syncing} style={{
+          width: '100%', padding: 8,
+          background: icsUrl.trim() && !syncing ? colors.primaryDim : 'transparent',
+          border: `1px solid ${icsUrl.trim() && !syncing ? colors.primary : colors.border}`,
+          color: icsUrl.trim() && !syncing ? colors.primary : colors.textMuted,
+          fontSize: 10, cursor: icsUrl.trim() && !syncing ? 'pointer' : 'default',
+          fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+        }}>{syncing ? 'SYNCING...' : 'SYNC CALENDAR'}</button>
+        {syncResult && <div style={{ color: syncResult.includes('Imported') ? colors.success : colors.danger, fontSize: 9, marginTop: 6, fontFamily: "'JetBrains Mono', monospace" }}>{syncResult}</div>}
+      </div>
+    </Section>
   )
 }
 

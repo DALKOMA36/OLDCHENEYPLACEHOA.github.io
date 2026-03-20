@@ -1,5 +1,5 @@
-const CACHE_NAME = 'jarvis-v3'
-const STATIC_ASSETS = ['./', './index.html']
+const CACHE_NAME = 'jarvis-v4'
+const STATIC_ASSETS = ['./', './index.html', './manifest.json', './icon-192.svg']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -20,10 +20,10 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url)
 
-  // Never cache API calls
-  if (url.pathname.startsWith('/api/')) return
+  // Never cache API/webhook calls
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/webhook/')) return
 
-  // Network-first for Amtraker API
+  // Network-first for external APIs
   if (event.request.url.includes('api-v3.amtraker.com')) {
     event.respondWith(
       fetch(event.request)
@@ -37,7 +37,21 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Network-first for HTML
+  // Cache Google Fonts
+  if (event.request.url.includes('fonts.googleapis.com') || event.request.url.includes('fonts.gstatic.com')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        return cached || fetch(event.request).then((response) => {
+          const clone = response.clone()
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
+          return response
+        })
+      })
+    )
+    return
+  }
+
+  // Network-first for HTML (so deploys take effect)
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -46,12 +60,12 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
           return response
         })
-        .catch(() => caches.match(event.request))
+        .catch(() => caches.match(event.request) || caches.match('./index.html'))
     )
     return
   }
 
-  // Cache-first for static assets
+  // Cache-first for JS/CSS/images
   event.respondWith(
     caches.match(event.request).then((cached) => {
       return cached || fetch(event.request).then((response) => {
@@ -60,24 +74,21 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
         }
         return response
+      }).catch(() => {
+        // Offline fallback for assets
+        return new Response('', { status: 503 })
       })
     })
   )
 })
 
-// Push notification handler
+// Push notifications
 self.addEventListener('push', (event) => {
-  let data = { title: 'JARVIS', body: 'New notification', icon: './icon-192.svg' }
-
+  let data = { title: 'J.A.R.V.I.S.', body: 'New notification', icon: './icon-192.svg' }
   try {
-    if (event.data) {
-      const payload = event.data.json()
-      data = { ...data, ...payload }
-    }
+    if (event.data) data = { ...data, ...event.data.json() }
   } catch {
-    if (event.data) {
-      data.body = event.data.text()
-    }
+    if (event.data) data.body = event.data.text()
   }
 
   event.waitUntil(
@@ -88,26 +99,18 @@ self.addEventListener('push', (event) => {
       tag: data.tag || 'jarvis-notification',
       data: data.url ? { url: data.url } : undefined,
       vibrate: [100, 50, 100],
-      actions: data.actions || [],
     })
   )
 })
 
-// Notification click handler
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-
   const url = event.notification.data?.url || '/'
-
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // Focus existing window if open
       for (const client of windowClients) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
-          return client.focus()
-        }
+        if (client.url.includes(self.location.origin) && 'focus' in client) return client.focus()
       }
-      // Otherwise open new window
       return clients.openWindow(url)
     })
   )
