@@ -120,6 +120,9 @@ export default function Settings({ user, updateUser, addMemory }) {
         </div>
       </Section>
 
+      {/* Email Accounts */}
+      <EmailAccounts />
+
       {/* Display Mode */}
       <Section title="DISPLAY MODE">
         <div style={{ padding: '10px 14px', display: 'flex', gap: 6 }}>
@@ -439,6 +442,120 @@ export default function Settings({ user, updateUser, addMemory }) {
         }} />
       </div>
     </div>
+  )
+}
+
+function EmailAccounts() {
+  const [accounts, setAccounts] = useState([])
+  const [showAdd, setShowAdd] = useState(false)
+  const [newAccount, setNewAccount] = useState({ email: '', password: '', display_name: '', imap_host: '', imap_port: '' })
+  const [adding, setAdding] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    db.email.accounts().then(setAccounts).catch(() => {})
+  }, [])
+
+  const addAccount = async () => {
+    if (!newAccount.email || !newAccount.password) { setError('Email and password required'); return }
+    setAdding(true)
+    setError('')
+    try {
+      const result = await db.email.addAccount(newAccount)
+      if (result.success) {
+        const updated = await db.email.accounts()
+        setAccounts(updated)
+        setNewAccount({ email: '', password: '', display_name: '', imap_host: '', imap_port: '' })
+        setShowAdd(false)
+        if (result.note) setError(result.note)
+      } else {
+        setError(result.error || 'Failed to add')
+      }
+    } catch (err) {
+      setError(err.message)
+    }
+    setAdding(false)
+  }
+
+  const removeAccount = async (id) => {
+    if (!confirm('Remove this email account?')) return
+    await db.email.deleteAccount(id).catch(() => {})
+    setAccounts(prev => prev.filter(a => a.id !== id))
+  }
+
+  return (
+    <Section title="EMAIL ACCOUNTS">
+      <div style={{ padding: '10px 14px' }}>
+        {accounts.length === 0 && !showAdd && (
+          <div style={{ color: colors.textMuted, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8 }}>
+            No email accounts connected. Add one to let JARVIS read your inbox.
+          </div>
+        )}
+        {accounts.map(acc => (
+          <div key={acc.id} style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0',
+            borderBottom: `1px solid ${colors.border}`,
+          }}>
+            <div style={{
+              width: 30, height: 30, border: `1px solid ${colors.primary}40`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: colors.primary, fontSize: 10, fontFamily: "'JetBrains Mono', monospace",
+            }}>@</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif" }}>{acc.display_name || acc.email}</div>
+              <div style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace" }}>
+                {acc.imap_host} {acc.last_sync ? `// synced ${new Date(acc.last_sync).toLocaleDateString()}` : '// not synced yet'}
+              </div>
+            </div>
+            <button onClick={() => removeAccount(acc.id)} style={{
+              background: 'none', border: `1px solid ${colors.border}`,
+              color: colors.textMuted, fontSize: 11, cursor: 'pointer',
+              padding: '2px 6px', fontFamily: "'JetBrains Mono', monospace",
+            }}>X</button>
+          </div>
+        ))}
+
+        {showAdd ? (
+          <div style={{ marginTop: 8 }}>
+            <input value={newAccount.email} onChange={e => setNewAccount(prev => ({ ...prev, email: e.target.value }))}
+              placeholder="Email address" type="email"
+              style={{ ...inputStyle, width: '100%', marginBottom: 6 }} />
+            <input value={newAccount.password} onChange={e => setNewAccount(prev => ({ ...prev, password: e.target.value }))}
+              placeholder="Password or app password" type="password"
+              style={{ ...inputStyle, width: '100%', marginBottom: 6 }} />
+            <input value={newAccount.display_name} onChange={e => setNewAccount(prev => ({ ...prev, display_name: e.target.value }))}
+              placeholder="Display name (optional)"
+              style={{ ...inputStyle, width: '100%', marginBottom: 6 }} />
+            <input value={newAccount.imap_host} onChange={e => setNewAccount(prev => ({ ...prev, imap_host: e.target.value }))}
+              placeholder="IMAP server (auto-detected)"
+              style={{ ...inputStyle, width: '100%', marginBottom: 8 }} />
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={addAccount} disabled={adding} style={{
+                flex: 1, padding: 8, background: colors.primaryDim, border: `1px solid ${colors.primary}`,
+                color: colors.primary, fontSize: 10, cursor: 'pointer',
+                fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+              }}>{adding ? 'CONNECTING...' : 'CONNECT'}</button>
+              <button onClick={() => { setShowAdd(false); setError('') }} style={{
+                padding: '8px 14px', background: 'transparent', border: `1px solid ${colors.border}`,
+                color: colors.textMuted, fontSize: 10, cursor: 'pointer',
+                fontFamily: "'JetBrains Mono', monospace",
+              }}>CANCEL</button>
+            </div>
+            {error && <div style={{ color: error.includes('Requires') ? colors.warning : colors.danger, fontSize: 9, marginTop: 6, fontFamily: "'JetBrains Mono', monospace" }}>{error}</div>}
+            <div style={{ color: colors.textMuted, fontSize: 8, marginTop: 6, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.6 }}>
+              IMAP auto-detected for Outlook, Gmail, Yahoo, iCloud, ProtonMail. Use app-specific passwords for accounts with 2FA.
+            </div>
+          </div>
+        ) : (
+          <button onClick={() => setShowAdd(true)} style={{
+            width: '100%', padding: 8, marginTop: 8,
+            background: 'transparent', border: `1px solid ${colors.border}`,
+            color: colors.textSecondary, fontSize: 10, cursor: 'pointer',
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+          }}>+ ADD EMAIL ACCOUNT</button>
+        )}
+      </div>
+    </Section>
   )
 }
 

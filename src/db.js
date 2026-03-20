@@ -201,6 +201,16 @@ export const db = {
       apiFetch('/ai-app', { method: 'POST', body: { description } }),
   },
 
+  // ---- Email ----
+  email: {
+    accounts: () => apiFetch('/email?action=accounts'),
+    emails: (accountId, limit) => apiFetch(`/email?action=emails${accountId ? `&account_id=${accountId}` : ''}${limit ? `&limit=${limit}` : ''}`),
+    addAccount: (data) => apiFetch('/email', { method: 'POST', body: data }),
+    updateAccount: (data) => apiFetch('/email', { method: 'PUT', body: data }),
+    deleteAccount: (id) => apiFetch(`/email?id=${id}`, { method: 'DELETE' }),
+    markRead: (emailId, read) => apiFetch('/email', { method: 'PUT', body: { email_id: emailId, read } }),
+  },
+
   // ---- SMS ----
   sms: {
     send: (to, message) =>
