@@ -244,6 +244,28 @@ export default function Reader({ user }) {
   const scrollTextRef = useRef(null)
   const chunkRefs = useRef([])
 
+  // Bionic reading
+  const [bionicMode, setBionicMode] = useState(false)
+
+  // Font size
+  const [fontSize, setFontSize] = useState(14) // S=12, M=14, L=18
+  const FONT_SIZES = [12, 14, 18]
+  const FONT_LABELS = ['S', 'M', 'L']
+
+  // Highlights & notes
+  const [highlights, setHighlights] = useState({}) // { chunkIndex: { color, note } }
+  const [editingNote, setEditingNote] = useState(null) // chunk index being noted
+  const [noteText, setNoteText] = useState('')
+
+  // AI content chat
+  const [showChat, setShowChat] = useState(false)
+  const [chatMessages, setChatMessages] = useState([])
+  const [chatInput, setChatInput] = useState('')
+  const [chatLoading, setChatLoading] = useState(false)
+
+  // Drag and drop
+  const [dragOver, setDragOver] = useState(false)
+
   // View: 'input' or 'player'
   const [view, setView] = useState('input')
 
@@ -412,10 +434,11 @@ export default function Reader({ user }) {
         summarize: `Provide a clear, comprehensive summary of this text in 3-5 paragraphs. Capture all key points:\n\n${text}`,
         keypoints: `Extract the key points from this text as a numbered list. Be thorough:\n\n${text}`,
         simplify: `Rewrite this text at a 6th grade reading level. Keep all important information but use simpler words and shorter sentences:\n\n${text}`,
+        translate: `Translate this text to English. Preserve paragraph structure and meaning. Return ONLY the translated text:\n\n${text}`,
       }
       const result = await db.ai.chat(prompts[action], [], { userName: user.name })
       if (result.response) {
-        if (action === 'clean') {
+        if (action === 'clean' || action === 'translate') {
           setText(result.response)
         } else {
           setAiResult({ type: action, content: result.response })
@@ -461,6 +484,121 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
     }
     setAiLoading('')
   }
+
+  // ---- Highlights & notes ----
+
+  const toggleHighlight = (chunkIndex) => {
+    setHighlights(prev => {
+      const copy = { ...prev }
+      if (copy[chunkIndex]) {
+        delete copy[chunkIndex]
+      } else {
+        copy[chunkIndex] = { color: 'yellow', note: '' }
+      }
+      return copy
+    })
+  }
+
+  const startNote = (chunkIndex) => {
+    setEditingNote(chunkIndex)
+    setNoteText(highlights[chunkIndex]?.note || '')
+  }
+
+  const saveNote = () => {
+    if (editingNote !== null) {
+      setHighlights(prev => ({
+        ...prev,
+        [editingNote]: { ...prev[editingNote], color: 'yellow', note: noteText }
+      }))
+      setEditingNote(null)
+      setNoteText('')
+    }
+  }
+
+  // Persist highlights in library
+  const saveToLibraryWithHighlights = () => {
+    if (!text.trim()) return
+    const lib = loadLibrary()
+    const entry = {
+      id: currentReadingId || Date.now().toString(),
+      title: title || 'Untitled',
+      text,
+      position: currentIndexRef.current,
+      totalChunks: chunksRef.current.length || splitIntoChunks(text).length,
+      wordCount: text.split(/\s+/).length,
+      savedAt: new Date().toISOString(),
+      highlights: Object.keys(highlights).length > 0 ? highlights : undefined,
+    }
+    const idx = lib.findIndex(e => e.id === entry.id)
+    if (idx >= 0) lib[idx] = entry
+    else lib.unshift(entry)
+    saveLibrary(lib)
+    setLibrary(lib)
+    setCurrentReadingId(entry.id)
+  }
+
+  // ---- AI content chat ----
+
+  const sendChatMessage = async () => {
+    if (!chatInput.trim() || chatLoading) return
+    const userMsg = chatInput.trim()
+    setChatInput('')
+    setChatMessages(prev => [...prev, { role: 'user', content: userMsg }])
+    setChatLoading(true)
+
+    try {
+      const contextPrompt = `The user has been reading the following text. Answer their question about it.\n\n---TEXT---\n${text.slice(0, 3000)}\n---END TEXT---\n\nUser question: ${userMsg}`
+      const result = await db.ai.chat(contextPrompt, chatMessages.slice(-6), { userName: user.name })
+      if (result.response) {
+        setChatMessages(prev => [...prev, { role: 'assistant', content: result.response }])
+      }
+    } catch (err) {
+      setChatMessages(prev => [...prev, { role: 'assistant', content: `Error: ${err.message}` }])
+    }
+    setChatLoading(false)
+  }
+
+  // ---- Bionic text rendering ----
+
+  const bionicWord = (word) => {
+    if (!word) return word
+    const len = word.length
+    let boldLen = 1
+    if (len >= 8) boldLen = 4
+    else if (len >= 6) boldLen = 3
+    else if (len >= 3) boldLen = 2
+    else boldLen = 1
+    return { bold: word.slice(0, boldLen), rest: word.slice(boldLen) }
+  }
+
+  // ---- Drag and drop ----
+
+  const handleDrop = async (e) => {
+    e.preventDefault()
+    setDragOver(false)
+    const files = Array.from(e.dataTransfer.files)
+    if (files.length === 0) return
+
+    const file = files[0]
+    setLoading(true)
+    setError('')
+    try {
+      const extracted = await parseFile(file)
+      setText(extracted)
+      setTitle(file.name.replace(/\.[^.]+$/, ''))
+      setMode('file')
+    } catch (err) {
+      setError(err.message)
+    }
+    setLoading(false)
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    setDragOver(true)
+  }
+
+  const handleDragLeave = () => setDragOver(false)
 
   // ---- Download audio ----
 
@@ -875,31 +1013,14 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
 
   // ---- Library ----
 
-  const saveToLibrary = () => {
-    if (!text.trim()) return
-    const lib = loadLibrary()
-    const entry = {
-      id: currentReadingId || Date.now().toString(),
-      title: title || 'Untitled',
-      text,
-      position: currentIndexRef.current,
-      totalChunks: chunksRef.current.length || splitIntoChunks(text).length,
-      wordCount: text.split(/\s+/).length,
-      savedAt: new Date().toISOString(),
-    }
-    const idx = lib.findIndex(e => e.id === entry.id)
-    if (idx >= 0) lib[idx] = entry
-    else lib.unshift(entry)
-    saveLibrary(lib)
-    setLibrary(lib)
-    setCurrentReadingId(entry.id)
-  }
+  const saveToLibrary = () => saveToLibraryWithHighlights()
 
   const loadFromLibrary = (entry) => {
     setText(entry.text)
     setTitle(entry.title)
     setCurrentReadingId(entry.id)
     currentIndexRef.current = entry.position || 0
+    setHighlights(entry.highlights || {})
     setShowLibrary(false)
     setView('input')
   }
@@ -1181,26 +1302,164 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
           )}
         </div>
 
-        {/* Full text with auto-scroll and chunk highlighting */}
-        <div ref={scrollTextRef} style={{
-          maxHeight: 200, overflow: 'auto', padding: 12, marginBottom: 12,
-          border: `1px solid ${colors.border}`, background: colors.surfaceLight,
-          lineHeight: 1.8, fontSize: 14, fontFamily: "'Exo 2', sans-serif",
+        {/* Text display toolbar */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          marginBottom: 6, padding: '4px 0',
         }}>
-          {allChunks.map((chunk, ci) => (
-            <span
-              key={ci}
-              ref={el => chunkRefs.current[ci] = el}
-              style={{
-                color: ci === currentChunk && playing ? colors.primary : ci < currentChunk && playing ? colors.textMuted : colors.text,
-                background: ci === currentChunk && playing ? colors.primaryDim : 'transparent',
-                padding: ci === currentChunk && playing ? '2px 0' : '0',
-                transition: 'all 0.2s ease',
-                fontWeight: ci === currentChunk && playing ? 600 : 400,
-              }}
-            >{chunk}{' '}</span>
-          ))}
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button onClick={() => setBionicMode(!bionicMode)} style={{
+              ...tinyBtn,
+              color: bionicMode ? colors.primary : colors.textMuted,
+              borderColor: bionicMode ? colors.primary : colors.border,
+            }}>BIONIC</button>
+            <div style={{ display: 'flex', gap: 0, border: `1px solid ${colors.border}` }}>
+              {FONT_SIZES.map((fs, i) => (
+                <button key={fs} onClick={() => setFontSize(fs)} style={{
+                  padding: '2px 8px', background: fontSize === fs ? colors.primaryDim : 'transparent',
+                  border: 'none', color: fontSize === fs ? colors.primary : colors.textMuted,
+                  fontSize: 8, cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace",
+                }}>{FONT_LABELS[i]}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {Object.keys(highlights).length > 0 && (
+              <span style={{ color: colors.secondary, fontSize: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+                {Object.keys(highlights).length} HIGHLIGHTS
+              </span>
+            )}
+            <button onClick={() => setShowChat(!showChat)} style={{
+              ...tinyBtn,
+              color: showChat ? colors.primary : colors.textMuted,
+              borderColor: showChat ? colors.primary : colors.border,
+            }}>ASK AI</button>
+          </div>
         </div>
+
+        {/* Full text with auto-scroll, bionic, and highlights */}
+        <div ref={scrollTextRef} style={{
+          maxHeight: 220, overflow: 'auto', padding: 12, marginBottom: 12,
+          border: `1px solid ${colors.border}`, background: colors.surfaceLight,
+          lineHeight: 1.9, fontSize, fontFamily: "'Exo 2', sans-serif",
+        }}>
+          {allChunks.map((chunk, ci) => {
+            const isActive = ci === currentChunk && playing
+            const isPast = ci < currentChunk && playing
+            const isHighlighted = !!highlights[ci]
+
+            return (
+              <span
+                key={ci}
+                ref={el => chunkRefs.current[ci] = el}
+                onClick={() => !playing && toggleHighlight(ci)}
+                onDoubleClick={() => startNote(ci)}
+                style={{
+                  color: isActive ? colors.primary : isPast ? colors.textMuted : colors.text,
+                  background: isActive ? colors.primaryDim : isHighlighted ? 'rgba(240, 165, 0, 0.15)' : 'transparent',
+                  borderBottom: isHighlighted ? `2px solid ${colors.secondary}` : 'none',
+                  padding: isActive ? '2px 0' : '0',
+                  transition: 'all 0.2s ease',
+                  fontWeight: isActive ? 600 : 400,
+                  cursor: playing ? 'default' : 'pointer',
+                }}
+              >
+                {bionicMode ? chunk.split(/\s+/).map((word, wi) => {
+                  const b = bionicWord(word)
+                  return <span key={wi}><strong style={{ fontWeight: 800 }}>{b.bold}</strong>{b.rest} </span>
+                }) : chunk}{!bionicMode && ' '}
+                {isHighlighted && highlights[ci]?.note && (
+                  <span style={{
+                    fontSize: 8, color: colors.secondary, fontFamily: "'JetBrains Mono', monospace",
+                    verticalAlign: 'super',
+                  }}> [{highlights[ci].note.slice(0, 20)}]</span>
+                )}
+              </span>
+            )
+          })}
+        </div>
+
+        {/* Note editor inline */}
+        {editingNote !== null && (
+          <div style={{
+            padding: 10, marginBottom: 10,
+            border: `1px solid ${colors.secondary}`, background: colors.surfaceLight,
+          }}>
+            <div style={{ color: colors.secondary, fontSize: 9, marginBottom: 6, fontFamily: "'JetBrains Mono', monospace" }}>
+              NOTE ON PASSAGE {editingNote + 1}
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input
+                value={noteText}
+                onChange={e => setNoteText(e.target.value)}
+                placeholder="Add a note..."
+                autoFocus
+                onKeyDown={e => e.key === 'Enter' && saveNote()}
+                style={{
+                  flex: 1, padding: '6px 10px',
+                  background: colors.surface, border: `1px solid ${colors.border}`,
+                  color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif",
+                }}
+              />
+              <button onClick={saveNote} style={{ ...tinyBtn, color: colors.success, borderColor: colors.success }}>SAVE</button>
+              <button onClick={() => setEditingNote(null)} style={tinyBtn}>X</button>
+            </div>
+          </div>
+        )}
+
+        {/* AI Content Chat */}
+        {showChat && (
+          <div style={{
+            marginBottom: 12, border: `1px solid ${colors.border}`,
+            background: colors.surfaceLight, maxHeight: 250, display: 'flex', flexDirection: 'column',
+          }}>
+            <div style={{
+              padding: '6px 10px', borderBottom: `1px solid ${colors.border}`,
+              color: colors.primary, fontSize: 9, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+            }}>ASK ABOUT THIS TEXT</div>
+            <div style={{ flex: 1, overflow: 'auto', padding: 10, maxHeight: 150 }}>
+              {chatMessages.length === 0 && (
+                <div style={{ color: colors.textMuted, fontSize: 11, fontFamily: "'Exo 2', sans-serif" }}>
+                  Ask JARVIS anything about what you're reading...
+                </div>
+              )}
+              {chatMessages.map((msg, i) => (
+                <div key={i} style={{
+                  marginBottom: 8, padding: '6px 8px',
+                  background: msg.role === 'user' ? colors.primaryDim : 'transparent',
+                  border: msg.role === 'user' ? 'none' : `1px solid ${colors.border}`,
+                  color: colors.text, fontSize: 12, lineHeight: 1.5,
+                  fontFamily: "'Exo 2', sans-serif",
+                }}>
+                  <span style={{
+                    fontSize: 8, color: msg.role === 'user' ? colors.primary : colors.secondary,
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}>{msg.role === 'user' ? 'YOU' : 'JARVIS'}</span>
+                  <div style={{ marginTop: 2, whiteSpace: 'pre-wrap' }}>{msg.content}</div>
+                </div>
+              ))}
+              {chatLoading && (
+                <div style={{ color: colors.textMuted, fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>Thinking...</div>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 6, padding: 8, borderTop: `1px solid ${colors.border}` }}>
+              <input
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                placeholder="Ask a question..."
+                onKeyDown={e => e.key === 'Enter' && sendChatMessage()}
+                style={{
+                  flex: 1, padding: '6px 10px',
+                  background: colors.surface, border: `1px solid ${colors.border}`,
+                  color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif",
+                }}
+              />
+              <button onClick={sendChatMessage} disabled={chatLoading || !chatInput.trim()} style={{
+                ...tinyBtn, color: colors.primary, borderColor: colors.primary,
+              }}>SEND</button>
+            </div>
+          </div>
+        )}
 
         {/* Playback controls */}
         <div style={{
@@ -1335,7 +1594,27 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
 
   // Input view (default)
   return (
-    <div style={{ padding: 16 }}>
+    <div
+      style={{ padding: 16, position: 'relative' }}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+    >
+      {/* Drag overlay */}
+      {dragOver && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 10,
+          background: 'rgba(0, 212, 255, 0.1)',
+          border: `3px dashed ${colors.primary}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            color: colors.primary, fontSize: 14, fontWeight: 600,
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 2,
+          }}>DROP FILE HERE</div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
         <h2 style={{
           color: colors.primary, fontSize: 11, fontWeight: 600,
@@ -1548,6 +1827,7 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
                 ['summarize', 'SUMMARIZE'],
                 ['keypoints', 'KEY POINTS'],
                 ['simplify', 'SIMPLIFY'],
+                ['translate', 'TRANSLATE'],
               ].map(([action, label]) => (
                 <button key={action} onClick={() => aiAction(action)} disabled={!!aiLoading} style={{
                   padding: '6px 12px',
@@ -1658,4 +1938,11 @@ const selectStyle = {
 const errorStyle = {
   color: colors.danger, fontSize: 10, marginTop: 8,
   fontFamily: "'JetBrains Mono', monospace",
+}
+
+const tinyBtn = {
+  padding: '3px 8px', fontSize: 8, cursor: 'pointer',
+  background: 'transparent', border: `1px solid ${colors.border}`,
+  color: colors.textMuted, fontFamily: "'JetBrains Mono', monospace",
+  letterSpacing: 1,
 }
