@@ -13,6 +13,8 @@ import Settings from './screens/Settings'
 import Reminders from './screens/Reminders'
 import TrainTracker from './screens/TrainTracker'
 import Reader from './screens/Reader'
+import HabitTracker from './screens/HabitTracker'
+import Finance from './screens/Finance'
 import JarvisCheckin from './JarvisCheckin'
 import { db, auth } from './db'
 import { colors, loadState, saveState } from './constants'
@@ -31,11 +33,13 @@ const SCREENS = {
   travel: { label: 'Travel', icon: 'TV', component: TravelPlanner },
   builder: { label: 'Builder', icon: 'BD', component: AppBuilder },
   reminders: { label: 'Remind', icon: 'RM', component: Reminders },
+  habits: { label: 'Habits', icon: 'HB', component: HabitTracker },
+  finance: { label: 'Finance', icon: 'FN', component: Finance },
   settings: { label: 'Settings', icon: 'SY', component: Settings },
 }
 
 const NAV_ITEMS = ['dashboard', 'trains', 'chat', 'tasks', 'settings']
-const MENU_ITEMS = ['meals', 'scanner', 'channels', 'voice', 'reader', 'travel', 'builder', 'reminders']
+const MENU_ITEMS = ['meals', 'scanner', 'channels', 'voice', 'reader', 'travel', 'builder', 'reminders', 'habits', 'finance']
 
 export { colors, loadState, saveState }
 

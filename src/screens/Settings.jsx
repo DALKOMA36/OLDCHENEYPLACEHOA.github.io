@@ -430,20 +430,43 @@ export default function Settings({ user, updateUser, addMemory }) {
         </div>
       </Section>
 
-      {/* About */}
-      <div style={{
-        textAlign: 'center', padding: '24px 0 40px',
-        color: colors.textMuted, fontSize: 10,
-        fontFamily: "'JetBrains Mono', monospace",
-        letterSpacing: 1,
-      }}>
-        <div style={{ marginBottom: 4 }}>J.A.R.V.I.S. v1.0</div>
-        <div>Just A Rather Very Intelligent System</div>
-        <div style={{
-          marginTop: 8, width: 30, height: 1,
-          background: colors.border, margin: '8px auto 0',
-        }} />
-      </div>
+      {/* About / Version */}
+      <Section title="ABOUT // VERSION">
+        <div style={{ padding: '14px 14px 16px', textAlign: 'center' }}>
+          <div style={{
+            color: colors.primary, fontSize: 13, fontWeight: 600,
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 2, marginBottom: 6,
+          }}>J.A.R.V.I.S. v2.0</div>
+          <div style={{
+            color: colors.textMuted, fontSize: 9,
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1, marginBottom: 4,
+          }}>Just A Rather Very Intelligent System</div>
+          <div style={{
+            color: colors.textSecondary, fontSize: 9,
+            fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.8,
+          }}>
+            Powered by Anthropic Claude // Built by Tony Stark (you)
+          </div>
+          <div style={{
+            marginTop: 10, width: 30, height: 1,
+            background: colors.border, margin: '10px auto',
+          }} />
+          <div style={{
+            color: colors.textMuted, fontSize: 9,
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 0.5,
+          }}>
+            {(() => {
+              try {
+                const learned = JSON.parse(localStorage.getItem('jarvis_learned') || '0')
+                const count = typeof learned === 'number' ? learned : (Array.isArray(learned) ? learned.length : Object.keys(learned).length)
+                return `${count} interaction${count !== 1 ? 's' : ''} logged`
+              } catch { return '0 interactions logged' }
+            })()}
+          </div>
+        </div>
+      </Section>
+
+      <div style={{ height: 40 }} />
     </div>
   )
 }
@@ -498,16 +521,43 @@ function CalendarSync() {
   )
 }
 
+const EMAIL_PROVIDERS = [
+  { key: 'gmail', name: 'Gmail', icon: 'GM', imap_host: 'imap.gmail.com', imap_port: 993, smtp_host: 'smtp.gmail.com', smtp_port: 587, help: 'Use an App Password from myaccount.google.com/apppasswords' },
+  { key: 'outlook', name: 'Outlook / Hotmail', icon: 'OL', imap_host: 'outlook.office365.com', imap_port: 993, smtp_host: 'smtp.office365.com', smtp_port: 587, help: 'Use your regular Outlook/Microsoft password' },
+  { key: 'protonmail', name: 'ProtonMail Bridge', icon: 'PM', imap_host: '127.0.0.1', imap_port: 1143, smtp_host: '127.0.0.1', smtp_port: 1025, help: 'Requires ProtonMail Bridge running on your computer' },
+  { key: 'yahoo', name: 'Yahoo', icon: 'YH', imap_host: 'imap.mail.yahoo.com', imap_port: 993, smtp_host: 'smtp.mail.yahoo.com', smtp_port: 587, help: null },
+  { key: 'custom', name: 'Custom IMAP', icon: '{}', imap_host: '', imap_port: '', smtp_host: '', smtp_port: '', help: null },
+]
+
 function EmailAccounts() {
   const [accounts, setAccounts] = useState([])
   const [showAdd, setShowAdd] = useState(false)
-  const [newAccount, setNewAccount] = useState({ email: '', password: '', display_name: '', imap_host: '', imap_port: '' })
+  const [selectedProvider, setSelectedProvider] = useState(null)
+  const [newAccount, setNewAccount] = useState({ email: '', password: '', display_name: '', imap_host: '', imap_port: '', smtp_host: '', smtp_port: '' })
   const [adding, setAdding] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     db.email.accounts().then(setAccounts).catch(() => {})
   }, [])
+
+  const selectProvider = (provider) => {
+    setSelectedProvider(provider)
+    setNewAccount(prev => ({
+      ...prev,
+      imap_host: provider.imap_host,
+      imap_port: provider.imap_port,
+      smtp_host: provider.smtp_host,
+      smtp_port: provider.smtp_port,
+    }))
+  }
+
+  const resetForm = () => {
+    setShowAdd(false)
+    setSelectedProvider(null)
+    setNewAccount({ email: '', password: '', display_name: '', imap_host: '', imap_port: '', smtp_host: '', smtp_port: '' })
+    setError('')
+  }
 
   const addAccount = async () => {
     if (!newAccount.email || !newAccount.password) { setError('Email and password required'); return }
@@ -518,8 +568,7 @@ function EmailAccounts() {
       if (result.success) {
         const updated = await db.email.accounts()
         setAccounts(updated)
-        setNewAccount({ email: '', password: '', display_name: '', imap_host: '', imap_port: '' })
-        setShowAdd(false)
+        resetForm()
         if (result.note) setError(result.note)
       } else {
         setError(result.error || 'Failed to add')
@@ -535,6 +584,17 @@ function EmailAccounts() {
     await db.email.deleteAccount(id).catch(() => {})
     setAccounts(prev => prev.filter(a => a.id !== id))
   }
+
+  const providerBtnStyle = (isSelected) => ({
+    display: 'flex', alignItems: 'center', gap: 8,
+    width: '100%', padding: '8px 10px', marginBottom: 4,
+    background: isSelected ? colors.primaryDim : 'transparent',
+    border: `1px solid ${isSelected ? colors.primary : colors.border}`,
+    color: isSelected ? colors.primary : colors.textSecondary,
+    fontSize: 10, cursor: 'pointer', textAlign: 'left',
+    fontFamily: "'JetBrains Mono', monospace", letterSpacing: 0.5,
+    transition: 'all 0.15s ease',
+  })
 
   return (
     <Section title="EMAIL ACCOUNTS">
@@ -570,34 +630,117 @@ function EmailAccounts() {
 
         {showAdd ? (
           <div style={{ marginTop: 8 }}>
-            <input value={newAccount.email} onChange={e => setNewAccount(prev => ({ ...prev, email: e.target.value }))}
-              placeholder="Email address" type="email"
-              style={{ ...inputStyle, width: '100%', marginBottom: 6 }} />
-            <input value={newAccount.password} onChange={e => setNewAccount(prev => ({ ...prev, password: e.target.value }))}
-              placeholder="Password or app password" type="password"
-              style={{ ...inputStyle, width: '100%', marginBottom: 6 }} />
-            <input value={newAccount.display_name} onChange={e => setNewAccount(prev => ({ ...prev, display_name: e.target.value }))}
-              placeholder="Display name (optional)"
-              style={{ ...inputStyle, width: '100%', marginBottom: 6 }} />
-            <input value={newAccount.imap_host} onChange={e => setNewAccount(prev => ({ ...prev, imap_host: e.target.value }))}
-              placeholder="IMAP server (auto-detected)"
-              style={{ ...inputStyle, width: '100%', marginBottom: 8 }} />
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={addAccount} disabled={adding} style={{
-                flex: 1, padding: 8, background: colors.primaryDim, border: `1px solid ${colors.primary}`,
-                color: colors.primary, fontSize: 10, cursor: 'pointer',
-                fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
-              }}>{adding ? 'CONNECTING...' : 'CONNECT'}</button>
-              <button onClick={() => { setShowAdd(false); setError('') }} style={{
-                padding: '8px 14px', background: 'transparent', border: `1px solid ${colors.border}`,
-                color: colors.textMuted, fontSize: 10, cursor: 'pointer',
-                fontFamily: "'JetBrains Mono', monospace",
-              }}>CANCEL</button>
-            </div>
-            {error && <div style={{ color: error.includes('Requires') ? colors.warning : colors.danger, fontSize: 9, marginTop: 6, fontFamily: "'JetBrains Mono', monospace" }}>{error}</div>}
-            <div style={{ color: colors.textMuted, fontSize: 8, marginTop: 6, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.6 }}>
-              IMAP auto-detected for Outlook, Gmail, Yahoo, iCloud, ProtonMail. Use app-specific passwords for accounts with 2FA.
-            </div>
+            {/* Provider Selection Step */}
+            {!selectedProvider ? (
+              <div>
+                <div style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8, letterSpacing: 1 }}>
+                  SELECT PROVIDER:
+                </div>
+                {EMAIL_PROVIDERS.map(p => (
+                  <button key={p.key} onClick={() => selectProvider(p)} style={providerBtnStyle(false)}>
+                    <span style={{
+                      width: 22, textAlign: 'center', fontSize: 9, fontWeight: 600,
+                      color: colors.textMuted,
+                    }}>{p.icon}</span>
+                    <span>{p.name}</span>
+                  </button>
+                ))}
+                <button onClick={resetForm} style={{
+                  width: '100%', padding: 8, marginTop: 4,
+                  background: 'transparent', border: `1px solid ${colors.border}`,
+                  color: colors.textMuted, fontSize: 10, cursor: 'pointer',
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}>CANCEL</button>
+              </div>
+            ) : (
+              <div>
+                {/* Provider badge */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10,
+                  padding: '6px 10px', background: colors.primaryDim,
+                  border: `1px solid ${colors.primary}40`,
+                }}>
+                  <span style={{ color: colors.primary, fontSize: 9, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>
+                    {selectedProvider.icon}
+                  </span>
+                  <span style={{ color: colors.primary, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", flex: 1 }}>
+                    {selectedProvider.name}
+                  </span>
+                  <button onClick={() => setSelectedProvider(null)} style={{
+                    background: 'none', border: 'none', color: colors.textMuted,
+                    fontSize: 10, cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace",
+                  }}>CHANGE</button>
+                </div>
+
+                {/* Provider-specific help text */}
+                {selectedProvider.help && (
+                  <div style={{
+                    padding: '6px 10px', marginBottom: 8,
+                    background: `${colors.warning}10`, border: `1px solid ${colors.warning}30`,
+                    color: colors.warning, fontSize: 9,
+                    fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.6,
+                  }}>
+                    {selectedProvider.help}
+                  </div>
+                )}
+
+                <input value={newAccount.email} onChange={e => setNewAccount(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="Email address" type="email"
+                  style={{ ...inputStyle, width: '100%', marginBottom: 6 }} />
+                <input value={newAccount.password} onChange={e => setNewAccount(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder={selectedProvider.key === 'gmail' ? 'App password' : 'Password'}
+                  type="password"
+                  style={{ ...inputStyle, width: '100%', marginBottom: 6 }} />
+                <input value={newAccount.display_name} onChange={e => setNewAccount(prev => ({ ...prev, display_name: e.target.value }))}
+                  placeholder="Display name (optional)"
+                  style={{ ...inputStyle, width: '100%', marginBottom: 6 }} />
+
+                {/* IMAP / SMTP fields - editable for custom, pre-filled for presets */}
+                <div style={{
+                  color: colors.textMuted, fontSize: 8, fontFamily: "'JetBrains Mono', monospace",
+                  letterSpacing: 1, marginBottom: 4, marginTop: 4,
+                }}>IMAP SETTINGS</div>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+                  <input value={newAccount.imap_host} onChange={e => setNewAccount(prev => ({ ...prev, imap_host: e.target.value }))}
+                    placeholder="IMAP host"
+                    readOnly={selectedProvider.key !== 'custom'}
+                    style={{ ...inputStyle, flex: 1, marginBottom: 0, opacity: selectedProvider.key !== 'custom' ? 0.6 : 1 }} />
+                  <input value={newAccount.imap_port} onChange={e => setNewAccount(prev => ({ ...prev, imap_port: e.target.value }))}
+                    placeholder="Port"
+                    readOnly={selectedProvider.key !== 'custom'}
+                    style={{ ...inputStyle, width: 60, marginBottom: 0, opacity: selectedProvider.key !== 'custom' ? 0.6 : 1 }} />
+                </div>
+
+                <div style={{
+                  color: colors.textMuted, fontSize: 8, fontFamily: "'JetBrains Mono', monospace",
+                  letterSpacing: 1, marginBottom: 4,
+                }}>SMTP SETTINGS</div>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                  <input value={newAccount.smtp_host} onChange={e => setNewAccount(prev => ({ ...prev, smtp_host: e.target.value }))}
+                    placeholder="SMTP host"
+                    readOnly={selectedProvider.key !== 'custom'}
+                    style={{ ...inputStyle, flex: 1, marginBottom: 0, opacity: selectedProvider.key !== 'custom' ? 0.6 : 1 }} />
+                  <input value={newAccount.smtp_port} onChange={e => setNewAccount(prev => ({ ...prev, smtp_port: e.target.value }))}
+                    placeholder="Port"
+                    readOnly={selectedProvider.key !== 'custom'}
+                    style={{ ...inputStyle, width: 60, marginBottom: 0, opacity: selectedProvider.key !== 'custom' ? 0.6 : 1 }} />
+                </div>
+
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button onClick={addAccount} disabled={adding} style={{
+                    flex: 1, padding: 8, background: colors.primaryDim, border: `1px solid ${colors.primary}`,
+                    color: colors.primary, fontSize: 10, cursor: 'pointer',
+                    fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+                  }}>{adding ? 'CONNECTING...' : 'CONNECT'}</button>
+                  <button onClick={resetForm} style={{
+                    padding: '8px 14px', background: 'transparent', border: `1px solid ${colors.border}`,
+                    color: colors.textMuted, fontSize: 10, cursor: 'pointer',
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}>CANCEL</button>
+                </div>
+                {error && <div style={{ color: error.includes('Requires') ? colors.warning : colors.danger, fontSize: 9, marginTop: 6, fontFamily: "'JetBrains Mono', monospace" }}>{error}</div>}
+              </div>
+            )}
           </div>
         ) : (
           <button onClick={() => setShowAdd(true)} style={{
