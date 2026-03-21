@@ -13,6 +13,7 @@ import Settings from './screens/Settings'
 import Reminders from './screens/Reminders'
 import TrainTracker from './screens/TrainTracker'
 import Reader from './screens/Reader'
+import JarvisCheckin from './JarvisCheckin'
 import { db, auth } from './db'
 import { colors, loadState, saveState } from './constants'
 
@@ -454,6 +455,9 @@ export default function App() {
       <main style={{ flex: 1, overflowY: 'auto', paddingBottom: 72 }}>
         <CurrentScreen user={user} updateUser={updateUser} addMemory={addMemory} navigate={navigate} />
       </main>
+
+      {/* JARVIS proactive check-in overlay */}
+      <JarvisCheckin user={user} />
 
       {/* Bottom nav */}
       <nav style={{
