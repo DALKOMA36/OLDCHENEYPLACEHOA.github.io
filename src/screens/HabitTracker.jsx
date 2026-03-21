@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { colors, loadState, saveState } from '../constants'
+import { db } from '../db'
 
 const HABIT_COLORS = ['#00d4ff', '#00e676', '#f0a500', '#ff4d4d', '#bb86fc', '#ff6b9d', '#48dbfb', '#feca57']
 
@@ -36,7 +37,17 @@ export default function HabitTracker({ user }) {
   const [newFreq, setNewFreq] = useState('daily') // daily, weekdays, weekly
   const [view, setView] = useState('today') // today, grid
 
+  // Persist locally
   useEffect(() => { saveState('habits_data', habits) }, [habits])
+
+  // Load from D1 on mount
+  useEffect(() => {
+    db.habits.list().then(rows => {
+      if (rows?.length) {
+        setHabits(rows.map(r => ({ ...r, log: typeof r.log === 'string' ? JSON.parse(r.log || '{}') : (r.log || {}) })))
+      }
+    }).catch(() => {})
+  }, [])
 
   const today = getDateStr()
   const last30 = getDaysInRange(30)
@@ -52,6 +63,7 @@ export default function HabitTracker({ user }) {
       createdAt: today,
     }
     setHabits(prev => [...prev, habit])
+    db.habits.create({ ...habit, log: JSON.stringify(habit.log) }).catch(() => {})
     setNewName('')
     setShowAdd(false)
   }
@@ -61,12 +73,15 @@ export default function HabitTracker({ user }) {
       if (h.id !== habitId) return h
       const log = { ...h.log }
       log[date] = !log[date]
-      return { ...h, log }
+      const updated = { ...h, log }
+      db.habits.update({ ...updated, log: JSON.stringify(updated.log) }).catch(() => {})
+      return updated
     }))
   }
 
   const deleteHabit = (id) => {
     setHabits(prev => prev.filter(h => h.id !== id))
+    db.habits.delete(id).catch(() => {})
   }
 
   const completedToday = habits.filter(h => h.log[today]).length

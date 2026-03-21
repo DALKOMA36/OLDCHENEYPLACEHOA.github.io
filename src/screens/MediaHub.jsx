@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { colors, loadState, saveState } from '../constants'
+import { db } from '../db'
 
 // ---- Deep link launchers ----
 
@@ -63,6 +64,12 @@ export default function MediaHub({ user }) {
   useEffect(() => { saveState('podcast_feeds', podFeeds) }, [podFeeds])
   useEffect(() => { saveState('saved_places', savedPlaces) }, [savedPlaces])
 
+  // Load from D1
+  useEffect(() => {
+    db.media.feeds().then(rows => { if (rows?.length) setPodFeeds(rows) }).catch(() => {})
+    db.media.places().then(rows => { if (rows?.length) setSavedPlaces(rows) }).catch(() => {})
+  }, [])
+
   // Load feed when selected
   useEffect(() => {
     if (!selectedFeed) { setFeedData(null); return }
@@ -81,6 +88,7 @@ export default function MediaHub({ user }) {
       const data = await fetchPodcastFeed(newFeedUrl.trim())
       const feed = { id: Date.now().toString(), url: newFeedUrl.trim(), title: data.title, image: data.image }
       setPodFeeds(prev => [...prev, feed])
+      db.media.addFeed(feed).catch(() => {})
       setNewFeedUrl('')
       setSelectedFeed(feed)
       setFeedData(data)
@@ -321,6 +329,7 @@ export default function MediaHub({ user }) {
                   {/* Delete feed */}
                   <button onClick={() => {
                     setPodFeeds(prev => prev.filter(f => f.id !== selectedFeed.id))
+                    db.media.deleteFeed(selectedFeed.id).catch(() => {})
                     setSelectedFeed(null)
                   }} style={{
                     width: '100%', padding: 10, marginTop: 10,

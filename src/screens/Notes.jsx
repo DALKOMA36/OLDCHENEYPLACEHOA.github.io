@@ -143,6 +143,13 @@ export default function Notes({ user }) {
     saveState('notes', notes)
   }, [notes])
 
+  // Load from D1
+  useEffect(() => {
+    db.notes.list().then(rows => {
+      if (rows?.length) setNotes(rows.map(r => ({ ...r, pinned: !!r.pinned })))
+    }).catch(() => {})
+  }, [])
+
   // ---- CRUD ----
   const createNote = useCallback(() => {
     const newNote = {
@@ -180,8 +187,10 @@ export default function Notes({ user }) {
       if (existing >= 0) {
         const copy = [...prev]
         copy[existing] = updated
+        db.notes.update(updated).catch(() => {})
         return copy
       }
+      db.notes.create(updated).catch(() => {})
       return [updated, ...prev]
     })
     setShowEditor(false)
@@ -190,6 +199,7 @@ export default function Notes({ user }) {
 
   const deleteNote = useCallback((id) => {
     setNotes(prev => prev.filter(n => n.id !== id))
+    db.notes.delete(id).catch(() => {})
     if (editingNote?.id === id) {
       setShowEditor(false)
       setEditingNote(null)

@@ -34,13 +34,7 @@
     <script type="module" src="/src/main.jsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(regs) {
-          regs.forEach(function(r) { r.unregister(); });
-          if (regs.length > 0) {
-            caches.keys().then(function(k) { k.forEach(function(n) { caches.delete(n); }); });
-            setTimeout(function() { window.location.reload(); }, 500);
-          }
-        });
+        navigator.serviceWorker.register('/sw.js').catch(function() {});
       }
     </script>
   </body>

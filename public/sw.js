@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jarvis-v4'
+const CACHE_NAME = 'jarvis-v5'
 const STATIC_ASSETS = ['./', './index.html', './manifest.json', './icon-192.svg']
 
 self.addEventListener('install', (event) => {
@@ -20,8 +20,24 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url)
 
-  // Never cache API/webhook calls
-  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/webhook/')) return
+  // Webhook calls — never cache
+  if (url.pathname.startsWith('/webhook/')) return
+
+  // API GET requests — network first, cache fallback for offline
+  if (url.pathname.startsWith('/api/') && event.request.method === 'GET') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const clone = response.clone()
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
+          return response
+        })
+        .catch(() => caches.match(event.request))
+    )
+    return
+  }
+  // API non-GET — pass through, don't cache
+  if (url.pathname.startsWith('/api/')) return
 
   // Network-first for external APIs
   if (event.request.url.includes('api-v3.amtraker.com')) {

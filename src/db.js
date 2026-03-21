@@ -256,6 +256,47 @@ export const db = {
       apiFetch('/sms', { method: 'POST', body: { to, message } }),
   },
 
+  // ---- Habits ----
+  habits: {
+    list: () => apiFetch('/habits'),
+    create: (habit) => apiFetch('/habits', { method: 'POST', body: habit }),
+    update: (habit) => apiFetch('/habits', { method: 'PUT', body: habit }),
+    delete: (id) => apiFetch(`/habits?id=${id}`, { method: 'DELETE' }),
+  },
+
+  // ---- Finance ----
+  finance: {
+    transactions: () => apiFetch('/finance?type=transactions'),
+    budgets: () => apiFetch('/finance?type=budgets'),
+    addTransaction: (txn) => apiFetch('/finance?type=transaction', { method: 'POST', body: txn }),
+    setBudget: (budget) => apiFetch('/finance?type=budget', { method: 'POST', body: budget }),
+    deleteTransaction: (id) => apiFetch(`/finance?id=${id}`, { method: 'DELETE' }),
+  },
+
+  // ---- Notes ----
+  notes: {
+    list: () => apiFetch('/notes'),
+    create: (note) => apiFetch('/notes', { method: 'POST', body: note }),
+    update: (note) => apiFetch('/notes', { method: 'PUT', body: note }),
+    delete: (id) => apiFetch(`/notes?id=${id}`, { method: 'DELETE' }),
+  },
+
+  // ---- Media ----
+  media: {
+    feeds: () => apiFetch('/media?type=feeds'),
+    places: () => apiFetch('/media?type=places'),
+    addFeed: (feed) => apiFetch('/media?type=feed', { method: 'POST', body: feed }),
+    addPlace: (place) => apiFetch('/media?type=place', { method: 'POST', body: place }),
+    updatePlace: (place) => apiFetch('/media', { method: 'PUT', body: place }),
+    deleteFeed: (id) => apiFetch(`/media?type=feed&id=${id}`, { method: 'DELETE' }),
+    deletePlace: (id) => apiFetch(`/media?type=place&id=${id}`, { method: 'DELETE' }),
+  },
+
+  // ---- Push ----
+  push: {
+    subscribe: (subscription) => apiFetch('/push', { method: 'POST', body: { subscription } }),
+  },
+
   // ---- Sync (migrate localStorage -> D1) ----
   sync: (data) => apiFetch('/sync', { method: 'POST', body: data }),
 }

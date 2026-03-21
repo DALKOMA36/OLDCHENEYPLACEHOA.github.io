@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { colors, loadState, saveState } from '../constants'
+import { db } from '../db'
 
 const CATEGORIES = [
   { id: 'food', name: 'Food & Dining', color: '#f0a500', icon: 'FD' },
@@ -37,6 +38,18 @@ export default function Finance({ user }) {
   useEffect(() => { saveState('finance_txns', transactions) }, [transactions])
   useEffect(() => { saveState('finance_budgets', budgets) }, [budgets])
 
+  // Load from D1
+  useEffect(() => {
+    db.finance.transactions().then(rows => { if (rows?.length) setTransactions(rows) }).catch(() => {})
+    db.finance.budgets().then(rows => {
+      if (rows?.length) {
+        const b = {}
+        rows.forEach(r => { b[r.category] = r.amount })
+        setBudgets(b)
+      }
+    }).catch(() => {})
+  }, [])
+
   const addTransaction = () => {
     if (!amount || isNaN(parseFloat(amount))) return
     const txn = {
@@ -48,6 +61,7 @@ export default function Finance({ user }) {
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }
     setTransactions(prev => [txn, ...prev])
+    db.finance.addTransaction(txn).catch(() => {})
     setAmount('')
     setDesc('')
     setShowAdd(false)
@@ -55,10 +69,13 @@ export default function Finance({ user }) {
 
   const deleteTransaction = (id) => {
     setTransactions(prev => prev.filter(t => t.id !== id))
+    db.finance.deleteTransaction(id).catch(() => {})
   }
 
   const setBudget = (catId, value) => {
-    setBudgets(prev => ({ ...prev, [catId]: parseFloat(value) || 0 }))
+    const amt = parseFloat(value) || 0
+    setBudgets(prev => ({ ...prev, [catId]: amt }))
+    db.finance.setBudget({ category: catId, amount: amt }).catch(() => {})
   }
 
   // Compute monthly stats
