@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { colors } from '../constants'
 import { db } from '../db'
 
@@ -17,16 +17,18 @@ const CLOUD_VOICES = [
 
 async function parsePDF(file) {
   if (!window.pdfjsLib) {
-    const script = document.createElement('script')
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs'
-    script.type = 'module'
-    // Use global worker
     await new Promise((resolve, reject) => {
-      // For pdf.js 4.x, use the legacy build for broader compat
       const s = document.createElement('script')
       s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
       s.onload = resolve
-      s.onerror = reject
+      s.onerror = () => {
+        // Fallback to unpkg if cdnjs fails
+        const s2 = document.createElement('script')
+        s2.src = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js'
+        s2.onload = resolve
+        s2.onerror = reject
+        document.head.appendChild(s2)
+      }
       document.head.appendChild(s)
     })
     window.pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -60,9 +62,6 @@ async function parseDOCX(file) {
 }
 
 async function parseEPUB(file) {
-  // EPUB is a zip of XHTML files — parse with basic zip extraction
-  // Use the AI OCR approach: send as file to extract text
-  // For now, extract via JSZip
   if (!window.JSZip) {
     await new Promise((resolve, reject) => {
       const s = document.createElement('script')
@@ -75,22 +74,57 @@ async function parseEPUB(file) {
   const buffer = await file.arrayBuffer()
   const zip = await window.JSZip.loadAsync(buffer)
 
-  // Find content files (xhtml/html) from the OPF manifest
-  const htmlFiles = []
-  zip.forEach((path, entry) => {
-    if (!entry.dir && (path.endsWith('.xhtml') || path.endsWith('.html') || path.endsWith('.htm'))
-        && !path.includes('toc') && !path.includes('nav')) {
-      htmlFiles.push(entry)
+  // Find the OPF file from container.xml for correct reading order
+  let opfPath = null
+  try {
+    const container = await zip.file('META-INF/container.xml')?.async('text')
+    if (container) {
+      const match = container.match(/full-path="([^"]+\.opf)"/)
+      if (match) opfPath = match[1]
     }
-  })
+  } catch {}
 
-  // Sort by name to maintain order
-  htmlFiles.sort((a, b) => a.name.localeCompare(b.name))
+  // Read spine order from OPF
+  const orderedFiles = []
+  if (opfPath) {
+    try {
+      const opf = await zip.file(opfPath)?.async('text')
+      if (opf) {
+        const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : ''
+        // Parse manifest items
+        const manifest = {}
+        const itemRegex = /<item\s+[^>]*id="([^"]*)"[^>]*href="([^"]*)"[^>]*/g
+        let m
+        while ((m = itemRegex.exec(opf)) !== null) {
+          manifest[m[1]] = opfDir + decodeURIComponent(m[2])
+        }
+        // Parse spine order
+        const spineRegex = /<itemref\s+[^>]*idref="([^"]*)"/g
+        while ((m = spineRegex.exec(opf)) !== null) {
+          const href = manifest[m[1]]
+          if (href) {
+            const entry = zip.file(href)
+            if (entry) orderedFiles.push(entry)
+          }
+        }
+      }
+    } catch {}
+  }
+
+  // Fallback: grab all html files sorted by name
+  if (orderedFiles.length === 0) {
+    zip.forEach((path, entry) => {
+      if (!entry.dir && (path.endsWith('.xhtml') || path.endsWith('.html') || path.endsWith('.htm'))
+          && !path.includes('toc') && !path.includes('nav')) {
+        orderedFiles.push(entry)
+      }
+    })
+    orderedFiles.sort((a, b) => a.name.localeCompare(b.name))
+  }
 
   let fullText = ''
-  for (const entry of htmlFiles) {
+  for (const entry of orderedFiles) {
     const html = await entry.async('text')
-    // Strip HTML tags to get plain text
     const div = document.createElement('div')
     div.innerHTML = html
     const text = div.textContent || div.innerText || ''
@@ -409,7 +443,7 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
       setHighlightedWord(0)
 
       const utter = new SpeechSynthesisUtterance(chunks[index])
-      utter.rate = speed
+      utter.rate = speedRef.current
       utter.pitch = 1.0
 
       const voice = voices.find(v => v.name === selectedVoice)
@@ -450,6 +484,8 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
   }
 
   // Cloud TTS (OpenAI)
+  const cloudResolveRef = useRef(null)
+
   const speakCloud = async (startIndex = 0) => {
     const chunks = splitIntoChunks(text)
     chunksRef.current = chunks
@@ -461,7 +497,7 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
     setView('player')
 
     // Clean up old audio URLs
-    audioUrlsRef.current.forEach(url => URL.revokeObjectURL(url))
+    audioUrlsRef.current.forEach(u => URL.revokeObjectURL(u))
     audioUrlsRef.current = []
 
     for (let i = startIndex; i < chunks.length; i++) {
@@ -480,29 +516,49 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
 
         if (cancelledRef.current) break
 
-        // Play the audio
         await new Promise((resolve, reject) => {
+          // Store resolve so stop/skip can break out of this promise
+          cloudResolveRef.current = resolve
+
           const audio = new Audio(audioUrl)
           audioRef.current = audio
+          let highlightTimer = null
 
-          // Simulate word highlighting based on audio duration
           audio.onloadedmetadata = () => {
             const duration = audio.duration * 1000
             const interval = duration / words.length
             let wIdx = 0
-            const timer = setInterval(() => {
+            highlightTimer = setInterval(() => {
               if (wIdx < words.length) {
                 setHighlightedWord(wIdx)
                 wIdx++
               } else {
-                clearInterval(timer)
+                clearInterval(highlightTimer)
               }
             }, interval)
-            audio.onended = () => { clearInterval(timer); resolve() }
-            audio.onerror = () => { clearInterval(timer); reject(new Error('Audio playback error')) }
           }
 
-          audio.play().catch(reject)
+          audio.onended = () => {
+            if (highlightTimer) clearInterval(highlightTimer)
+            cloudResolveRef.current = null
+            resolve()
+          }
+          audio.onerror = () => {
+            if (highlightTimer) clearInterval(highlightTimer)
+            cloudResolveRef.current = null
+            reject(new Error('Audio playback error'))
+          }
+          // Also resolve on pause event from stop/skip (src set to '')
+          audio.onabort = () => {
+            if (highlightTimer) clearInterval(highlightTimer)
+            cloudResolveRef.current = null
+            resolve()
+          }
+
+          audio.play().catch(err => {
+            cloudResolveRef.current = null
+            reject(err)
+          })
         })
 
         autoSaveProgress(i + 1, chunks.length)
@@ -541,11 +597,23 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
     setPaused(false)
   }
 
-  const stop = () => {
-    cancelledRef.current = true
-    if (voiceMode === 'cloud' && audioRef.current) {
+  const stopCloudAudio = () => {
+    if (audioRef.current) {
       audioRef.current.pause()
       audioRef.current.src = ''
+      audioRef.current = null
+    }
+    // Resolve any pending promise so the async loop exits
+    if (cloudResolveRef.current) {
+      cloudResolveRef.current()
+      cloudResolveRef.current = null
+    }
+  }
+
+  const stop = () => {
+    cancelledRef.current = true
+    if (voiceMode === 'cloud') {
+      stopCloudAudio()
     } else {
       window.speechSynthesis.cancel()
     }
@@ -557,33 +625,38 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
   const skipForward = () => {
     const next = Math.min(currentIndexRef.current + 1, chunksRef.current.length - 1)
     cancelledRef.current = true
-    if (voiceMode === 'cloud' && audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.src = ''
+    if (voiceMode === 'cloud') {
+      stopCloudAudio()
     } else {
       window.speechSynthesis.cancel()
     }
-    cancelledRef.current = false
-    speak(next)
+    setTimeout(() => {
+      cancelledRef.current = false
+      speak(next)
+    }, 50)
   }
 
   const skipBack = () => {
     const prev = Math.max(currentIndexRef.current - 1, 0)
     cancelledRef.current = true
-    if (voiceMode === 'cloud' && audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.src = ''
+    if (voiceMode === 'cloud') {
+      stopCloudAudio()
     } else {
       window.speechSynthesis.cancel()
     }
-    cancelledRef.current = false
-    speak(prev)
+    setTimeout(() => {
+      cancelledRef.current = false
+      speak(prev)
+    }, 50)
   }
 
+  const speedRef = useRef(speed)
+
   const changeSpeed = () => {
-    const idx = SPEEDS.indexOf(speed)
+    const idx = SPEEDS.indexOf(speedRef.current)
     const newSpeed = SPEEDS[(idx + 1) % SPEEDS.length]
     setSpeed(newSpeed)
+    speedRef.current = newSpeed
     if (playing && voiceMode === 'browser') {
       const current = currentIndexRef.current
       cancelledRef.current = true
@@ -606,9 +679,12 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
     runRSVP(words, 0)
   }
 
-  const runRSVP = (words, startIdx) => {
+  const rsvpWpmRef = useRef(rsvpWpm)
+
+  const runRSVP = (words, startIdx, wpm) => {
     clearInterval(rsvpTimerRef.current)
-    const interval = 60000 / rsvpWpm
+    const useWpm = wpm || rsvpWpmRef.current
+    const interval = 60000 / useWpm
     let idx = startIdx
     rsvpTimerRef.current = setInterval(() => {
       if (idx >= words.length) {
@@ -646,9 +722,10 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
     const idx = RSVP_WPM.indexOf(rsvpWpm)
     const newWpm = RSVP_WPM[(idx + 1) % RSVP_WPM.length]
     setRsvpWpm(newWpm)
+    rsvpWpmRef.current = newWpm
     if (rsvpActive && !rsvpPaused) {
       clearInterval(rsvpTimerRef.current)
-      runRSVP(rsvpWordsRef.current, rsvpIndexRef.current)
+      runRSVP(rsvpWordsRef.current, rsvpIndexRef.current, newWpm)
     }
   }
 
@@ -678,6 +755,7 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
     setText(entry.text)
     setTitle(entry.title)
     setCurrentReadingId(entry.id)
+    currentIndexRef.current = entry.position || 0
     setShowLibrary(false)
     setView('input')
   }
