@@ -201,6 +201,21 @@ export const db = {
       apiFetch('/ai-app', { method: 'POST', body: { description } }),
     email: (action, emailData) =>
       apiFetch('/ai-email', { method: 'POST', body: { action, ...emailData } }),
+    ocr: async (images) => {
+      const token = getToken()
+      const headers = {}
+      if (token) headers['Authorization'] = `Bearer ${token}`
+
+      const formData = new FormData()
+      for (const img of images) {
+        formData.append('images', img)
+      }
+
+      const res = await fetch('/api/ocr', { method: 'POST', headers, body: formData })
+      if (res.status === 401) { clearToken(); throw new Error('Session expired') }
+      if (!res.ok) throw new Error(`OCR error ${res.status}`)
+      return res.json()
+    },
   },
 
   // ---- Calendar Sync ----

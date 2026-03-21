@@ -7,7 +7,11 @@ const SPEEDS = [0.75, 1, 1.25, 1.5, 1.75, 2]
 export default function Reader({ user }) {
   const [text, setText] = useState('')
   const [url, setUrl] = useState('')
-  const [mode, setMode] = useState('text') // text, url
+  const [mode, setMode] = useState('text') // text, url, scan
+  const [pages, setPages] = useState([]) // captured page images
+  const [scanning, setScanning] = useState(false)
+  const [scanProgress, setScanProgress] = useState('')
+  const fileInputRef = useRef(null)
   const [playing, setPlaying] = useState(false)
   const [paused, setPaused] = useState(false)
   const [speed, setSpeed] = useState(1)
@@ -79,6 +83,39 @@ export default function Reader({ user }) {
       setError('Failed to fetch URL content')
     }
     setLoading(false)
+  }
+
+  const handlePhotos = (e) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
+    setPages(prev => [...prev, ...files])
+  }
+
+  const removePage = (index) => {
+    setPages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const processPages = async () => {
+    if (pages.length === 0) return
+    setScanning(true)
+    setScanProgress(`Processing ${pages.length} page${pages.length > 1 ? 's' : ''}...`)
+    setError('')
+
+    try {
+      const result = await db.ai.ocr(pages)
+      if (result.text) {
+        setText(prev => prev ? prev + '\n\n' + result.text : result.text)
+        setScanProgress(`Extracted text from ${result.pages || pages.length} page(s)`)
+        setPages([])
+      } else {
+        setError(result.error || 'No text extracted')
+        setScanProgress('')
+      }
+    } catch (err) {
+      setError(err.message)
+      setScanProgress('')
+    }
+    setScanning(false)
   }
 
   const speak = (startIndex = 0) => {
@@ -201,7 +238,7 @@ export default function Reader({ user }) {
 
       {/* Mode tabs */}
       <div style={{ display: 'flex', gap: 0, marginBottom: 12, border: `1px solid ${colors.border}`, overflow: 'hidden' }}>
-        {[['text', 'PASTE TEXT'], ['url', 'FROM URL']].map(([m, label]) => (
+        {[['text', 'PASTE TEXT'], ['url', 'FROM URL'], ['scan', 'SCAN PAGES']].map(([m, label]) => (
           <button key={m} onClick={() => setMode(m)} style={{
             flex: 1, padding: '8px 0',
             background: mode === m ? colors.primaryDim : 'transparent',
@@ -214,7 +251,7 @@ export default function Reader({ user }) {
       </div>
 
       {/* Input */}
-      {mode === 'text' ? (
+      {mode === 'text' && (
         <textarea
           value={text}
           onChange={e => setText(e.target.value)}
@@ -227,7 +264,9 @@ export default function Reader({ user }) {
             resize: 'vertical', lineHeight: 1.6,
           }}
         />
-      ) : (
+      )}
+
+      {mode === 'url' && (
         <div style={{ display: 'flex', gap: 8 }}>
           <input
             value={url}
@@ -245,6 +284,84 @@ export default function Reader({ user }) {
             fontSize: 10, cursor: 'pointer',
             fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
           }}>{loading ? '...' : 'FETCH'}</button>
+        </div>
+      )}
+
+      {mode === 'scan' && (
+        <div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            capture="environment"
+            onChange={handlePhotos}
+            style={{ display: 'none' }}
+          />
+
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <button onClick={() => fileInputRef.current?.click()} disabled={scanning} style={{
+              flex: 1, padding: 14,
+              background: 'transparent', border: `1px dashed ${colors.border}`,
+              color: colors.textSecondary, fontSize: 10, cursor: 'pointer',
+              fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+            }}>
+              TAKE PHOTO / SELECT IMAGES
+            </button>
+          </div>
+
+          {/* Page thumbnails */}
+          {pages.length > 0 && (
+            <div>
+              <div style={{
+                color: colors.textMuted, fontSize: 9, marginBottom: 6,
+                fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+              }}>{pages.length} PAGE{pages.length > 1 ? 'S' : ''} QUEUED</div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+                {pages.map((file, i) => (
+                  <div key={i} style={{ position: 'relative' }}>
+                    <img
+                      src={URL.createObjectURL(file)}
+                      style={{ width: 60, height: 80, objectFit: 'cover', border: `1px solid ${colors.border}` }}
+                    />
+                    <button onClick={() => removePage(i)} style={{
+                      position: 'absolute', top: -6, right: -6,
+                      width: 18, height: 18, borderRadius: '50%',
+                      background: colors.danger, border: 'none',
+                      color: '#fff', fontSize: 10, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>x</button>
+                    <div style={{
+                      textAlign: 'center', color: colors.textMuted, fontSize: 8,
+                      fontFamily: "'JetBrains Mono', monospace",
+                    }}>P{i + 1}</div>
+                  </div>
+                ))}
+              </div>
+
+              <button onClick={processPages} disabled={scanning} style={{
+                width: '100%', padding: 12,
+                background: scanning ? 'transparent' : colors.primaryDim,
+                border: `1px solid ${scanning ? colors.border : colors.primary}`,
+                color: scanning ? colors.textMuted : colors.primary,
+                fontSize: 11, cursor: scanning ? 'wait' : 'pointer',
+                fontFamily: "'JetBrains Mono', monospace", letterSpacing: 2,
+              }}>{scanning ? 'EXTRACTING TEXT...' : `EXTRACT TEXT FROM ${pages.length} PAGE${pages.length > 1 ? 'S' : ''}`}</button>
+            </div>
+          )}
+
+          {scanProgress && (
+            <div style={{ color: colors.success, fontSize: 10, marginTop: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+              {scanProgress}
+            </div>
+          )}
+
+          <div style={{
+            color: colors.textMuted, fontSize: 8, marginTop: 8,
+            fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.6,
+          }}>
+            Take photos of book pages in order. JARVIS uses AI vision to extract the text. Then hit play to listen.
+          </div>
         </div>
       )}
 
