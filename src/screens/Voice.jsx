@@ -69,10 +69,15 @@ function parseCommand(text) {
     return { type: 'navigate_unknown', target, display: `Unknown screen: "${target}"` }
   }
 
+  // "suit up" / "focus mode"
+  if (/^(?:suit\s+up|focus\s+mode|activate\s+focus)/i.test(lower)) {
+    return { type: 'focus_mode', display: 'Activating focus mode...' }
+  }
+
   return null // Not a direct command — pass to AI
 }
 
-export default function Voice({ user, addMemory, navigate }) {
+export default function Voice({ user, addMemory, navigate, startFocusMode }) {
   const [listening, setListening] = useState(false)
   const [processing, setProcessing] = useState(false)
   const [speaking, setSpeaking] = useState(false)
@@ -339,6 +344,13 @@ export default function Voice({ user, addMemory, navigate }) {
           setConversation(prev => [...prev, { role: 'ai', text: response, isCommand: true }])
           await speakResponse(response)
           setTimeout(() => navigate(cmd.screen), 800)
+          break
+        }
+        case 'focus_mode': {
+          const response = "Right away, sir. Initializing focus mode. All non-essential systems suppressed."
+          setConversation(prev => [...prev, { role: 'ai', text: response, isCommand: true }])
+          await speakResponse(response)
+          setTimeout(() => startFocusMode?.(), 1000)
           break
         }
         case 'navigate_unknown': {

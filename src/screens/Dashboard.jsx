@@ -23,7 +23,7 @@ const getSubGreeting = () => {
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-export default function Dashboard({ user, navigate, addMemory }) {
+export default function Dashboard({ user, navigate, addMemory, startFocusMode }) {
   const [briefing, setBriefing] = useState(null)
   const [events, setEvents] = useState(() => loadState('events', []))
   const [tasks, setTasks] = useState(() => loadState('tasks', []))
@@ -399,8 +399,9 @@ export default function Dashboard({ user, navigate, addMemory }) {
             ['TV', 'Travel', 'travel', colors.success],
             ['ML', 'Meals', 'meals', colors.secondary],
             ['BT', 'Build', 'builder', colors.primary],
+            ['FO', 'Focus', '__focus__', colors.danger],
           ].map(([icon, label, target, col]) => (
-            <button key={target} onClick={() => navigate(target)} style={{
+            <button key={target} onClick={() => target === '__focus__' ? startFocusMode?.() : navigate(target)} style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
               padding: '12px 8px', background: 'transparent',
               border: `1px solid ${colors.border}`, color: col, cursor: 'pointer',

@@ -29,14 +29,14 @@ function getStreak(log, dates) {
 }
 
 export default function HabitTracker({ user }) {
-  const [habits, setHabits] = useState(() => loadState('habits', []))
+  const [habits, setHabits] = useState(() => loadState('habits_data', []))
   const [showAdd, setShowAdd] = useState(false)
   const [newName, setNewName] = useState('')
   const [newColor, setNewColor] = useState(HABIT_COLORS[0])
   const [newFreq, setNewFreq] = useState('daily') // daily, weekdays, weekly
   const [view, setView] = useState('today') // today, grid
 
-  useEffect(() => { saveState('habits', habits) }, [habits])
+  useEffect(() => { saveState('habits_data', habits) }, [habits])
 
   const today = getDateStr()
   const last30 = getDaysInRange(30)
