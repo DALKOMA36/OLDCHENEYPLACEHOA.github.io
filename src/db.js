@@ -201,6 +201,23 @@ export const db = {
       apiFetch('/ai-app', { method: 'POST', body: { description } }),
     email: (action, emailData) =>
       apiFetch('/ai-email', { method: 'POST', body: { action, ...emailData } }),
+    tts: async (text, voice = 'alloy', speed = 1) => {
+      const token = getToken()
+      const headers = { 'Content-Type': 'application/json' }
+      if (token) headers['Authorization'] = `Bearer ${token}`
+
+      const res = await fetch('/api/tts', {
+        method: 'POST', headers,
+        body: JSON.stringify({ text, voice, speed }),
+      })
+      if (res.status === 401) { clearToken(); throw new Error('Session expired') }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'TTS failed' }))
+        throw new Error(err.error || 'TTS failed')
+      }
+      const blob = await res.blob()
+      return URL.createObjectURL(blob)
+    },
     ocr: async (images) => {
       const token = getToken()
       const headers = {}
