@@ -4,9 +4,84 @@ import { db } from '../db'
 
 const defaultGreeting = (name) => ({
   role: 'ai',
-  text: `Good to have you online${name ? `, ${name}` : ''}. I'm J.A.R.V.I.S., your personal AI assistant. I have access to your calendar, tasks, reminders, and other systems. How may I assist you?`,
+  text: `Good to have you online${name ? `, ${name}` : ''}. I'm J.A.R.V.I.S., your personal AI assistant. I have full access to your calendar, tasks, reminders, communications, and all systems. What shall we tackle?`,
   time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
 })
+
+// ---- Action parser: detect actionable items in AI responses ----
+function parseActions(text) {
+  const actions = []
+
+  // Detect task suggestions
+  const taskMatches = text.match(/(?:create|add|set up|make)\s+(?:a\s+)?task[:\s]+["']?([^"'\n.]+)/gi)
+  if (taskMatches) {
+    taskMatches.forEach(m => {
+      const title = m.replace(/(?:create|add|set up|make)\s+(?:a\s+)?task[:\s]+["']?/i, '').trim()
+      if (title) actions.push({ type: 'task', title, icon: '\u2611' })
+    })
+  }
+
+  // Detect reminder suggestions
+  const reminderMatches = text.match(/(?:set|create|add)\s+(?:a\s+)?reminder[:\s]+["']?([^"'\n.]+)/gi)
+  if (reminderMatches) {
+    reminderMatches.forEach(m => {
+      const t = m.replace(/(?:set|create|add)\s+(?:a\s+)?reminder[:\s]+["']?/i, '').trim()
+      if (t) actions.push({ type: 'reminder', text: t, icon: '\u23F0' })
+    })
+  }
+
+  // Detect event suggestions
+  const eventMatches = text.match(/(?:schedule|add|create|book)\s+(?:a\s+)?(?:meeting|event|appointment)[:\s]+["']?([^"'\n.]+)/gi)
+  if (eventMatches) {
+    eventMatches.forEach(m => {
+      const title = m.replace(/(?:schedule|add|create|book)\s+(?:a\s+)?(?:meeting|event|appointment)[:\s]+["']?/i, '').trim()
+      if (title) actions.push({ type: 'event', title, icon: '\uD83D\uDCC5' })
+    })
+  }
+
+  // Detect numbered list items as potential tasks
+  const listItems = text.match(/^\d+\.\s+(.+)/gm)
+  if (listItems && listItems.length >= 2 && text.toLowerCase().includes('task')) {
+    listItems.forEach(item => {
+      const title = item.replace(/^\d+\.\s+/, '').trim()
+      if (title.length > 3 && title.length < 100) {
+        actions.push({ type: 'task', title, icon: '\u2611' })
+      }
+    })
+  }
+
+  return actions
+}
+
+// ---- Smart quick prompts based on time/context ----
+function getSmartPrompts(appContext) {
+  const hour = new Date().getHours()
+  const prompts = []
+
+  if (hour < 12) {
+    prompts.push('Brief me on today')
+    prompts.push("What's my morning look like?")
+  } else if (hour < 17) {
+    prompts.push("What's left today?")
+    prompts.push('Summarize my afternoon')
+  } else {
+    prompts.push('Plan my evening')
+    prompts.push('Wrap up my day')
+  }
+
+  if (appContext?.pendingTasks?.length > 3) {
+    prompts.push(`Prioritize my ${appContext.pendingTasks.length} tasks`)
+  }
+
+  prompts.push('Set a reminder')
+  prompts.push('Draft a message')
+
+  if (appContext?.todayEvents?.length > 0) {
+    prompts.push("What's my next event?")
+  }
+
+  return prompts.slice(0, 5)
+}
 
 export default function Chat({ user, addMemory, navigate }) {
   const [messages, setMessages] = useState([])
@@ -14,6 +89,9 @@ export default function Chat({ user, addMemory, navigate }) {
   const [typing, setTyping] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [appContext, setAppContext] = useState(null)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [actionFeedback, setActionFeedback] = useState(null)
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
 
@@ -21,7 +99,6 @@ export default function Chat({ user, addMemory, navigate }) {
   useEffect(() => {
     let cancelled = false
     const load = async () => {
-      // Load app context for AI
       try {
         const today = new Date().toISOString().split('T')[0]
         const [events, tasks, reminders, trains] = await Promise.all([
@@ -41,7 +118,6 @@ export default function Chat({ user, addMemory, navigate }) {
         }
       } catch {}
 
-      // Load chat messages
       try {
         const rows = await db.chat.list(50)
         if (!cancelled) {
@@ -90,6 +166,50 @@ export default function Chat({ user, addMemory, navigate }) {
     return updated
   }, [persistMessage])
 
+  // ---- Execute actions from AI responses ----
+  const executeAction = async (action) => {
+    setActionFeedback({ text: 'Executing...', type: 'info' })
+    try {
+      if (action.type === 'task') {
+        await db.tasks.create({ title: action.title, priority: 'medium', category: 'personal' })
+        setActionFeedback({ text: `Task created: ${action.title}`, type: 'success' })
+      } else if (action.type === 'reminder') {
+        const tomorrow = new Date()
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        tomorrow.setHours(9, 0, 0, 0)
+        await db.reminders.create({
+          text: action.text,
+          date: tomorrow.toISOString().split('T')[0],
+          time: '09:00',
+          priority: 'normal',
+          repeat: 'none',
+        })
+        setActionFeedback({ text: `Reminder set: ${action.text}`, type: 'success' })
+      } else if (action.type === 'event') {
+        const tomorrow = new Date()
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        await db.events.create({
+          title: action.title,
+          date: tomorrow.toISOString().split('T')[0],
+          time: '10:00',
+          calendar_type: 'personal',
+        })
+        setActionFeedback({ text: `Event created: ${action.title}`, type: 'success' })
+      }
+    } catch (err) {
+      setActionFeedback({ text: `Failed: ${err.message}`, type: 'error' })
+    }
+    setTimeout(() => setActionFeedback(null), 3000)
+  }
+
+  // ---- Clear conversation ----
+  const clearChat = async () => {
+    try { await db.chat.clear() } catch {}
+    const greeting = defaultGreeting(user.name)
+    setMessages([greeting])
+    persistMessage(greeting)
+  }
+
   const send = async () => {
     if (!input.trim() || typing) return
     const text = input.trim()
@@ -101,17 +221,28 @@ export default function Chat({ user, addMemory, navigate }) {
     setTyping(true)
 
     try {
-      const result = await db.ai.chat(text, messages.slice(-20), appContext)
+      // Inject learning context
+      const memory = loadState('jarvis_learned', {})
+      const enrichedContext = {
+        ...appContext,
+        learnedPreferences: memory,
+      }
+
+      const result = await db.ai.chat(text, messages.slice(-20), enrichedContext)
       const aiMsg = {
         role: 'ai',
         text: result.response,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        actions: parseActions(result.response),
       }
       setMessages(prev => addMsg(prev, aiMsg))
+
+      // Learn from interaction
+      learnFromInteraction(text, result.response)
     } catch (err) {
       const aiMsg = {
         role: 'ai',
-        text: 'Connection to AI core interrupted. Please try again.',
+        text: 'Connection to AI core interrupted. Please try again, sir.',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       }
       setMessages(prev => addMsg(prev, aiMsg))
@@ -119,11 +250,109 @@ export default function Chat({ user, addMemory, navigate }) {
     setTyping(false)
   }
 
+  // ---- Learning system ----
+  const learnFromInteraction = (userText, aiResponse) => {
+    const memory = loadState('jarvis_learned', {
+      topics: {},
+      interactionCount: 0,
+      lastActive: null,
+      preferredTimes: {},
+    })
+
+    memory.interactionCount = (memory.interactionCount || 0) + 1
+    memory.lastActive = new Date().toISOString()
+
+    // Track active hours
+    const hour = new Date().getHours()
+    memory.preferredTimes[hour] = (memory.preferredTimes[hour] || 0) + 1
+
+    // Track topics
+    const topics = ['task', 'reminder', 'schedule', 'meal', 'train', 'email', 'travel', 'workout', 'money', 'habit']
+    for (const topic of topics) {
+      if (userText.toLowerCase().includes(topic)) {
+        memory.topics[topic] = (memory.topics[topic] || 0) + 1
+      }
+    }
+
+    saveState('jarvis_learned', memory)
+  }
+
+  // ---- Search ----
+  const filteredMessages = searchQuery
+    ? messages.filter(m => m.text.toLowerCase().includes(searchQuery.toLowerCase()))
+    : messages
+
+  const smartPrompts = getSmartPrompts(appContext)
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)', height: 'calc(100dvh - 120px)' }}>
+
+      {/* Header bar */}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '8px 16px', borderBottom: `1px solid ${colors.border}`, flexShrink: 0,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            width: 8, height: 8, borderRadius: '50%',
+            background: colors.primary, boxShadow: `0 0 8px ${colors.primary}`,
+            animation: 'pulse 2s ease-in-out infinite',
+          }} />
+          <span style={{
+            color: colors.primary, fontSize: 10, fontWeight: 600,
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 2,
+          }}>J.A.R.V.I.S. INTERFACE</span>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => setSearchOpen(!searchOpen)} style={headerBtn}>
+            {searchOpen ? 'CLOSE' : 'SEARCH'}
+          </button>
+          <button onClick={clearChat} style={headerBtn}>CLEAR</button>
+        </div>
+      </div>
+
+      {/* Search bar */}
+      {searchOpen && (
+        <div style={{ padding: '8px 16px', borderBottom: `1px solid ${colors.border}`, flexShrink: 0 }}>
+          <input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search conversations..."
+            autoFocus
+            style={{
+              width: '100%', padding: '8px 12px',
+              background: colors.surface, border: `1px solid ${colors.border}`,
+              color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif",
+            }}
+          />
+          {searchQuery && (
+            <div style={{ color: colors.textMuted, fontSize: 9, marginTop: 4, fontFamily: "'JetBrains Mono', monospace" }}>
+              {filteredMessages.length} result{filteredMessages.length !== 1 ? 's' : ''}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Action feedback toast */}
+      {actionFeedback && (
+        <div style={{
+          padding: '8px 16px', flexShrink: 0,
+          background: actionFeedback.type === 'success' ? 'rgba(0, 230, 118, 0.1)' :
+            actionFeedback.type === 'error' ? 'rgba(255, 77, 77, 0.1)' : colors.primaryDim,
+          borderBottom: `1px solid ${actionFeedback.type === 'success' ? colors.success :
+            actionFeedback.type === 'error' ? colors.danger : colors.primary}`,
+        }}>
+          <span style={{
+            color: actionFeedback.type === 'success' ? colors.success :
+              actionFeedback.type === 'error' ? colors.danger : colors.primary,
+            fontSize: 10, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+          }}>{actionFeedback.text}</span>
+        </div>
+      )}
+
       {/* Messages */}
       <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
-        {messages.map((msg, i) => (
+        {filteredMessages.map((msg, i) => (
           <div key={i} style={{
             display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
             marginBottom: 12, animation: 'fadeIn 0.3s ease',
@@ -141,16 +370,32 @@ export default function Chat({ user, addMemory, navigate }) {
                   }} />
                   <span style={{
                     color: colors.primary, fontSize: 10,
-                    fontFamily: "'JetBrains Mono', monospace",
-                    letterSpacing: 1,
+                    fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
                   }}>JARVIS</span>
                 </div>
               )}
               <p style={{
                 color: colors.text, fontSize: 13, lineHeight: 1.6, margin: 0,
-                fontFamily: "'Exo 2', sans-serif",
-                whiteSpace: 'pre-wrap',
+                fontFamily: "'Exo 2', sans-serif", whiteSpace: 'pre-wrap',
               }}>{msg.text}</p>
+
+              {/* Inline action buttons */}
+              {msg.actions && msg.actions.length > 0 && (
+                <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {msg.actions.slice(0, 5).map((action, ai) => (
+                    <button key={ai} onClick={() => executeAction(action)} style={{
+                      padding: '4px 10px', fontSize: 9,
+                      background: 'rgba(0, 230, 118, 0.1)',
+                      border: `1px solid ${colors.success}`,
+                      color: colors.success, cursor: 'pointer',
+                      fontFamily: "'JetBrains Mono', monospace", letterSpacing: 0.5,
+                    }}>
+                      {action.icon} {action.type.toUpperCase()}: {action.title || action.text}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               <div style={{
                 color: colors.textMuted, fontSize: 9, marginTop: 6, textAlign: 'right',
                 fontFamily: "'JetBrains Mono', monospace",
@@ -162,19 +407,16 @@ export default function Chat({ user, addMemory, navigate }) {
           <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 12 }}>
             <div style={{
               padding: '12px 20px',
-              background: colors.surfaceLight,
-              border: `1px solid ${colors.border}`,
+              background: colors.surfaceLight, border: `1px solid ${colors.border}`,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{
-                  width: 6, height: 6, borderRadius: '50%',
-                  background: colors.primary,
+                  width: 6, height: 6, borderRadius: '50%', background: colors.primary,
                   animation: 'pulse 1s ease-in-out infinite',
                 }} />
                 <span style={{
                   color: colors.textMuted, fontSize: 10,
-                  fontFamily: "'JetBrains Mono', monospace",
-                  letterSpacing: 1,
+                  fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
                 }}>PROCESSING</span>
               </div>
             </div>
@@ -183,18 +425,15 @@ export default function Chat({ user, addMemory, navigate }) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Quick actions */}
+      {/* Smart quick actions */}
       <div style={{ padding: '6px 16px', display: 'flex', gap: 6, overflowX: 'auto', flexShrink: 0 }}>
-        {['Brief me on today', 'What tasks are pending?', 'Plan my evening', 'Set a reminder'].map(s => (
+        {smartPrompts.map(s => (
           <button key={s} onClick={() => { setInput(s); setTimeout(() => inputRef.current?.focus(), 50) }} style={{
-            padding: '5px 12px',
-            background: 'transparent',
+            padding: '5px 12px', background: 'transparent',
             border: `1px solid ${colors.border}`,
             color: colors.textMuted, fontSize: 10, cursor: 'pointer',
-            whiteSpace: 'nowrap',
-            fontFamily: "'JetBrains Mono', monospace",
-            letterSpacing: 0.5,
-            transition: 'all 0.15s ease',
+            whiteSpace: 'nowrap', fontFamily: "'JetBrains Mono', monospace",
+            letterSpacing: 0.5, transition: 'all 0.15s ease',
           }}>{s}</button>
         ))}
       </div>
@@ -210,10 +449,8 @@ export default function Chat({ user, addMemory, navigate }) {
           disabled={typing}
           style={{
             flex: 1, padding: '11px 14px',
-            background: colors.surface,
-            border: `1px solid ${colors.border}`,
-            color: colors.text, fontSize: 13,
-            fontFamily: "'Exo 2', sans-serif",
+            background: colors.surface, border: `1px solid ${colors.border}`,
+            color: colors.text, fontSize: 13, fontFamily: "'Exo 2', sans-serif",
             transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
           }}
         />
@@ -236,4 +473,11 @@ export default function Chat({ user, addMemory, navigate }) {
       `}</style>
     </div>
   )
+}
+
+const headerBtn = {
+  padding: '4px 10px', background: 'transparent',
+  border: `1px solid ${colors.border}`, color: colors.textMuted,
+  fontSize: 8, cursor: 'pointer',
+  fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
 }
