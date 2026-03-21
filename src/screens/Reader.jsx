@@ -372,6 +372,12 @@ export default function Reader({ user }) {
     setLoading(false)
   }
 
+  // Scan page management state
+  const [pageTexts, setPageTexts] = useState([]) // { file, text, status } per page
+  const [editingPageIdx, setEditingPageIdx] = useState(null)
+  const [editPageText, setEditPageText] = useState('')
+  const insertInputRef = useRef(null)
+
   const handlePhotos = (e) => {
     const files = Array.from(e.target.files || [])
     if (files.length === 0) return
@@ -380,6 +386,80 @@ export default function Reader({ user }) {
 
   const removePage = (index) => {
     setPages(prev => prev.filter((_, i) => i !== index))
+    setPageTexts(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const movePage = (from, to) => {
+    if (to < 0 || to >= pages.length) return
+    setPages(prev => {
+      const copy = [...prev]
+      const [item] = copy.splice(from, 1)
+      copy.splice(to, 0, item)
+      return copy
+    })
+    setPageTexts(prev => {
+      const copy = [...prev]
+      const [item] = copy.splice(from, 1)
+      copy.splice(to, 0, item)
+      return copy
+    })
+  }
+
+  const insertPageAt = (index) => {
+    // Trigger file input, insert at position
+    insertInputRef.current._insertAt = index
+    insertInputRef.current.click()
+  }
+
+  const handleInsertPage = (e) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
+    const insertAt = insertInputRef.current._insertAt ?? pages.length
+    setPages(prev => {
+      const copy = [...prev]
+      copy.splice(insertAt, 0, ...files)
+      return copy
+    })
+    // Insert empty texts at position
+    setPageTexts(prev => {
+      const copy = [...prev]
+      copy.splice(insertAt, 0, ...files.map(() => ({ text: '', status: 'pending' })))
+      return copy
+    })
+    if (insertInputRef.current) insertInputRef.current.value = ''
+  }
+
+  const rescanPage = async (index) => {
+    if (!pages[index]) return
+    setPageTexts(prev => {
+      const copy = [...prev]
+      copy[index] = { text: '', status: 'scanning' }
+      return copy
+    })
+    try {
+      const result = await db.ai.ocr([pages[index]])
+      setPageTexts(prev => {
+        const copy = [...prev]
+        copy[index] = { text: result.text || '', status: result.text ? 'done' : 'error' }
+        return copy
+      })
+    } catch (err) {
+      setPageTexts(prev => {
+        const copy = [...prev]
+        copy[index] = { text: '', status: 'error' }
+        return copy
+      })
+    }
+  }
+
+  const editPageTextSave = (index) => {
+    setPageTexts(prev => {
+      const copy = [...prev]
+      copy[index] = { text: editPageText, status: 'edited' }
+      return copy
+    })
+    setEditingPageIdx(null)
+    setEditPageText('')
   }
 
   const processPages = async () => {
@@ -387,19 +467,54 @@ export default function Reader({ user }) {
     setScanning(true)
     setScanProgress(`Processing ${pages.length} page${pages.length > 1 ? 's' : ''}...`)
     setError('')
-    try {
-      const result = await db.ai.ocr(pages)
-      if (result.text) {
-        setText(prev => prev ? prev + '\n\n' + result.text : result.text)
-        setScanProgress(`Extracted text from ${result.pages || pages.length} page(s)`)
-        setTitle('Scanned Document')
-        setPages([])
-      } else {
-        setError(result.error || 'No text extracted')
-        setScanProgress('')
+
+    // Process pages that haven't been scanned yet
+    const newTexts = [...pageTexts]
+    // Pad array to match pages
+    while (newTexts.length < pages.length) {
+      newTexts.push({ text: '', status: 'pending' })
+    }
+
+    const unscanned = []
+    for (let i = 0; i < pages.length; i++) {
+      if (newTexts[i].status === 'pending' || newTexts[i].status === 'error') {
+        unscanned.push(i)
       }
-    } catch (err) {
-      setError(err.message)
+    }
+
+    if (unscanned.length > 0) {
+      const unscannedFiles = unscanned.map(i => pages[i])
+      try {
+        // OCR all unscanned at once
+        const result = await db.ai.ocr(unscannedFiles)
+        if (result.text) {
+          // Split by double newline to separate pages (rough heuristic)
+          const pageResults = result.text.split(/\n{3,}/)
+          for (let j = 0; j < unscanned.length; j++) {
+            newTexts[unscanned[j]] = {
+              text: pageResults[j] || pageResults[0] || result.text,
+              status: 'done'
+            }
+          }
+        }
+      } catch (err) {
+        setError(err.message)
+        setScanProgress('')
+        setScanning(false)
+        return
+      }
+    }
+
+    setPageTexts(newTexts)
+
+    // Combine all page texts in order
+    const combinedText = newTexts.map(p => p.text).filter(t => t).join('\n\n')
+    if (combinedText) {
+      setText(combinedText)
+      setScanProgress(`Extracted text from ${pages.length} page(s)`)
+      setTitle(title || 'Scanned Document')
+    } else {
+      setError('No text extracted from any page')
       setScanProgress('')
     }
     setScanning(false)
@@ -1729,6 +1844,15 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
             onChange={handlePhotos}
             style={{ display: 'none' }}
           />
+          <input
+            ref={insertInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            capture="environment"
+            onChange={handleInsertPage}
+            style={{ display: 'none' }}
+          />
 
           <button onClick={() => fileInputRef.current?.click()} disabled={scanning} style={{
             width: '100%', padding: 14,
@@ -1742,33 +1866,105 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
           {pages.length > 0 && (
             <div style={{ marginTop: 10 }}>
               <div style={{
-                color: colors.textMuted, fontSize: 9, marginBottom: 6,
-                fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
-              }}>{pages.length} PAGE{pages.length > 1 ? 'S' : ''} QUEUED</div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
-                {pages.map((file, i) => (
-                  <div key={i} style={{ position: 'relative' }}>
-                    <img
-                      src={URL.createObjectURL(file)}
-                      style={{ width: 60, height: 80, objectFit: 'cover', border: `1px solid ${colors.border}` }}
-                    />
-                    <button onClick={() => removePage(i)} style={{
-                      position: 'absolute', top: -6, right: -6,
-                      width: 18, height: 18, borderRadius: '50%',
-                      background: colors.danger, border: 'none',
-                      color: '#fff', fontSize: 10, cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>x</button>
-                    <div style={{
-                      textAlign: 'center', color: colors.textMuted, fontSize: 8,
-                      fontFamily: "'JetBrains Mono', monospace",
-                    }}>P{i + 1}</div>
-                  </div>
-                ))}
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8,
+              }}>
+                <div style={{
+                  color: colors.textMuted, fontSize: 9,
+                  fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+                }}>{pages.length} PAGE{pages.length > 1 ? 'S' : ''}</div>
+                <div style={{
+                  color: colors.textMuted, fontSize: 7,
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}>TAP TO RESCAN // ARROWS TO REORDER</div>
               </div>
 
+              {/* Page cards with full management */}
+              {pages.map((file, i) => {
+                const pt = pageTexts[i]
+                const statusColor = pt?.status === 'done' ? colors.success
+                  : pt?.status === 'edited' ? colors.secondary
+                  : pt?.status === 'scanning' ? colors.primary
+                  : pt?.status === 'error' ? colors.danger
+                  : colors.textMuted
+
+                return (
+                  <div key={i} style={{
+                    display: 'flex', gap: 8, marginBottom: 6, padding: 8,
+                    border: `1px solid ${colors.border}`, background: colors.surface,
+                    alignItems: 'flex-start',
+                  }}>
+                    {/* Thumbnail */}
+                    <img
+                      src={URL.createObjectURL(file)}
+                      style={{ width: 50, height: 65, objectFit: 'cover', border: `1px solid ${colors.border}`, flexShrink: 0 }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {/* Page header */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <span style={{ color: colors.text, fontSize: 10, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>
+                          PAGE {i + 1}
+                        </span>
+                        <span style={{ fontSize: 7, color: statusColor, fontFamily: "'JetBrains Mono', monospace" }}>
+                          {pt?.status === 'done' ? 'SCANNED' : pt?.status === 'edited' ? 'EDITED' : pt?.status === 'scanning' ? 'SCANNING...' : pt?.status === 'error' ? 'ERROR' : 'QUEUED'}
+                        </span>
+                      </div>
+
+                      {/* Text preview */}
+                      {pt?.text && editingPageIdx !== i && (
+                        <div style={{
+                          color: colors.textMuted, fontSize: 9, lineHeight: 1.4,
+                          maxHeight: 36, overflow: 'hidden',
+                          fontFamily: "'Exo 2', sans-serif",
+                        }}>{pt.text.slice(0, 120)}...</div>
+                      )}
+
+                      {/* Inline page text editor */}
+                      {editingPageIdx === i && (
+                        <div style={{ marginTop: 4 }}>
+                          <textarea
+                            value={editPageText}
+                            onChange={e => setEditPageText(e.target.value)}
+                            style={{
+                              width: '100%', minHeight: 60, padding: 6,
+                              background: colors.surfaceLight, border: `1px solid ${colors.border}`,
+                              color: colors.text, fontSize: 10, fontFamily: "'Exo 2', sans-serif",
+                              resize: 'vertical',
+                            }}
+                          />
+                          <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                            <button onClick={() => editPageTextSave(i)} style={{ ...tinyBtn, color: colors.success, borderColor: colors.success }}>SAVE</button>
+                            <button onClick={() => setEditingPageIdx(null)} style={tinyBtn}>CANCEL</button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action buttons */}
+                      <div style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap' }}>
+                        <button onClick={() => rescanPage(i)} disabled={pt?.status === 'scanning'} style={tinyBtn}>
+                          {pt?.status === 'scanning' ? '...' : 'RESCAN'}
+                        </button>
+                        <button onClick={() => { setEditingPageIdx(i); setEditPageText(pt?.text || '') }} style={tinyBtn}>EDIT</button>
+                        <button onClick={() => insertPageAt(i)} style={tinyBtn}>INSERT BEFORE</button>
+                        <button onClick={() => movePage(i, i - 1)} disabled={i === 0} style={tinyBtn}>UP</button>
+                        <button onClick={() => movePage(i, i + 1)} disabled={i === pages.length - 1} style={tinyBtn}>DOWN</button>
+                        <button onClick={() => removePage(i)} style={{ ...tinyBtn, color: colors.danger, borderColor: colors.danger }}>DEL</button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+
+              {/* Add more pages */}
+              <button onClick={() => insertPageAt(pages.length)} style={{
+                width: '100%', padding: 8, marginTop: 4,
+                background: 'transparent', border: `1px dashed ${colors.border}`,
+                color: colors.textMuted, fontSize: 9, cursor: 'pointer',
+                fontFamily: "'JetBrains Mono', monospace",
+              }}>+ ADD MORE PAGES</button>
+
+              {/* Extract button */}
               <button onClick={processPages} disabled={scanning} style={{
-                width: '100%', padding: 12,
+                width: '100%', padding: 12, marginTop: 8,
                 background: scanning ? 'transparent' : colors.primaryDim,
                 border: `1px solid ${scanning ? colors.border : colors.primary}`,
                 color: scanning ? colors.textMuted : colors.primary,
@@ -1788,7 +1984,7 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
             color: colors.textMuted, fontSize: 8, marginTop: 8,
             fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.6,
           }}>
-            Take photos of book pages in order. JARVIS uses AI vision to extract the text.
+            Scan book pages in order. Rescan bad pages, edit text, reorder, or insert missing pages. JARVIS uses AI vision to extract text.
           </div>
         </div>
       )}
