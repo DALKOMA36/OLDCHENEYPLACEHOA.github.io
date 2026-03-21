@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { colors, loadState, saveState } from '../constants'
 import { db } from '../db'
+import { isOffline, parseOfflineCommand, cacheResponse, findCachedResponse, queueAction, learnPattern, logFeatureAttempt } from '../offline'
 
 const defaultGreeting = (name) => ({
   role: 'ai',
@@ -220,8 +221,103 @@ export default function Chat({ user, addMemory, navigate }) {
     setInput('')
     setTyping(true)
 
+    // Learn from every interaction
+    learnPattern('query', { query: text })
+
+    // ---- Try offline command first ----
+    const offlineCmd = parseOfflineCommand(text)
+
+    if (offlineCmd) {
+      // Handle local commands (works online AND offline)
+      let response = offlineCmd.response
+
+      // Fill schedule queries from local context
+      if (offlineCmd.type === 'schedule_query' && appContext) {
+        const events = appContext.todayEvents || []
+        const now = new Date()
+        const upcoming = events.filter(e => {
+          if (!e.time) return true
+          const [h, m] = e.time.split(':').map(Number)
+          const t = new Date(); t.setHours(h, m, 0, 0)
+          return t > now
+        })
+        response = upcoming.length > 0
+          ? `Your next event is "${upcoming[0].title}" at ${upcoming[0].time}${upcoming[0].location ? ` at ${upcoming[0].location}` : ''}. You have ${upcoming.length} more event${upcoming.length > 1 ? 's' : ''} today.`
+          : 'Your schedule is clear for the rest of the day, sir.'
+      }
+
+      if (offlineCmd.type === 'task_count_query' && appContext) {
+        const tasks = appContext.pendingTasks || []
+        response = `You have ${tasks.length} pending task${tasks.length !== 1 ? 's' : ''}${tasks.length > 0 ? ': ' + tasks.slice(0, 3).map(t => t.title).join(', ') : ''}.`
+      }
+
+      // Execute create actions
+      if (offlineCmd.type === 'create_task') {
+        if (isOffline()) {
+          queueAction({ type: 'task', data: offlineCmd.data })
+        } else {
+          try { await db.tasks.create(offlineCmd.data) } catch { queueAction({ type: 'task', data: offlineCmd.data }) }
+        }
+        learnPattern('task_created', offlineCmd.data)
+      }
+      if (offlineCmd.type === 'create_reminder') {
+        if (isOffline()) {
+          queueAction({ type: 'reminder', data: offlineCmd.data })
+        } else {
+          try { await db.reminders.create(offlineCmd.data) } catch { queueAction({ type: 'reminder', data: offlineCmd.data }) }
+        }
+      }
+      if (offlineCmd.type === 'timer') {
+        setTimeout(() => {
+          if ('speechSynthesis' in window) {
+            const utter = new SpeechSynthesisUtterance("Timer complete, sir.")
+            window.speechSynthesis.speak(utter)
+          }
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('J.A.R.V.I.S.', { body: 'Timer complete, sir.' })
+          }
+        }, offlineCmd.duration)
+      }
+
+      const aiMsg = {
+        role: 'ai',
+        text: response,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        offline: true,
+      }
+      setMessages(prev => addMsg(prev, aiMsg))
+      setTyping(false)
+      return
+    }
+
+    // ---- Online AI (or cached fallback) ----
+    if (isOffline()) {
+      // Try cached response
+      const cached = findCachedResponse(text)
+      if (cached) {
+        const aiMsg = {
+          role: 'ai',
+          text: `[From memory] ${cached}`,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          offline: true,
+        }
+        setMessages(prev => addMsg(prev, aiMsg))
+      } else {
+        logFeatureAttempt(text)
+        const aiMsg = {
+          role: 'ai',
+          text: "I'm currently offline and don't have a cached response for that. I've noted your request — I'll be able to help fully when we reconnect. In the meantime, I can still add tasks, set reminders, set timers, do calculations, and check your schedule.",
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          offline: true,
+        }
+        setMessages(prev => addMsg(prev, aiMsg))
+      }
+      setTyping(false)
+      return
+    }
+
+    // ---- Online: full AI ----
     try {
-      // Inject learning context
       const memory = loadState('jarvis_learned', {})
       const enrichedContext = {
         ...appContext,
@@ -237,13 +333,19 @@ export default function Chat({ user, addMemory, navigate }) {
       }
       setMessages(prev => addMsg(prev, aiMsg))
 
-      // Learn from interaction
+      // Cache for offline use
+      cacheResponse(text, result.response)
       learnFromInteraction(text, result.response)
     } catch (err) {
+      // Network error — try cache
+      const cached = findCachedResponse(text)
       const aiMsg = {
         role: 'ai',
-        text: 'Connection to AI core interrupted. Please try again, sir.',
+        text: cached
+          ? `[From memory] ${cached}`
+          : 'Connection to AI core interrupted. Please try again, sir.',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        offline: !!cached,
       }
       setMessages(prev => addMsg(prev, aiMsg))
     }
