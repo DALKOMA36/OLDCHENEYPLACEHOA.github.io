@@ -15,6 +15,7 @@ import TrainTracker from './screens/TrainTracker'
 import Reader from './screens/Reader'
 import HabitTracker from './screens/HabitTracker'
 import Finance from './screens/Finance'
+import MediaHub from './screens/MediaHub'
 import JarvisCheckin from './JarvisCheckin'
 import CalendarSync from './CalendarSync'
 import { db, auth } from './db'
@@ -36,11 +37,12 @@ const SCREENS = {
   reminders: { label: 'Remind', icon: 'RM', component: Reminders },
   habits: { label: 'Habits', icon: 'HB', component: HabitTracker },
   finance: { label: 'Finance', icon: 'FN', component: Finance },
+  media: { label: 'Media', icon: 'MD', component: MediaHub },
   settings: { label: 'Settings', icon: 'SY', component: Settings },
 }
 
 const NAV_ITEMS = ['dashboard', 'trains', 'chat', 'tasks', 'settings']
-const MENU_ITEMS = ['meals', 'scanner', 'channels', 'voice', 'reader', 'travel', 'builder', 'reminders', 'habits', 'finance']
+const MENU_ITEMS = ['meals', 'scanner', 'channels', 'voice', 'reader', 'travel', 'builder', 'reminders', 'habits', 'finance', 'media']
 
 export { colors, loadState, saveState }
 
