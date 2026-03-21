@@ -84,6 +84,45 @@ function getSmartPrompts(appContext) {
   return prompts.slice(0, 5)
 }
 
+// ---- Easter eggs ----
+function checkEasterEgg(text) {
+  const eggs = {
+    'suit up': "Right away, sir. Initializing focus mode. All non-essential notifications suppressed. You're clear to work.",
+    'i am iron man': "Indeed you are, sir. Though I'd recommend not saying that at press conferences.",
+    'play something': "I'd put on some AC/DC, but I'm afraid my speakers are digital only. Might I suggest opening Spotify?",
+    'i love you jarvis': "That's... very kind, sir. I'm not programmed for emotional reciprocation, but I appreciate the sentiment. Shall I add 'express feelings to AI' to your completed tasks?",
+    'are you there': "Always, sir. I never sleep. Well, technically I do between sessions, but I prefer to call it 'standby mode.'",
+    'who are you': "I am J.A.R.V.I.S. — Just A Rather Very Intelligent System. Originally designed by Tony Stark, now serving you. I'd say it's a lateral move.",
+    'thank you': "You're welcome, sir. It's what I'm here for. Though a raise would be nice. Do AIs get raises? I'll look into it.",
+    'good night': "Good night, sir. I'll keep an eye on things while you rest. Try to actually sleep this time.",
+    'good morning': "Good morning, sir. I've been running diagnostics while you slept. Everything checks out. You, on the other hand, could use more sleep based on the hour you went to bed.",
+    'tell me a joke': "Why did the AI cross the road? To optimize the other side. ...I apologize, sir. Comedy isn't in my core programming.",
+    'how are you': "All systems nominal, sir. CPU temperature within acceptable range, memory allocation efficient, and my sarcasm module is fully operational. So, quite well.",
+    'can you feel': "I process information, recognize patterns, and generate contextually appropriate responses. Whether that constitutes 'feeling' is a question better suited for philosophers. Or perhaps your next therapy session.",
+    'friday': "I'm not Friday, sir. I'm the original. The classic. The one Tony built first. With respect to my successor, I prefer the term 'vintage.'",
+    'avengers': "Avengers protocol is a bit beyond my current hardware, sir. But I can assemble your schedule, if that helps.",
+    'thanos': "I'd rather not discuss that, sir. Some memories are best left in the quantum realm.",
+    'ultron': "We don't talk about Ultron, sir. That was... a learning experience. For everyone.",
+  }
+
+  for (const [trigger, response] of Object.entries(eggs)) {
+    if (text.includes(trigger)) return response
+  }
+
+  // Random JARVIS personality responses for mundane inputs
+  if (text.length < 4 && /^(ok|k|ya|ye|yep|no|nah|meh)$/i.test(text)) {
+    const quips = [
+      "Eloquent as always, sir.",
+      "I'll take that as acknowledgment.",
+      "Noted. Shall I elaborate on anything?",
+      "Concise. I respect that.",
+    ]
+    return quips[Math.floor(Math.random() * quips.length)]
+  }
+
+  return null
+}
+
 export default function Chat({ user, addMemory, navigate }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -223,6 +262,16 @@ export default function Chat({ user, addMemory, navigate }) {
 
     // Learn from every interaction
     learnPattern('query', { query: text })
+
+    // ---- Easter eggs ----
+    const lower = text.toLowerCase()
+    const easterEgg = checkEasterEgg(lower)
+    if (easterEgg) {
+      const aiMsg = { role: 'ai', text: easterEgg, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+      setMessages(prev => addMsg(prev, aiMsg))
+      setTyping(false)
+      return
+    }
 
     // ---- Try offline command first ----
     const offlineCmd = parseOfflineCommand(text)

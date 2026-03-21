@@ -18,6 +18,7 @@ import Finance from './screens/Finance'
 import MediaHub from './screens/MediaHub'
 import JarvisCheckin from './JarvisCheckin'
 import CalendarSync from './CalendarSync'
+import BootSequence from './BootSequence'
 import { syncQueue, isOffline } from './offline'
 import { db, auth } from './db'
 import { colors, loadState, saveState } from './constants'
@@ -51,6 +52,7 @@ export default function App() {
   const [screen, setScreen] = useState('dashboard')
   const [menuOpen, setMenuOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [booting, setBooting] = useState(true)
   const [authState, setAuthState] = useState('checking') // checking, login, register, authenticated
   const [user, setUser] = useState({
     name: '',
@@ -458,6 +460,9 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Boot sequence overlay */}
+      {booting && <BootSequence user={user} onComplete={() => setBooting(false)} />}
 
       {/* Main content */}
       <main style={{ flex: 1, overflowY: 'auto', paddingBottom: 72 }}>
