@@ -16,6 +16,7 @@ import Reader from './screens/Reader'
 import HabitTracker from './screens/HabitTracker'
 import Finance from './screens/Finance'
 import JarvisCheckin from './JarvisCheckin'
+import CalendarSync from './CalendarSync'
 import { db, auth } from './db'
 import { colors, loadState, saveState } from './constants'
 
@@ -460,8 +461,9 @@ export default function App() {
         <CurrentScreen user={user} updateUser={updateUser} addMemory={addMemory} navigate={navigate} />
       </main>
 
-      {/* JARVIS proactive check-in overlay */}
+      {/* Background systems */}
       <JarvisCheckin user={user} />
+      <CalendarSync />
 
       {/* Bottom nav */}
       <nav style={{

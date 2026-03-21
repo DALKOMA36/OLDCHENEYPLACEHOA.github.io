@@ -192,7 +192,7 @@ export default function Settings({ user, updateUser, addMemory }) {
 
       {/* Morning Briefing */}
       {/* Calendar Sync */}
-      <CalendarSync />
+      <CalendarSyncSettings />
 
       <Section title="BRIEFING SCHEDULE">
         <div style={{ padding: '10px 14px' }}>
@@ -471,51 +471,181 @@ export default function Settings({ user, updateUser, addMemory }) {
   )
 }
 
-function CalendarSync() {
-  const [icsUrl, setIcsUrl] = useState(loadState('icsUrl', ''))
+function CalendarSyncSettings() {
+  const [feeds, setFeeds] = useState(() => loadState('ics_feeds', []))
+  const [icsUrl, setIcsUrl] = useState('')
+  const [feedName, setFeedName] = useState('')
+  const [provider, setProvider] = useState('google')
   const [syncing, setSyncing] = useState(false)
   const [syncResult, setSyncResult] = useState('')
+  const [showAdd, setShowAdd] = useState(false)
 
-  const syncCalendar = async () => {
+  const CAL_PROVIDERS = [
+    { id: 'google', name: 'Google', help: 'Google Calendar → Settings → your calendar → "Secret address in iCal format". Copy the URL. Google never sees your JARVIS data — one-way pull only.' },
+    { id: 'apple', name: 'Apple iCloud', help: 'Calendar app → right-click calendar → Share → Public Calendar. Copy the URL. Or use iCloud.com → Calendar → Share.' },
+    { id: 'outlook', name: 'Outlook', help: 'Outlook.com → Calendar → Settings → Shared calendars → Publish. Copy the ICS link.' },
+    { id: 'custom', name: 'Other ICS', help: 'Paste any ICS/webcal feed URL.' },
+  ]
+
+  const addFeed = async () => {
     if (!icsUrl.trim()) return
     setSyncing(true)
     setSyncResult('')
     try {
       const result = await db.ics.import(icsUrl.trim())
-      if (result.success) {
-        saveState('icsUrl', icsUrl.trim())
-        setSyncResult(`Imported ${result.imported} new events (${result.total} total in feed)`)
-      } else {
-        setSyncResult(result.error || 'Sync failed')
+      const feed = {
+        id: Date.now().toString(),
+        name: feedName.trim() || CAL_PROVIDERS.find(p => p.id === provider)?.name || 'Calendar',
+        url: icsUrl.trim(),
+        provider,
+        lastSync: new Date().toISOString(),
+        eventCount: result.imported || 0,
       }
+      const updated = [...feeds, feed]
+      setFeeds(updated)
+      saveState('ics_feeds', updated)
+      setSyncResult(`Added! Imported ${result.imported || 0} events.`)
+      setIcsUrl('')
+      setFeedName('')
+      setShowAdd(false)
     } catch (err) {
-      setSyncResult(err.message)
+      setSyncResult(`Error: ${err.message}`)
     }
     setSyncing(false)
   }
+
+  const removeFeed = (id) => {
+    const updated = feeds.filter(f => f.id !== id)
+    setFeeds(updated)
+    saveState('ics_feeds', updated)
+  }
+
+  const syncNow = async (feed) => {
+    setSyncing(true)
+    try {
+      const result = await db.ics.import(feed.url)
+      const updated = feeds.map(f => f.id === feed.id ? {
+        ...f, lastSync: new Date().toISOString(), eventCount: result.imported || 0,
+      } : f)
+      setFeeds(updated)
+      saveState('ics_feeds', updated)
+      setSyncResult(`Synced ${feed.name}: ${result.imported || 0} events`)
+    } catch (err) {
+      setSyncResult(`Sync failed: ${err.message}`)
+    }
+    setSyncing(false)
+  }
+
+  const lastSync = loadState('ics_last_sync', null)
 
   return (
     <Section title="CALENDAR SYNC">
       <div style={{ padding: '10px 14px' }}>
         <div style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8, lineHeight: 1.6 }}>
-          Paste an ICS calendar URL from Outlook, Google, or Apple to import events.
-          Find it in your calendar's sharing/publish settings.
+          Import calendars from Google, Apple, or Outlook. One-way pull — your JARVIS data is never shared. Auto-syncs every 30 minutes.
         </div>
-        <input
-          value={icsUrl}
-          onChange={e => setIcsUrl(e.target.value)}
-          placeholder="https://outlook.office365.com/owa/calendar/..."
-          style={{ ...inputStyle, width: '100%', marginBottom: 6 }}
-        />
-        <button onClick={syncCalendar} disabled={!icsUrl.trim() || syncing} style={{
-          width: '100%', padding: 8,
-          background: icsUrl.trim() && !syncing ? colors.primaryDim : 'transparent',
-          border: `1px solid ${icsUrl.trim() && !syncing ? colors.primary : colors.border}`,
-          color: icsUrl.trim() && !syncing ? colors.primary : colors.textMuted,
-          fontSize: 10, cursor: icsUrl.trim() && !syncing ? 'pointer' : 'default',
-          fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
-        }}>{syncing ? 'SYNCING...' : 'SYNC CALENDAR'}</button>
-        {syncResult && <div style={{ color: syncResult.includes('Imported') ? colors.success : colors.danger, fontSize: 9, marginTop: 6, fontFamily: "'JetBrains Mono', monospace" }}>{syncResult}</div>}
+
+        {lastSync && (
+          <div style={{ color: colors.textMuted, fontSize: 8, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8 }}>
+            LAST AUTO-SYNC: {new Date(lastSync).toLocaleString()}
+          </div>
+        )}
+
+        {/* Existing feeds */}
+        {feeds.map(feed => (
+          <div key={feed.id} style={{
+            display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', marginBottom: 4,
+            background: colors.surfaceLight, border: `1px solid ${colors.border}`,
+          }}>
+            <span style={{
+              color: feed.provider === 'google' ? '#4285f4' : feed.provider === 'apple' ? '#a0a0a0' : colors.primary,
+              fontSize: 9, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace",
+            }}>{feed.provider === 'google' ? 'GC' : feed.provider === 'apple' ? 'AP' : feed.provider === 'outlook' ? 'OL' : 'IC'}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: colors.text, fontSize: 11, fontFamily: "'Exo 2', sans-serif" }}>{feed.name}</div>
+              <div style={{ color: colors.textMuted, fontSize: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+                {feed.eventCount} events // synced {feed.lastSync ? new Date(feed.lastSync).toLocaleDateString() : 'never'}
+              </div>
+            </div>
+            <button onClick={() => syncNow(feed)} disabled={syncing} style={{
+              padding: '3px 8px', fontSize: 8, background: 'transparent',
+              border: `1px solid ${colors.border}`, color: colors.textMuted,
+              cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace",
+            }}>SYNC</button>
+            <button onClick={() => removeFeed(feed.id)} style={{
+              padding: '3px 8px', fontSize: 8, background: 'transparent',
+              border: `1px solid ${colors.danger}`, color: colors.danger,
+              cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace",
+            }}>DEL</button>
+          </div>
+        ))}
+
+        {/* Add feed */}
+        {!showAdd ? (
+          <button onClick={() => setShowAdd(true)} style={{
+            width: '100%', padding: 10, marginTop: 6,
+            background: 'transparent', border: `1px dashed ${colors.border}`,
+            color: colors.textMuted, fontSize: 9, cursor: 'pointer',
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+          }}>+ ADD CALENDAR FEED</button>
+        ) : (
+          <div style={{ marginTop: 8, padding: 10, border: `1px solid ${colors.border}`, background: colors.surfaceLight }}>
+            {/* Provider selection */}
+            <div style={{ display: 'flex', gap: 4, marginBottom: 8, flexWrap: 'wrap' }}>
+              {CAL_PROVIDERS.map(p => (
+                <button key={p.id} onClick={() => setProvider(p.id)} style={{
+                  padding: '4px 10px', fontSize: 9,
+                  background: provider === p.id ? colors.primaryDim : 'transparent',
+                  border: `1px solid ${provider === p.id ? colors.primary : colors.border}`,
+                  color: provider === p.id ? colors.primary : colors.textMuted,
+                  cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace",
+                }}>{p.name}</button>
+              ))}
+            </div>
+
+            {/* Provider help */}
+            <div style={{
+              color: colors.textSecondary, fontSize: 9, marginBottom: 8, lineHeight: 1.6,
+              fontFamily: "'JetBrains Mono', monospace", padding: 8,
+              background: colors.primaryDim, border: `1px solid ${colors.border}`,
+            }}>
+              {CAL_PROVIDERS.find(p => p.id === provider)?.help}
+            </div>
+
+            <input
+              value={feedName}
+              onChange={e => setFeedName(e.target.value)}
+              placeholder="Calendar name (e.g., Work, Personal)"
+              style={{ ...inputStyle, width: '100%', marginBottom: 6 }}
+            />
+            <input
+              value={icsUrl}
+              onChange={e => setIcsUrl(e.target.value)}
+              placeholder="Paste ICS feed URL here..."
+              style={{ ...inputStyle, width: '100%', marginBottom: 6 }}
+            />
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={addFeed} disabled={!icsUrl.trim() || syncing} style={{
+                flex: 1, padding: 8,
+                background: icsUrl.trim() && !syncing ? colors.primaryDim : 'transparent',
+                border: `1px solid ${icsUrl.trim() && !syncing ? colors.primary : colors.border}`,
+                color: icsUrl.trim() && !syncing ? colors.primary : colors.textMuted,
+                fontSize: 10, cursor: 'pointer',
+                fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+              }}>{syncing ? 'IMPORTING...' : 'ADD & SYNC'}</button>
+              <button onClick={() => setShowAdd(false)} style={{
+                padding: '8px 12px', background: 'transparent',
+                border: `1px solid ${colors.border}`, color: colors.textMuted,
+                fontSize: 10, cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace",
+              }}>CANCEL</button>
+            </div>
+          </div>
+        )}
+
+        {syncResult && <div style={{
+          color: syncResult.includes('Error') || syncResult.includes('failed') ? colors.danger : colors.success,
+          fontSize: 9, marginTop: 6, fontFamily: "'JetBrains Mono', monospace",
+        }}>{syncResult}</div>}
       </div>
     </Section>
   )
