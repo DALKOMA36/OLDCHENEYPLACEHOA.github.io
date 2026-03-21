@@ -430,6 +430,71 @@ export default function Settings({ user, updateUser, addMemory }) {
         </div>
       </Section>
 
+      {/* Data Export / Backup */}
+      <Section title="DATA // BACKUP">
+        <div style={{ padding: '10px 14px' }}>
+          <div style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace", marginBottom: 10, lineHeight: 1.6 }}>
+            Export all your JARVIS data as a JSON file. Use it to backup or migrate.
+          </div>
+          <button onClick={() => {
+            const data = {}
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i)
+              if (key.startsWith('jarvis_')) {
+                try { data[key] = JSON.parse(localStorage.getItem(key)) }
+                catch { data[key] = localStorage.getItem(key) }
+              }
+            }
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `jarvis-backup-${new Date().toISOString().split('T')[0]}.json`
+            a.click()
+            URL.revokeObjectURL(url)
+          }} style={{
+            width: '100%', padding: 10, marginBottom: 6,
+            background: colors.primaryDim, border: `1px solid ${colors.primary}`,
+            color: colors.primary, fontSize: 10, cursor: 'pointer',
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+          }}>EXPORT ALL DATA</button>
+          <div style={{ position: 'relative' }}>
+            <input
+              type="file"
+              accept=".json"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                const reader = new FileReader()
+                reader.onload = () => {
+                  try {
+                    const data = JSON.parse(reader.result)
+                    let count = 0
+                    for (const [key, value] of Object.entries(data)) {
+                      if (key.startsWith('jarvis_')) {
+                        localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value))
+                        count++
+                      }
+                    }
+                    alert(`Restored ${count} data entries. Reloading...`)
+                    window.location.reload()
+                  } catch { alert('Invalid backup file') }
+                }
+                reader.readAsText(file)
+              }}
+              style={{ display: 'none' }}
+              id="backup-import"
+            />
+            <button onClick={() => document.getElementById('backup-import')?.click()} style={{
+              width: '100%', padding: 10,
+              background: 'transparent', border: `1px solid ${colors.border}`,
+              color: colors.textMuted, fontSize: 10, cursor: 'pointer',
+              fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+            }}>IMPORT BACKUP</button>
+          </div>
+        </div>
+      </Section>
+
       {/* About / Version */}
       <Section title="ABOUT // VERSION">
         <div style={{ padding: '14px 14px 16px', textAlign: 'center' }}>

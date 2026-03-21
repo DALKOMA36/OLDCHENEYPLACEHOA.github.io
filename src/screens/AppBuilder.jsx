@@ -115,37 +115,87 @@ export default function AppBuilder({ user, addMemory }) {
     setActiveApp(null)
   }
 
+  const deleteEntry = (appId, entryId) => {
+    const updated = apps.map(a => a.id === appId
+      ? { ...a, entries: a.entries.filter(e => e.id !== entryId) }
+      : a)
+    save(updated)
+    setActiveApp(updated.find(a => a.id === appId))
+    db.apps.deleteEntry(entryId).catch(() => {})
+  }
+
+  const [editingEntry, setEditingEntry] = useState(null)
+  const [searchEntries, setSearchEntries] = useState('')
+
+  const saveEditEntry = (appId) => {
+    if (!editingEntry) return
+    const updated = apps.map(a => a.id === appId
+      ? { ...a, entries: a.entries.map(e => e.id === editingEntry.id ? editingEntry : e) }
+      : a)
+    save(updated)
+    setActiveApp(updated.find(a => a.id === appId))
+    setEditingEntry(null)
+  }
+
+  const exportCSV = (app) => {
+    if (!app.entries.length) return
+    const fields = app.fields.map(f => f.label)
+    const header = [...fields, 'Date'].join(',')
+    const rows = app.entries.map(e =>
+      [...fields.map(f => `"${(e.data[f] || '').replace(/"/g, '""')}"`), e.createdAt].join(',')
+    )
+    const csv = [header, ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${app.name.replace(/\s+/g, '_')}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   if (activeApp) {
     const app = apps.find(a => a.id === activeApp.id) || activeApp
+    const filteredEntries = searchEntries
+      ? app.entries.filter(e => Object.values(e.data).some(v => String(v).toLowerCase().includes(searchEntries.toLowerCase())))
+      : app.entries
+
     return (
       <div style={{ padding: 16 }}>
-        <button onClick={() => setActiveApp(null)} style={{
-          background: 'none', border: 'none', color: colors.primaryLight, fontSize: 13,
-          cursor: 'pointer', marginBottom: 12, fontFamily: 'inherit',
-        }}>‹ Back to Apps</button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <button onClick={() => { setActiveApp(null); setSearchEntries('') }} style={{
+            background: 'none', border: 'none', color: colors.primary, fontSize: 11,
+            cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+          }}>← BACK</button>
+          <button onClick={() => exportCSV(app)} style={{
+            background: 'none', border: `1px solid ${colors.border}`, color: colors.textMuted,
+            fontSize: 8, cursor: 'pointer', padding: '3px 8px',
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+          }}>EXPORT CSV</button>
+        </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
           <span style={{ fontSize: 28 }}>{app.icon}</span>
           <div>
-            <h2 style={{ color: colors.text, fontSize: 20, fontWeight: 700 }}>{app.name}</h2>
-            <span style={{ color: colors.textSecondary, fontSize: 12 }}>{app.entries.length} entries</span>
+            <h2 style={{ color: colors.text, fontSize: 18, fontWeight: 700, fontFamily: "'Exo 2', sans-serif" }}>{app.name}</h2>
+            <span style={{ color: colors.textMuted, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>{app.entries.length} entries</span>
           </div>
         </div>
 
         {/* Add Entry Form */}
         <div style={{
-          padding: 16, background: colors.surfaceLight, border: `1px solid ${colors.border}`,
-          borderRadius: 12, marginBottom: 16,
+          padding: 14, background: colors.surfaceLight, border: `1px solid ${colors.border}`,
+          marginBottom: 14,
         }}>
-          <h3 style={{ color: colors.text, fontSize: 14, fontWeight: 600, marginBottom: 12 }}>ADD ENTRY</h3>
+          <div style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1, marginBottom: 10 }}>ADD ENTRY</div>
           {app.fields.map(field => (
-            <div key={field.label} style={{ marginBottom: 10 }}>
-              <label style={{ color: colors.textSecondary, fontSize: 11, marginBottom: 4, display: 'block' }}>{field.label}</label>
+            <div key={field.label} style={{ marginBottom: 8 }}>
+              <label style={{ color: colors.textMuted, fontSize: 9, marginBottom: 3, display: 'block', fontFamily: "'JetBrains Mono', monospace" }}>{field.label}</label>
               {field.type === 'select' ? (
                 <select
                   value={entries[field.label] || ''}
                   onChange={e => setEntries({ ...entries, [field.label]: e.target.value })}
-                  style={inputStyle}
+                  style={{ ...inputStyle, borderRadius: 0 }}
                 >
                   <option value="">Select...</option>
                   {field.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
@@ -156,44 +206,86 @@ export default function AppBuilder({ user, addMemory }) {
                   value={entries[field.label] || ''}
                   onChange={e => setEntries({ ...entries, [field.label]: e.target.value })}
                   placeholder={field.label}
-                  style={inputStyle}
+                  style={{ ...inputStyle, borderRadius: 0 }}
                 />
               )}
             </div>
           ))}
           <button onClick={() => addEntry(app.id)} style={{
-            width: '100%', padding: 12, background: colors.gradient1, color: '#fff',
-            border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-          }}>Add Entry</button>
+            width: '100%', padding: 10, background: colors.primaryDim,
+            border: `1px solid ${colors.primary}`, color: colors.primary,
+            fontSize: 10, fontWeight: 600, cursor: 'pointer',
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 2,
+          }}>ADD ENTRY</button>
         </div>
 
+        {/* Search entries */}
+        {app.entries.length > 3 && (
+          <input
+            value={searchEntries}
+            onChange={e => setSearchEntries(e.target.value)}
+            placeholder="Search entries..."
+            style={{ ...inputStyle, borderRadius: 0, marginBottom: 10 }}
+          />
+        )}
+
         {/* Entries List */}
-        {app.entries.length > 0 && (
+        {filteredEntries.length > 0 && (
           <div>
-            <h3 style={{ color: colors.text, fontSize: 14, fontWeight: 600, marginBottom: 10 }}>ENTRIES</h3>
-            {app.entries.map(entry => (
+            <div style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1, marginBottom: 8 }}>
+              ENTRIES {searchEntries && `(${filteredEntries.length} of ${app.entries.length})`}
+            </div>
+            {filteredEntries.map(entry => (
               <div key={entry.id} style={{
-                padding: 12, background: colors.surfaceLight, border: `1px solid ${colors.border}`,
-                borderRadius: 8, marginBottom: 6,
+                padding: 10, background: colors.surfaceLight, border: `1px solid ${colors.border}`,
+                marginBottom: 4,
               }}>
-                {Object.entries(entry.data).filter(([_, v]) => v).map(([key, val]) => (
-                  <div key={key} style={{ display: 'flex', gap: 8, marginBottom: 2 }}>
-                    <span style={{ color: colors.textMuted, fontSize: 11, minWidth: 70 }}>{key}:</span>
-                    <span style={{ color: colors.text, fontSize: 12 }}>{val}</span>
+                {editingEntry?.id === entry.id ? (
+                  <div>
+                    {app.fields.map(field => (
+                      <div key={field.label} style={{ marginBottom: 6 }}>
+                        <label style={{ color: colors.textMuted, fontSize: 8, fontFamily: "'JetBrains Mono', monospace" }}>{field.label}</label>
+                        <input
+                          value={editingEntry.data[field.label] || ''}
+                          onChange={e => setEditingEntry({ ...editingEntry, data: { ...editingEntry.data, [field.label]: e.target.value } })}
+                          style={{ ...inputStyle, borderRadius: 0, padding: '6px 10px', fontSize: 12 }}
+                        />
+                      </div>
+                    ))}
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button onClick={() => saveEditEntry(app.id)} style={{ ...tinyBtn, color: colors.success, borderColor: colors.success }}>SAVE</button>
+                      <button onClick={() => setEditingEntry(null)} style={tinyBtn}>CANCEL</button>
+                    </div>
                   </div>
-                ))}
-                <div style={{ color: colors.textMuted, fontSize: 10, marginTop: 4 }}>
-                  {new Date(entry.createdAt).toLocaleString()}
-                </div>
+                ) : (
+                  <div>
+                    {Object.entries(entry.data).filter(([_, v]) => v).map(([key, val]) => (
+                      <div key={key} style={{ display: 'flex', gap: 8, marginBottom: 2 }}>
+                        <span style={{ color: colors.textMuted, fontSize: 10, minWidth: 60, fontFamily: "'JetBrains Mono', monospace" }}>{key}:</span>
+                        <span style={{ color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif" }}>{val}</span>
+                      </div>
+                    ))}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                      <span style={{ color: colors.textMuted, fontSize: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+                        {new Date(entry.createdAt).toLocaleString()}
+                      </span>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button onClick={() => setEditingEntry({ ...entry })} style={tinyBtn}>EDIT</button>
+                        <button onClick={() => deleteEntry(app.id, entry.id)} style={{ ...tinyBtn, color: colors.danger }}>DEL</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
 
         <button onClick={() => deleteApp(app.id)} style={{
-          width: '100%', padding: 10, background: 'transparent', border: `1px solid ${colors.danger}40`,
-          borderRadius: 8, color: colors.danger, fontSize: 12, cursor: 'pointer', marginTop: 20, fontFamily: 'inherit',
-        }}>Delete App</button>
+          width: '100%', padding: 10, background: 'transparent', border: `1px solid ${colors.danger}`,
+          color: colors.danger, fontSize: 10, cursor: 'pointer', marginTop: 16,
+          fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+        }}>DELETE APP</button>
       </div>
     )
   }
@@ -343,4 +435,9 @@ const modalContent = {
 const actionBtn = {
   flex: 1, padding: '12px 16px', border: 'none', borderRadius: 10,
   fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+}
+const tinyBtn = {
+  padding: '3px 8px', fontSize: 8, cursor: 'pointer',
+  background: 'transparent', border: `1px solid ${colors.border}`,
+  color: colors.textMuted, fontFamily: "'JetBrains Mono', monospace",
 }
