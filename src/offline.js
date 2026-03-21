@@ -258,8 +258,6 @@ export function parseOfflineCommand(text) {
 // ---- Offline Learning Engine ----
 // Tracks patterns to get smarter over time
 
-const LEARNING_KEY = 'jarvis_learned'
-
 export function learnPattern(category, data) {
   const memory = loadState('jarvis_learned', {
     topics: {},
@@ -267,13 +265,11 @@ export function learnPattern(category, data) {
     preferredTimes: {},
     commonTasks: {},
     commonQueries: [],
-    featureAttempts: [],
   })
 
   memory.interactionCount = (memory.interactionCount || 0) + 1
   memory.lastActive = new Date().toISOString()
 
-  // Track active hours
   const hour = new Date().getHours()
   if (!memory.preferredTimes) memory.preferredTimes = {}
   memory.preferredTimes[hour] = (memory.preferredTimes[hour] || 0) + 1
@@ -300,6 +296,103 @@ export function learnPattern(category, data) {
 
 export function getLearned() {
   return loadState('jarvis_learned', {})
+}
+
+// ---- Long-Term Memory System ----
+// Stores specific facts, wishes, preferences, plans INDEFINITELY
+// JARVIS remembers everything you've ever told him
+
+const LONGTERM_KEY = 'jarvis_longterm_memory'
+const MAX_MEMORIES = 2000 // practically unlimited
+
+export function addLongTermMemory(text, category = 'general', source = 'chat') {
+  const memories = loadState('longterm_memory', [])
+  memories.push({
+    id: Date.now().toString(),
+    text,
+    category, // wish, plan, preference, fact, place, person, general
+    source,   // chat, task, calendar, note, travel
+    createdAt: new Date().toISOString(),
+    lastRecalled: null,
+  })
+  // Keep the most recent N but never delete — in practice 2000 is years of memories
+  saveState('longterm_memory', memories.slice(-MAX_MEMORIES))
+}
+
+export function searchMemories(query) {
+  const memories = loadState('longterm_memory', [])
+  const q = query.toLowerCase()
+  const words = q.split(/\s+/)
+
+  return memories
+    .map(m => {
+      const text = m.text.toLowerCase()
+      let score = 0
+      for (const w of words) {
+        if (text.includes(w)) score++
+      }
+      return { ...m, score }
+    })
+    .filter(m => m.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10)
+}
+
+export function getAllMemories() {
+  return loadState('longterm_memory', [])
+}
+
+export function getMemoriesForContext(context) {
+  // Pull relevant memories for AI context enrichment
+  const memories = loadState('longterm_memory', [])
+  if (memories.length === 0) return []
+
+  // Get memories matching the context keywords
+  const words = context.toLowerCase().split(/\s+/).filter(w => w.length > 3)
+  const relevant = memories
+    .map(m => {
+      const text = m.text.toLowerCase()
+      let score = 0
+      for (const w of words) {
+        if (text.includes(w)) score++
+      }
+      return { ...m, score }
+    })
+    .filter(m => m.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5)
+
+  return relevant
+}
+
+// Auto-extract memories from AI conversations
+export function extractMemoriesFromChat(userText, aiResponse) {
+  const lower = userText.toLowerCase()
+
+  // Detect wishes: "I want to...", "I'd like to...", "I wish..."
+  if (/i (?:want|wanna|wish|'d like|would like|hope) to\s+/i.test(lower)) {
+    addLongTermMemory(userText, 'wish', 'chat')
+  }
+
+  // Detect preferences: "I prefer...", "I like...", "I hate...", "I love..."
+  if (/i (?:prefer|like|love|hate|can't stand|always|never)\s+/i.test(lower)) {
+    addLongTermMemory(userText, 'preference', 'chat')
+  }
+
+  // Detect plans: "I'm going to...", "We're planning...", "Next year..."
+  if (/(?:i'm going|we're planning|next (?:year|month|week)|planning to|scheduled|booked)\s+/i.test(lower)) {
+    addLongTermMemory(userText, 'plan', 'chat')
+  }
+
+  // Detect facts about people: "My [relation] is...", "[Name] works at..."
+  if (/(?:my (?:wife|husband|partner|mom|dad|brother|sister|boss|friend|kid|son|daughter))\s+/i.test(lower)) {
+    addLongTermMemory(userText, 'person', 'chat')
+  }
+
+  // Detect place mentions: "I visited...", "I live...", "My favorite restaurant..."
+  if (/(?:i (?:visited|live|went|traveled)|my favorite (?:restaurant|place|spot|bar|cafe))\s+/i.test(lower)) {
+    addLongTermMemory(userText, 'place', 'chat')
+  }
 }
 
 // ---- Smart Suggestions (offline) ----

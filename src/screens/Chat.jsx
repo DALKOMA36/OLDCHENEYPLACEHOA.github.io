@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { colors, loadState, saveState } from '../constants'
 import { db } from '../db'
-import { isOffline, parseOfflineCommand, cacheResponse, findCachedResponse, queueAction, learnPattern, logFeatureAttempt } from '../offline'
+import { isOffline, parseOfflineCommand, cacheResponse, findCachedResponse, queueAction, learnPattern, logFeatureAttempt, getMemoriesForContext, extractMemoriesFromChat } from '../offline'
 
 const defaultGreeting = (name) => ({
   role: 'ai',
@@ -375,9 +375,14 @@ export default function Chat({ user, addMemory, navigate, startFocusMode }) {
     // ---- Online: full AI ----
     try {
       const memory = loadState('jarvis_learned', {})
+      // Pull relevant long-term memories for context
+      const relevantMemories = getMemoriesForContext(text)
       const enrichedContext = {
         ...appContext,
         learnedPreferences: memory,
+        longTermMemories: relevantMemories.length > 0
+          ? relevantMemories.map(m => `[${m.category}] ${m.text} (${new Date(m.createdAt).toLocaleDateString()})`).join('\n')
+          : undefined,
       }
 
       const result = await db.ai.chat(text, messages.slice(-20), enrichedContext)
@@ -392,6 +397,9 @@ export default function Chat({ user, addMemory, navigate, startFocusMode }) {
       // Cache for offline use
       cacheResponse(text, result.response)
       learnFromInteraction(text, result.response)
+
+      // Extract and store long-term memories from this interaction
+      extractMemoriesFromChat(text, result.response)
     } catch (err) {
       // Network error — try cache
       const cached = findCachedResponse(text)

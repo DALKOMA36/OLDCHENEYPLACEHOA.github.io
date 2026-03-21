@@ -386,20 +386,27 @@ export default function Dashboard({ user, navigate, addMemory, startFocusMode })
         </button>
       )}
 
-      {/* Quick Actions — expanded */}
+      {/* All Modules — single unified grid */}
       <div style={{ marginBottom: 20 }}>
-        <h3 style={sectionHeader}>QUICK ACCESS</h3>
+        <h3 style={sectionHeader}>MODULES</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
           {[
-            ['AI', 'Chat', 'chat', colors.primary],
-            ['VC', 'Voice', 'voice', colors.success],
+            ['TK', 'Tasks', 'tasks', colors.primary],
+            ['CL', 'Calendar', 'calendar', colors.secondary],
+            ['RM', 'Reminders', 'reminders', colors.success],
+            ['MS', 'Messages', 'channels', colors.primary],
             ['TR', 'Trains', 'trains', colors.secondary],
-            ['SC', 'Scan', 'scanner', colors.primary],
-            ['RD', 'Reader', 'reader', colors.warning],
-            ['TV', 'Travel', 'travel', colors.success],
-            ['ML', 'Meals', 'meals', colors.secondary],
-            ['BT', 'Build', 'builder', colors.primary],
+            ['ML', 'Meals', 'meals', colors.warning],
+            ['SC', 'Scanner', 'scanner', colors.primary],
+            ['RD', 'Reader', 'reader', colors.success],
+            ['TV', 'Travel', 'travel', colors.secondary],
+            ['HB', 'Habits', 'habits', colors.success],
+            ['FN', 'Finance', 'finance', colors.warning],
+            ['MD', 'Media', 'media', colors.primary],
+            ['NT', 'Notes', 'notes', colors.secondary],
+            ['AP', 'Apps', 'builder', colors.primary],
             ['FO', 'Focus', '__focus__', colors.danger],
+            ['SY', 'Settings', 'settings', colors.textMuted],
           ].map(([icon, label, target, col]) => (
             <button key={target} onClick={() => target === '__focus__' ? startFocusMode?.() : navigate(target)} style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
@@ -469,35 +476,7 @@ export default function Dashboard({ user, navigate, addMemory, startFocusMode })
         </div>
       )}
 
-      {/* System Modules Grid */}
-      <div style={{ marginBottom: 20 }}>
-        <h3 style={sectionHeader}>SYSTEM MODULES</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          {[
-            ['CH', 'Channels', 'SMS / Email', 'channels', colors.primary],
-            ['RM', 'Reminders', 'Alert system', 'reminders', colors.success],
-            ['CL', 'Calendar', 'Schedule', 'calendar', colors.secondary],
-            ['TK', 'Tasks', 'Active ops', 'tasks', colors.primary],
-          ].map(([icon, title, desc, target, col]) => (
-            <button key={target} onClick={() => navigate(target)} style={{
-              padding: 14, background: 'transparent',
-              border: `1px solid ${colors.border}`, textAlign: 'left', cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}>
-              <div style={{
-                fontSize: 11, marginBottom: 6, color: col,
-                fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, letterSpacing: 1,
-              }}>{icon}</div>
-              <div style={{
-                color: colors.text, fontSize: 12, fontWeight: 600, fontFamily: "'Exo 2', sans-serif",
-              }}>{title}</div>
-              <div style={{
-                color: colors.textMuted, fontSize: 10, fontFamily: "'JetBrains Mono', monospace",
-              }}>{desc}</div>
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Removed — all modules now in unified grid above */}
 
       <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }`}</style>
     </div>

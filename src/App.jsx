@@ -21,6 +21,7 @@ import JarvisCheckin from './JarvisCheckin'
 import CalendarSync from './CalendarSync'
 import BootSequence from './BootSequence'
 import StatusBar from './StatusBar'
+import JarvisAssistant from './JarvisAssistant'
 import FocusMode from './FocusMode'
 import { syncQueue, isOffline } from './offline'
 import { db, auth } from './db'
@@ -33,13 +34,13 @@ const SCREENS = {
   calendar: { label: 'Calendar', icon: 'CA', component: Calendar },
   tasks: { label: 'Tasks', icon: 'TK', component: Tasks },
   meals: { label: 'Meals', icon: 'ML', component: MealPlanner },
-  scanner: { label: 'Scan', icon: 'SC', component: Scanner },
-  channels: { label: 'Channels', icon: 'CH', component: Channels },
+  scanner: { label: 'Scanner', icon: 'SC', component: Scanner },
+  channels: { label: 'Messages', icon: 'MS', component: Channels },
   voice: { label: 'Voice', icon: 'VC', component: Voice },
   reader: { label: 'Reader', icon: 'RD', component: Reader },
   travel: { label: 'Travel', icon: 'TV', component: TravelPlanner },
-  builder: { label: 'Builder', icon: 'BD', component: AppBuilder },
-  reminders: { label: 'Remind', icon: 'RM', component: Reminders },
+  builder: { label: 'Custom Apps', icon: 'AP', component: AppBuilder },
+  reminders: { label: 'Reminders', icon: 'RM', component: Reminders },
   habits: { label: 'Habits', icon: 'HB', component: HabitTracker },
   finance: { label: 'Finance', icon: 'FN', component: Finance },
   media: { label: 'Media', icon: 'MD', component: MediaHub },
@@ -47,17 +48,18 @@ const SCREENS = {
   settings: { label: 'Settings', icon: 'SY', component: Settings },
 }
 
-const NAV_ITEMS = ['dashboard', 'trains', 'chat', 'tasks', 'settings']
-const MENU_ITEMS = ['meals', 'scanner', 'channels', 'voice', 'reader', 'travel', 'builder', 'reminders', 'habits', 'finance', 'media', 'notes']
+// Bottom nav — just the 3 essentials
+const NAV_ITEMS = ['dashboard', 'chat', 'voice']
 
 export { colors, loadState, saveState }
 
 export default function App() {
   const [screen, setScreen] = useState('dashboard')
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false) // kept for backwards compat
   const [loading, setLoading] = useState(true)
   const [booting, setBooting] = useState(true)
   const [focusMode, setFocusMode] = useState(false)
+  const [assistantActive, setAssistantActive] = useState(false)
   const [authState, setAuthState] = useState('checking') // checking, login, register, authenticated
   const [user, setUser] = useState({
     name: '',
@@ -350,7 +352,7 @@ export default function App() {
       {/* HUD Status Bar */}
       <StatusBar />
 
-      {/* Header */}
+      {/* Header — clean, no hamburger */}
       <header style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '10px 16px',
@@ -361,113 +363,45 @@ export default function App() {
         boxShadow: `0 1px 20px rgba(0, 212, 255, 0.05)`,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {/* Animated pulse dot */}
-          <div style={{
-            width: 8, height: 8, borderRadius: '50%',
-            background: colors.primary,
-            boxShadow: `0 0 8px ${colors.primary}`,
-            animation: 'pulse 2s ease-in-out infinite',
-          }} />
-          <span style={{
-            color: colors.primary, fontSize: 14, fontWeight: 500,
+          {screen !== 'dashboard' ? (
+            <button onClick={() => navigate('dashboard')} style={{
+              background: 'none', border: 'none', color: colors.primary,
+              fontSize: 14, cursor: 'pointer', padding: 0,
+              fontFamily: "'JetBrains Mono', monospace",
+            }}>{'<'}</button>
+          ) : (
+            <div style={{
+              width: 8, height: 8, borderRadius: '50%',
+              background: colors.primary,
+              boxShadow: `0 0 8px ${colors.primary}`,
+              animation: 'pulse 2s ease-in-out infinite',
+            }} />
+          )}
+          <button onClick={() => setAssistantActive(!assistantActive)} style={{
+            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            color: assistantActive ? colors.success : colors.primary, fontSize: 14, fontWeight: 500,
             fontFamily: "'JetBrains Mono', monospace",
             letterSpacing: 3,
-          }}>JARVIS</span>
+            textShadow: assistantActive ? `0 0 10px ${colors.success}` : 'none',
+          }}>JARVIS</button>
         </div>
         <div style={{
           color: colors.textSecondary, fontSize: 11,
           fontFamily: "'JetBrains Mono', monospace",
           letterSpacing: 1, textTransform: 'uppercase',
         }}>
-          {SCREENS[screen]?.label}
+          {screen === 'dashboard' ? '' : SCREENS[screen]?.label}
         </div>
         <button
-          onClick={() => setMenuOpen(!menuOpen)}
+          onClick={() => navigate('settings')}
           style={{
             background: 'none', border: `1px solid ${colors.border}`,
-            color: colors.textSecondary, fontSize: 14, cursor: 'pointer',
+            color: colors.textMuted, fontSize: 9, cursor: 'pointer',
             padding: '4px 8px', fontFamily: "'JetBrains Mono', monospace",
+            letterSpacing: 1,
           }}
-        >
-          {menuOpen ? 'X' : '///'}
-        </button>
+        >SYS</button>
       </header>
-
-      {/* Slide-out menu */}
-      {menuOpen && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99,
-          background: 'rgba(0,0,0,0.7)', animation: 'fadeIn 0.2s ease',
-          backdropFilter: 'blur(4px)',
-        }} onClick={() => setMenuOpen(false)}>
-          <div style={{
-            position: 'absolute', top: 0, right: 0, bottom: 0, width: 280,
-            background: colors.surface,
-            borderLeft: `1px solid ${colors.border}`,
-            padding: '60px 0 20px', overflowY: 'auto', animation: 'slideIn 0.25s ease',
-            backdropFilter: 'blur(20px)',
-            boxShadow: '-5px 0 30px rgba(0, 0, 0, 0.5)',
-          }} onClick={e => e.stopPropagation()}>
-            <div style={{
-              padding: '0 16px 16px',
-              borderBottom: `1px solid ${colors.border}`, marginBottom: 8,
-            }}>
-              <div style={{
-                color: colors.text, fontSize: 14, fontWeight: 500,
-                fontFamily: "'JetBrains Mono', monospace",
-              }}>{user.name}</div>
-              <div style={{
-                color: colors.textMuted, fontSize: 10,
-                fontFamily: "'JetBrains Mono', monospace",
-                letterSpacing: 1, marginTop: 4,
-              }}>SYSTEM MODULES</div>
-            </div>
-            {[...NAV_ITEMS, ...MENU_ITEMS].map(key => (
-              <button
-                key={key}
-                onClick={() => navigate(key)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 12, width: '100%',
-                  padding: '11px 20px',
-                  background: screen === key ? colors.primaryDim : 'transparent',
-                  border: 'none',
-                  borderLeft: screen === key ? `2px solid ${colors.primary}` : '2px solid transparent',
-                  color: screen === key ? colors.primary : colors.textSecondary,
-                  fontSize: 12, cursor: 'pointer', textAlign: 'left',
-                  fontFamily: "'Exo 2', sans-serif", letterSpacing: 0.5,
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span style={{
-                  fontSize: 10, width: 24, textAlign: 'center',
-                  fontFamily: "'JetBrains Mono', monospace",
-                  color: screen === key ? colors.primary : colors.textMuted,
-                  letterSpacing: 0,
-                }}>{SCREENS[key]?.icon}</span>
-                {SCREENS[key]?.label}
-              </button>
-            ))}
-            <button
-              onClick={handleLogout}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 12, width: '100%',
-                padding: '11px 20px', background: 'transparent',
-                border: 'none', color: colors.danger,
-                fontSize: 12, cursor: 'pointer', textAlign: 'left', marginTop: 8,
-                borderTop: `1px solid ${colors.border}`,
-                borderLeft: '2px solid transparent',
-                fontFamily: "'Exo 2', sans-serif",
-              }}
-            >
-              <span style={{
-                fontSize: 10, width: 24, textAlign: 'center',
-                fontFamily: "'JetBrains Mono', monospace",
-              }}>OFF</span>
-              Disconnect
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Full-screen overlays */}
       {booting && <BootSequence user={user} onComplete={() => setBooting(false)} />}
@@ -477,6 +411,9 @@ export default function App() {
       <main style={{ flex: 1, overflowY: 'auto', paddingBottom: 72 }}>
         <CurrentScreen user={user} updateUser={updateUser} addMemory={addMemory} navigate={navigate} startFocusMode={() => setFocusMode(true)} />
       </main>
+
+      {/* JARVIS always-on assistant */}
+      <JarvisAssistant active={assistantActive} onClose={() => setAssistantActive(false)} currentScreen={screen} user={user} />
 
       {/* Background systems */}
       <JarvisCheckin user={user} />
