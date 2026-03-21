@@ -226,6 +226,24 @@ export default function Reader({ user }) {
   const [showLibrary, setShowLibrary] = useState(false)
   const [currentReadingId, setCurrentReadingId] = useState(null)
 
+  // Sleep timer
+  const [sleepTimer, setSleepTimer] = useState(0) // minutes, 0 = off
+  const sleepTimerRef = useRef(null)
+  const [sleepRemaining, setSleepRemaining] = useState(0) // seconds remaining
+
+  // Reading stats
+  const [startTime, setStartTime] = useState(null)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const statsTimerRef = useRef(null)
+
+  // Download state
+  const [downloading, setDownloading] = useState(false)
+  const [downloadProgress, setDownloadProgress] = useState('')
+
+  // Full text scroll view
+  const scrollTextRef = useRef(null)
+  const chunkRefs = useRef([])
+
   // View: 'input' or 'player'
   const [view, setView] = useState('input')
 
@@ -252,6 +270,47 @@ export default function Reader({ user }) {
 
   // Load library
   useEffect(() => { setLibrary(loadLibrary()) }, [])
+
+  // Stats timer — track elapsed time while playing
+  useEffect(() => {
+    if (playing && !paused) {
+      if (!startTime) setStartTime(Date.now())
+      statsTimerRef.current = setInterval(() => {
+        setElapsedSeconds(s => s + 1)
+      }, 1000)
+    } else {
+      clearInterval(statsTimerRef.current)
+    }
+    return () => clearInterval(statsTimerRef.current)
+  }, [playing, paused])
+
+  // Sleep timer countdown
+  useEffect(() => {
+    clearInterval(sleepTimerRef.current)
+    if (sleepTimer > 0 && playing) {
+      setSleepRemaining(sleepTimer * 60)
+      sleepTimerRef.current = setInterval(() => {
+        setSleepRemaining(prev => {
+          if (prev <= 1) {
+            clearInterval(sleepTimerRef.current)
+            // Auto-stop playback
+            stop()
+            setSleepTimer(0)
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
+    }
+    return () => clearInterval(sleepTimerRef.current)
+  }, [sleepTimer, playing])
+
+  // Auto-scroll to current chunk
+  useEffect(() => {
+    if (playing && chunkRefs.current[currentChunk]) {
+      chunkRefs.current[currentChunk].scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [currentChunk, playing])
 
   // ---- Text chunking ----
   const splitIntoChunks = (fullText) => {
@@ -401,6 +460,91 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
       setError('Quiz generation failed')
     }
     setAiLoading('')
+  }
+
+  // ---- Download audio ----
+
+  const downloadAudio = async () => {
+    if (!text.trim()) return
+    setDownloading(true)
+    setDownloadProgress('Preparing...')
+    setError('')
+    try {
+      const chunks = splitIntoChunks(text)
+      const audioBlobs = []
+
+      for (let i = 0; i < chunks.length; i++) {
+        setDownloadProgress(`Generating audio ${i + 1}/${chunks.length}...`)
+        const audioUrl = await db.ai.tts(chunks[i], cloudVoice, speed)
+        const res = await fetch(audioUrl)
+        const blob = await res.blob()
+        audioBlobs.push(blob)
+        URL.revokeObjectURL(audioUrl)
+      }
+
+      // Combine blobs into one file
+      setDownloadProgress('Combining audio...')
+      const combined = new Blob(audioBlobs, { type: 'audio/mpeg' })
+      const url = URL.createObjectURL(combined)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${title || 'reading'}.mp3`
+      a.click()
+      URL.revokeObjectURL(url)
+      setDownloadProgress('Downloaded!')
+      setTimeout(() => setDownloadProgress(''), 3000)
+    } catch (err) {
+      setError(`Download failed: ${err.message}`)
+      setDownloadProgress('')
+    }
+    setDownloading(false)
+  }
+
+  // ---- Language detection (simple heuristic) ----
+
+  const detectLanguage = (t) => {
+    if (!t) return 'en'
+    const sample = t.slice(0, 500)
+    // Common character range checks
+    if (/[\u4e00-\u9fff]/.test(sample)) return 'zh'
+    if (/[\u3040-\u309f\u30a0-\u30ff]/.test(sample)) return 'ja'
+    if (/[\uac00-\ud7af]/.test(sample)) return 'ko'
+    if (/[\u0600-\u06ff]/.test(sample)) return 'ar'
+    if (/[\u0400-\u04ff]/.test(sample)) return 'ru'
+    if (/[\u0900-\u097f]/.test(sample)) return 'hi'
+    // European language heuristics
+    if (/\b(el|la|los|las|una|esto|como|pero|más)\b/i.test(sample)) return 'es'
+    if (/\b(le|la|les|des|une|est|dans|pour|avec)\b/i.test(sample)) return 'fr'
+    if (/\b(der|die|das|und|ist|ein|nicht|auf|mit)\b/i.test(sample)) return 'de'
+    if (/\b(il|lo|la|che|non|una|del|per|con)\b/i.test(sample)) return 'it'
+    if (/\b(de|het|een|van|dat|niet|voor|met)\b/i.test(sample)) return 'nl'
+    if (/\b(och|att|det|som|för|med|har|inte)\b/i.test(sample)) return 'sv'
+    if (/\b(e|um|uma|não|que|com|para|dos)\b/i.test(sample)) return 'pt'
+    return 'en'
+  }
+
+  const detectedLang = detectLanguage(text)
+
+  // Filter voices to detected language
+  const filteredVoices = voices.filter(v => {
+    if (detectedLang === 'en') return v.lang.startsWith('en')
+    return v.lang.startsWith(detectedLang) || v.lang.startsWith('en')
+  })
+
+  // ---- Sleep timer helpers ----
+
+  const SLEEP_OPTIONS = [0, 5, 10, 15, 30, 60]
+
+  const cycleSleepTimer = () => {
+    const idx = SLEEP_OPTIONS.indexOf(sleepTimer)
+    const next = SLEEP_OPTIONS[(idx + 1) % SLEEP_OPTIONS.length]
+    setSleepTimer(next)
+  }
+
+  const formatTime = (secs) => {
+    const m = Math.floor(secs / 60)
+    const s = secs % 60
+    return `${m}:${s.toString().padStart(2, '0')}`
   }
 
   // ---- TTS Playback ----
@@ -782,8 +926,10 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
     cancelledRef.current = true
     window.speechSynthesis?.cancel()
     clearInterval(rsvpTimerRef.current)
+    clearInterval(statsTimerRef.current)
+    clearInterval(sleepTimerRef.current)
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = '' }
-    audioUrlsRef.current.forEach(url => URL.revokeObjectURL(url))
+    audioUrlsRef.current.forEach(u => URL.revokeObjectURL(u))
   }, [])
 
   // ---- RENDER ----
@@ -977,74 +1123,89 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
 
   // Player view (during TTS playback or when text is loaded)
   if (view === 'player' && text) {
+    const wordCount = text.split(/\s+/).length
+    const estTotalMin = Math.ceil(wordCount / (150 * speed))
+    const estRemaining = Math.max(0, estTotalMin * 60 - elapsedSeconds)
+    const allChunks = chunksRef.current.length > 0 ? chunksRef.current : splitIntoChunks(text)
+
     return (
       <div style={{ padding: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-          <h2 style={{ color: colors.primary, fontSize: 11, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 3 }}>
-            {title || 'Reader'}
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h2 style={{ color: colors.primary, fontSize: 11, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 3 }}>
+              {title || 'Reader'}
+            </h2>
+            {detectedLang !== 'en' && (
+              <span style={{
+                padding: '2px 6px', fontSize: 8, background: colors.secondaryDim,
+                border: `1px solid ${colors.secondary}`, color: colors.secondary,
+                fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+              }}>{detectedLang.toUpperCase()}</span>
+            )}
+          </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => { stop(); setView('input') }} style={linkBtn}>EDIT</button>
+            <button onClick={() => { stop(); setElapsedSeconds(0); setStartTime(null); setView('input') }} style={linkBtn}>EDIT</button>
             <button onClick={() => setShowLibrary(true)} style={linkBtn}>LIBRARY</button>
           </div>
         </div>
 
+        {/* Stats bar */}
         <div style={{
+          display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4,
           color: colors.textMuted, fontSize: 9, marginBottom: 12,
           fontFamily: "'JetBrains Mono', monospace",
         }}>
-          {text.split(/\s+/).length} words // ~{Math.ceil(text.split(/\s+/).length / (150 * speed))} min at {speed}x
+          <span>{wordCount} words</span>
+          {playing && <span>{formatTime(elapsedSeconds)} elapsed</span>}
+          {playing && <span>~{formatTime(estRemaining)} left</span>}
+          {!playing && <span>~{estTotalMin} min at {speed}x</span>}
+          {sleepTimer > 0 && <span style={{ color: colors.secondary }}>SLEEP {formatTime(sleepRemaining)}</span>}
         </div>
 
         {/* Progress bar */}
-        {playing && (
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ width: '100%', height: 3, background: colors.border }}>
-              <div style={{
-                width: `${progress}%`, height: '100%', background: colors.primary,
-                boxShadow: `0 0 8px ${colors.primary}`, transition: 'width 0.3s ease',
-              }} />
-            </div>
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ width: '100%', height: 3, background: colors.border }}>
+            <div style={{
+              width: `${progress}%`, height: '100%', background: colors.primary,
+              boxShadow: `0 0 8px ${colors.primary}`, transition: 'width 0.3s ease',
+            }} />
+          </div>
+          {playing && (
             <div style={{
               display: 'flex', justifyContent: 'space-between', marginTop: 4,
               color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace",
             }}>
-              <span>CHUNK {currentChunk + 1}/{totalChunks}</span>
+              <span>CHUNK {currentChunk + 1}/{totalChunks || allChunks.length}</span>
               <span>{progress}%</span>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* Word-level highlighting display */}
-        {playing && displayChunkWords.length > 0 && (
-          <div style={{
-            padding: 16, marginBottom: 12,
-            border: `1px solid ${colors.border}`, background: colors.surfaceLight,
-            lineHeight: 2, minHeight: 80,
-          }}>
-            <div style={{
-              color: colors.textMuted, fontSize: 9, marginBottom: 8,
-              fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
-            }}>NOW READING</div>
-            <p style={{ fontFamily: "'Exo 2', sans-serif", fontSize: 15 }}>
-              {displayChunkWords.map((word, i) => (
-                <span key={i} style={{
-                  color: i === highlightedWord ? colors.primary : colors.text,
-                  background: i === highlightedWord ? colors.primaryDim : 'transparent',
-                  padding: i === highlightedWord ? '2px 4px' : '0',
-                  borderRadius: 2,
-                  transition: 'all 0.1s ease',
-                  fontWeight: i === highlightedWord ? 700 : 400,
-                }}>{word} </span>
-              ))}
-            </p>
-          </div>
-        )}
+        {/* Full text with auto-scroll and chunk highlighting */}
+        <div ref={scrollTextRef} style={{
+          maxHeight: 200, overflow: 'auto', padding: 12, marginBottom: 12,
+          border: `1px solid ${colors.border}`, background: colors.surfaceLight,
+          lineHeight: 1.8, fontSize: 14, fontFamily: "'Exo 2', sans-serif",
+        }}>
+          {allChunks.map((chunk, ci) => (
+            <span
+              key={ci}
+              ref={el => chunkRefs.current[ci] = el}
+              style={{
+                color: ci === currentChunk && playing ? colors.primary : ci < currentChunk && playing ? colors.textMuted : colors.text,
+                background: ci === currentChunk && playing ? colors.primaryDim : 'transparent',
+                padding: ci === currentChunk && playing ? '2px 0' : '0',
+                transition: 'all 0.2s ease',
+                fontWeight: ci === currentChunk && playing ? 600 : 400,
+              }}
+            >{chunk}{' '}</span>
+          ))}
+        </div>
 
         {/* Playback controls */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: 12, padding: 16,
+          gap: 10, padding: 14,
           border: `1px solid ${colors.border}`, background: colors.surfaceLight,
         }}>
           <button onClick={skipBack} disabled={!playing} style={controlBtn}>
@@ -1090,6 +1251,15 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
           }}>
             {speed}x
           </button>
+
+          <button onClick={cycleSleepTimer} style={{
+            ...controlBtn, width: 'auto', padding: '0 10px',
+            fontSize: 9, fontFamily: "'JetBrains Mono', monospace",
+            color: sleepTimer > 0 ? colors.secondary : colors.textSecondary,
+            borderColor: sleepTimer > 0 ? colors.secondary : colors.border,
+          }}>
+            {sleepTimer > 0 ? `${sleepTimer}m` : 'SLEEP'}
+          </button>
         </div>
 
         {/* Voice mode toggle */}
@@ -1107,15 +1277,15 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
             ))}
           </div>
 
-          {voiceMode === 'browser' && voices.length > 0 && (
+          {voiceMode === 'browser' && filteredVoices.length > 0 && (
             <div>
-              <label style={labelStyle}>VOICE</label>
+              <label style={labelStyle}>VOICE {detectedLang !== 'en' ? `(${detectedLang.toUpperCase()} + EN)` : ''}</label>
               <select
                 value={selectedVoice || ''}
                 onChange={e => setSelectedVoice(e.target.value)}
                 style={selectStyle}
               >
-                {voices.map(v => (
+                {filteredVoices.map(v => (
                   <option key={v.name} value={v.name}>{v.name} ({v.lang})</option>
                 ))}
               </select>
@@ -1151,6 +1321,11 @@ where "answer" is the index of the correct option. Return ONLY the JSON:\n\n${te
           <button onClick={saveToLibrary} style={actionBtn}>
             {currentReadingId ? 'UPDATE SAVE' : 'SAVE'}
           </button>
+          {voiceMode === 'cloud' && (
+            <button onClick={downloadAudio} disabled={downloading} style={actionBtn}>
+              {downloading ? downloadProgress : 'DOWNLOAD MP3'}
+            </button>
+          )}
         </div>
 
         {error && <div style={errorStyle}>{error}</div>}
