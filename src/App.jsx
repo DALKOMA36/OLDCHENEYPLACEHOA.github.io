@@ -16,9 +16,12 @@ import Reader from './screens/Reader'
 import HabitTracker from './screens/HabitTracker'
 import Finance from './screens/Finance'
 import MediaHub from './screens/MediaHub'
+import Notes from './screens/Notes'
 import JarvisCheckin from './JarvisCheckin'
 import CalendarSync from './CalendarSync'
 import BootSequence from './BootSequence'
+import StatusBar from './StatusBar'
+import FocusMode from './FocusMode'
 import { syncQueue, isOffline } from './offline'
 import { db, auth } from './db'
 import { colors, loadState, saveState } from './constants'
@@ -40,11 +43,12 @@ const SCREENS = {
   habits: { label: 'Habits', icon: 'HB', component: HabitTracker },
   finance: { label: 'Finance', icon: 'FN', component: Finance },
   media: { label: 'Media', icon: 'MD', component: MediaHub },
+  notes: { label: 'Notes', icon: 'NT', component: Notes },
   settings: { label: 'Settings', icon: 'SY', component: Settings },
 }
 
 const NAV_ITEMS = ['dashboard', 'trains', 'chat', 'tasks', 'settings']
-const MENU_ITEMS = ['meals', 'scanner', 'channels', 'voice', 'reader', 'travel', 'builder', 'reminders', 'habits', 'finance', 'media']
+const MENU_ITEMS = ['meals', 'scanner', 'channels', 'voice', 'reader', 'travel', 'builder', 'reminders', 'habits', 'finance', 'media', 'notes']
 
 export { colors, loadState, saveState }
 
@@ -53,6 +57,7 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [booting, setBooting] = useState(true)
+  const [focusMode, setFocusMode] = useState(false)
   const [authState, setAuthState] = useState('checking') // checking, login, register, authenticated
   const [user, setUser] = useState({
     name: '',
@@ -342,6 +347,9 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', minHeight: '100dvh', background: colors.bg, display: 'flex', flexDirection: 'column' }}>
+      {/* HUD Status Bar */}
+      <StatusBar />
+
       {/* Header */}
       <header style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -461,12 +469,13 @@ export default function App() {
         </div>
       )}
 
-      {/* Boot sequence overlay */}
+      {/* Full-screen overlays */}
       {booting && <BootSequence user={user} onComplete={() => setBooting(false)} />}
+      {focusMode && <FocusMode onExit={() => setFocusMode(false)} />}
 
       {/* Main content */}
       <main style={{ flex: 1, overflowY: 'auto', paddingBottom: 72 }}>
-        <CurrentScreen user={user} updateUser={updateUser} addMemory={addMemory} navigate={navigate} />
+        <CurrentScreen user={user} updateUser={updateUser} addMemory={addMemory} navigate={navigate} startFocusMode={() => setFocusMode(true)} />
       </main>
 
       {/* Background systems */}

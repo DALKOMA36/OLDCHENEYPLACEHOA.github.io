@@ -87,7 +87,7 @@ function getSmartPrompts(appContext) {
 // ---- Easter eggs ----
 function checkEasterEgg(text) {
   const eggs = {
-    'suit up': "Right away, sir. Initializing focus mode. All non-essential notifications suppressed. You're clear to work.",
+    'suit up': "__FOCUS_MODE__",
     'i am iron man': "Indeed you are, sir. Though I'd recommend not saying that at press conferences.",
     'play something': "I'd put on some AC/DC, but I'm afraid my speakers are digital only. Might I suggest opening Spotify?",
     'i love you jarvis': "That's... very kind, sir. I'm not programmed for emotional reciprocation, but I appreciate the sentiment. Shall I add 'express feelings to AI' to your completed tasks?",
@@ -123,7 +123,7 @@ function checkEasterEgg(text) {
   return null
 }
 
-export default function Chat({ user, addMemory, navigate }) {
+export default function Chat({ user, addMemory, navigate, startFocusMode }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [typing, setTyping] = useState(false)
@@ -267,6 +267,13 @@ export default function Chat({ user, addMemory, navigate }) {
     const lower = text.toLowerCase()
     const easterEgg = checkEasterEgg(lower)
     if (easterEgg) {
+      if (easterEgg === '__FOCUS_MODE__') {
+        const aiMsg = { role: 'ai', text: "Right away, sir. Initializing focus mode. All non-essential notifications suppressed. You're clear to work.", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+        setMessages(prev => addMsg(prev, aiMsg))
+        setTyping(false)
+        setTimeout(() => startFocusMode?.(), 1500)
+        return
+      }
       const aiMsg = { role: 'ai', text: easterEgg, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
       setMessages(prev => addMsg(prev, aiMsg))
       setTyping(false)
