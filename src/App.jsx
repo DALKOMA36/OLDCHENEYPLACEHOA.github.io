@@ -408,7 +408,7 @@ export default function App() {
       {focusMode && <FocusMode onExit={() => setFocusMode(false)} />}
 
       {/* Main content */}
-      <main style={{ flex: 1, overflowY: 'auto', paddingBottom: 72 }}>
+      <main style={{ flex: 1, overflowY: 'auto', paddingBottom: 16 }}>
         <CurrentScreen user={user} updateUser={updateUser} addMemory={addMemory} navigate={navigate} startFocusMode={() => setFocusMode(true)} />
       </main>
 
@@ -419,43 +419,7 @@ export default function App() {
       <JarvisCheckin user={user} />
       <CalendarSync />
 
-      {/* Bottom nav */}
-      <nav style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0,
-        display: 'flex',
-        background: colors.surface,
-        borderTop: `1px solid ${colors.border}`,
-        zIndex: 50,
-        paddingBottom: 'env(safe-area-inset-bottom, 0)',
-        backdropFilter: 'blur(12px)',
-        boxShadow: '0 -1px 20px rgba(0, 212, 255, 0.05)',
-      }}>
-        {NAV_ITEMS.map(key => {
-          const active = screen === key
-          return (
-            <button
-              key={key}
-              onClick={() => navigate(key)}
-              style={{
-                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-                padding: '8px 0 6px', background: 'none', border: 'none',
-                borderTop: active ? `2px solid ${colors.primary}` : '2px solid transparent',
-                color: active ? colors.primary : colors.textMuted,
-                fontSize: 9, cursor: 'pointer', gap: 2,
-                fontFamily: "'JetBrains Mono', monospace",
-                letterSpacing: 0.5,
-                transition: 'all 0.15s ease',
-              }}
-            >
-              <span style={{
-                fontSize: 11, fontWeight: 600,
-                textShadow: active ? `0 0 8px ${colors.primary}` : 'none',
-              }}>{SCREENS[key]?.icon}</span>
-              <span style={{ fontSize: 8, letterSpacing: 1, textTransform: 'uppercase' }}>{SCREENS[key]?.label}</span>
-            </button>
-          )
-        })}
-      </nav>
+      {/* No bottom nav — Dashboard is the hub, header has back button */}
 
       <style>{`
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
