@@ -74,12 +74,31 @@ const INTENTS = [
 
 export function classifyIntent(text) {
   const lower = text.toLowerCase().trim()
+  let bestMatch = null
+  let bestConfidence = 0
+
   for (const { intent, patterns } of INTENTS) {
     for (const pattern of patterns) {
       const match = lower.match(pattern)
-      if (match) return { intent, match, groups: match.slice(1) }
+      if (match) {
+        // Confidence = how much of the input the pattern covers
+        const matchLen = match[0].length
+        const inputLen = lower.length
+        const coverage = matchLen / inputLen
+        // Bonus for matching at start of input
+        const posBonus = match.index === 0 ? 0.15 : 0
+        const confidence = Math.min(coverage + posBonus, 1.0)
+
+        if (confidence > bestConfidence) {
+          bestConfidence = confidence
+          bestMatch = { intent, match, groups: match.slice(1), confidence }
+        }
+      }
     }
   }
+
+  // Only return if confidence is above threshold
+  if (bestMatch && bestConfidence >= 0.2) return bestMatch
   return null
 }
 

@@ -298,71 +298,222 @@ export function getLearned() {
   return loadState('jarvis_learned', {})
 }
 
-// ---- Long-Term Memory System ----
-// Stores specific facts, wishes, preferences, plans INDEFINITELY
-// JARVIS remembers everything you've ever told him
+// ---- 3-Tier Memory System (inspired by Leon AI) ----
+// Short-term: current conversation (expires after session)
+// Medium-term: daily summaries (expires after 30 days)
+// Long-term: facts, preferences, wishes (NEVER expires)
+//
+// Deduplication via Jaccard similarity to avoid storing same thing twice
+// Weighted recall — long-term memories rank higher than medium-term
 
-const LONGTERM_KEY = 'jarvis_longterm_memory'
-const MAX_MEMORIES = 2000 // practically unlimited
+const MAX_LONGTERM = 5000
+const MAX_MEDIUM = 500
+const MEDIUM_TTL_DAYS = 30
+const SIMILARITY_THRESHOLD = 0.7 // don't store if 70%+ similar to existing
+
+function jaccard(a, b) {
+  const setA = new Set(a.toLowerCase().split(/\s+/))
+  const setB = new Set(b.toLowerCase().split(/\s+/))
+  const intersection = new Set([...setA].filter(x => setB.has(x)))
+  const union = new Set([...setA, ...setB])
+  return union.size > 0 ? intersection.size / union.size : 0
+}
+
+function isDuplicate(text, memories, threshold = SIMILARITY_THRESHOLD) {
+  // Check last 200 memories for near-duplicates
+  const recent = memories.slice(-200)
+  for (const m of recent) {
+    if (jaccard(text, m.text) >= threshold) return true
+    // Also check substring containment
+    if (m.text.toLowerCase().includes(text.toLowerCase()) || text.toLowerCase().includes(m.text.toLowerCase())) return true
+  }
+  return false
+}
 
 export function addLongTermMemory(text, category = 'general', source = 'chat') {
+  if (!text || text.length < 5) return // Don't store tiny fragments
+
   const memories = loadState('longterm_memory', [])
+
+  // Dedup check
+  if (isDuplicate(text, memories)) return
+
   memories.push({
     id: Date.now().toString(),
     text,
-    category, // wish, plan, preference, fact, place, person, general
-    source,   // chat, task, calendar, note, travel
+    category, // wish, plan, preference, fact, place, person, query, general
+    source,   // chat, task, calendar, note, travel, habit, finance, voice
     createdAt: new Date().toISOString(),
     lastRecalled: null,
+    recallCount: 0,
   })
-  // Keep the most recent N but never delete — in practice 2000 is years of memories
-  saveState('longterm_memory', memories.slice(-MAX_MEMORIES))
+  saveState('longterm_memory', memories.slice(-MAX_LONGTERM))
+}
+
+// Medium-term: daily activity log
+export function addMediumTermMemory(text, source = 'system') {
+  const memories = loadState('medium_memory', [])
+  if (isDuplicate(text, memories, 0.8)) return
+
+  memories.push({
+    text, source,
+    createdAt: new Date().toISOString(),
+  })
+
+  // Expire old entries
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - MEDIUM_TTL_DAYS)
+  const filtered = memories.filter(m => new Date(m.createdAt) > cutoff)
+
+  saveState('medium_memory', filtered.slice(-MAX_MEDIUM))
 }
 
 export function searchMemories(query) {
-  const memories = loadState('longterm_memory', [])
+  const longTerm = loadState('longterm_memory', [])
+  const mediumTerm = loadState('medium_memory', [])
   const q = query.toLowerCase()
-  const words = q.split(/\s+/)
+  const words = q.split(/\s+/).filter(w => w.length > 2)
 
-  return memories
-    .map(m => {
-      const text = m.text.toLowerCase()
-      let score = 0
-      for (const w of words) {
-        if (text.includes(w)) score++
+  // Score and weight — long-term memories rank 1.5x higher
+  const score = (memories, weight) => memories.map(m => {
+    const text = m.text.toLowerCase()
+    let s = 0
+    for (const w of words) {
+      if (text.includes(w)) s++
+    }
+    return { ...m, score: s * weight, tier: weight > 1 ? 'long-term' : 'medium-term' }
+  }).filter(m => m.score > 0)
+
+  const results = [
+    ...score(longTerm, 1.5),
+    ...score(mediumTerm, 0.8),
+  ].sort((a, b) => b.score - a.score).slice(0, 10)
+
+  // Track recall — memories that get recalled frequently are more important
+  if (results.length > 0) {
+    const lt = loadState('longterm_memory', [])
+    let changed = false
+    for (const r of results) {
+      const mem = lt.find(m => m.id === r.id)
+      if (mem) {
+        mem.lastRecalled = new Date().toISOString()
+        mem.recallCount = (mem.recallCount || 0) + 1
+        changed = true
       }
-      return { ...m, score }
-    })
-    .filter(m => m.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 10)
+    }
+    if (changed) saveState('longterm_memory', lt)
+  }
+
+  return results
 }
 
 export function getAllMemories() {
   return loadState('longterm_memory', [])
 }
 
+export function getMemoryStats() {
+  const lt = loadState('longterm_memory', [])
+  const mt = loadState('medium_memory', [])
+  const categories = {}
+  lt.forEach(m => { categories[m.category] = (categories[m.category] || 0) + 1 })
+  const mostRecalled = lt.filter(m => m.recallCount > 0).sort((a, b) => (b.recallCount || 0) - (a.recallCount || 0)).slice(0, 5)
+  return {
+    longTermCount: lt.length,
+    mediumTermCount: mt.length,
+    categories,
+    mostRecalled,
+    oldestMemory: lt[0]?.createdAt,
+    newestMemory: lt[lt.length - 1]?.createdAt,
+  }
+}
+
 export function getMemoriesForContext(context) {
-  // Pull relevant memories for AI context enrichment
-  const memories = loadState('longterm_memory', [])
-  if (memories.length === 0) return []
+  const longTerm = loadState('longterm_memory', [])
+  const mediumTerm = loadState('medium_memory', [])
+  if (longTerm.length === 0 && mediumTerm.length === 0) return []
 
-  // Get memories matching the context keywords
   const words = context.toLowerCase().split(/\s+/).filter(w => w.length > 3)
-  const relevant = memories
-    .map(m => {
-      const text = m.text.toLowerCase()
-      let score = 0
-      for (const w of words) {
-        if (text.includes(w)) score++
-      }
-      return { ...m, score }
-    })
-    .filter(m => m.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5)
 
-  return relevant
+  const score = (memories, weight) => memories.map(m => {
+    const text = m.text.toLowerCase()
+    let s = 0
+    for (const w of words) {
+      if (text.includes(w)) s++
+    }
+    // Boost frequently recalled memories
+    const recallBoost = Math.min((m.recallCount || 0) * 0.1, 0.5)
+    return { ...m, score: (s + recallBoost) * weight }
+  }).filter(m => m.score > 0)
+
+  const all = [
+    ...score(longTerm, 1.5),
+    ...score(mediumTerm, 0.8),
+  ].sort((a, b) => b.score - a.score).slice(0, 8)
+
+  return all
+}
+
+// ---- Learn from ALL app actions, not just chat ----
+
+export function learnFromAction(actionType, data) {
+  const now = new Date()
+
+  // Log to medium-term memory (daily activity)
+  switch (actionType) {
+    case 'task_created':
+      addMediumTermMemory(`Created task: "${data.title}"${data.category ? ` [${data.category}]` : ''}`, 'tasks')
+      break
+    case 'task_completed':
+      addMediumTermMemory(`Completed task: "${data.title}"`, 'tasks')
+      break
+    case 'event_created':
+      addMediumTermMemory(`Added event: "${data.title}" on ${data.date}${data.location ? ` at ${data.location}` : ''}`, 'calendar')
+      // If event has a location, remember it as a place
+      if (data.location) addLongTermMemory(`Visited/planned to visit: ${data.location} for ${data.title}`, 'place', 'calendar')
+      break
+    case 'reminder_created':
+      addMediumTermMemory(`Set reminder: "${data.text}" for ${data.date}`, 'reminders')
+      break
+    case 'habit_completed':
+      addMediumTermMemory(`Completed habit: "${data.name}"`, 'habits')
+      break
+    case 'expense_logged':
+      addMediumTermMemory(`Spent $${Math.abs(data.amount).toFixed(2)} on ${data.description} [${data.category}]`, 'finance')
+      break
+    case 'income_logged':
+      addMediumTermMemory(`Received $${data.amount.toFixed(2)}: ${data.description}`, 'finance')
+      break
+    case 'note_created':
+      addMediumTermMemory(`Created note: "${data.title}"`, 'notes')
+      // Notes might contain important facts — store in long-term
+      if (data.body && data.body.length > 20) {
+        addLongTermMemory(`Note "${data.title}": ${data.body.slice(0, 200)}`, 'fact', 'notes')
+      }
+      break
+    case 'trip_created':
+      addLongTermMemory(`Planning trip to ${data.destination}${data.start_date ? ` on ${data.start_date}` : ''}`, 'plan', 'travel')
+      break
+    case 'contact_added':
+      addLongTermMemory(`Added contact: ${data.name}${data.phone ? ` (${data.phone})` : ''}${data.email ? ` — ${data.email}` : ''}`, 'person', 'contacts')
+      break
+    case 'message_sent':
+      addMediumTermMemory(`Sent message to ${data.to}: "${data.message?.slice(0, 50)}"`, 'messages')
+      break
+    case 'meal_planned':
+      addMediumTermMemory(`Planned meal: ${data.name} for ${data.slot}`, 'meals')
+      break
+    case 'podcast_added':
+      addLongTermMemory(`Subscribed to podcast: ${data.title}`, 'preference', 'media')
+      break
+    case 'place_saved':
+      if (data.name && data.address) {
+        addLongTermMemory(`Saved place "${data.name}": ${data.address}`, 'place', 'media')
+      }
+      break
+  }
+
+  // Also update the learning patterns
+  learnPattern('action', { type: actionType })
 }
 
 // Auto-extract memories from AI conversations
