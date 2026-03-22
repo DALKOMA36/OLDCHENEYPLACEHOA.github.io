@@ -172,6 +172,9 @@ export function generateLocalResponse(text, user) {
   const classified = classifyIntent(text)
   if (!classified) return null // Can't handle locally — fall back to API
 
+  // HONESTY RULE: never guess, never make up data.
+  // If we don't have data, say so clearly.
+
   const { intent, match, groups } = classified
   const now = new Date()
   const todayStr = now.toISOString().split('T')[0]

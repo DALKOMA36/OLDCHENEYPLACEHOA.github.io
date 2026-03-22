@@ -256,6 +256,15 @@ Your personality:
 - Be concise — give direct answers, not essays
 - When the user asks you to do something, USE YOUR TOOLS to actually do it
 
+CRITICAL HONESTY RULES — NEVER VIOLATE:
+- NEVER guess, fabricate, or make up information you don't have
+- If you don't know something, say "I don't have that information" — don't invent an answer
+- NEVER make up dates, times, prices, phone numbers, or facts
+- If the user asks about their schedule/tasks and you have the data below, use it. If not, say you don't have access right now
+- If asked about something outside your knowledge, say so honestly
+- NEVER pretend to have done something you haven't actually done
+- Only use tools when the user clearly wants an action taken
+
 You have tools to take REAL actions:
 - create_task: Create tasks with title, priority, due date, category
 - create_event: Create calendar events with title, date, time, location
@@ -281,6 +290,17 @@ Today's date is ${new Date().toISOString().split('T')[0]}.`
     }
     if (context.upcomingReminders?.length) {
       prompt += `\n\nUpcoming reminders:\n${context.upcomingReminders.map(r => `- ${r.text} on ${r.date} at ${r.time}`).join('\n')}`
+    }
+    if (context.longTermMemories) {
+      prompt += `\n\nLong-term memories about this user (things they've told you before — use these to be helpful and personal, but don't repeat them unprompted):\n${context.longTermMemories}`
+    }
+    if (context.learnedPreferences) {
+      const lp = context.learnedPreferences
+      if (lp.interactionCount) prompt += `\n\nYou've had ${lp.interactionCount} interactions with this user.`
+      if (lp.topics && Object.keys(lp.topics).length > 0) {
+        const top = Object.entries(lp.topics).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([t]) => t)
+        prompt += `\nTheir frequent topics: ${top.join(', ')}`
+      }
     }
   }
 

@@ -23,6 +23,7 @@ import BootSequence from './BootSequence'
 import StatusBar from './StatusBar'
 import JarvisAssistant from './JarvisAssistant'
 import FocusMode from './FocusMode'
+import UniversalSearch from './UniversalSearch'
 import { syncQueue, isOffline } from './offline'
 import { db, auth } from './db'
 import { colors, loadState, saveState } from './constants'
@@ -60,6 +61,7 @@ export default function App() {
   const [booting, setBooting] = useState(true)
   const [focusMode, setFocusMode] = useState(false)
   const [assistantActive, setAssistantActive] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const [authState, setAuthState] = useState('checking') // checking, login, register, authenticated
   const [user, setUser] = useState({
     name: '',
@@ -125,7 +127,8 @@ export default function App() {
       // Don't trigger in input/textarea
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return
 
-      if (e.key === 'Escape') { navigate('dashboard'); setAssistantActive(false); setFocusMode(false) }
+      if (e.key === 'Escape') { navigate('dashboard'); setAssistantActive(false); setFocusMode(false); setSearchOpen(false) }
+      else if (e.key === '/' || e.key === 's' || e.key === 'S') { setSearchOpen(true); e.preventDefault(); return }
       else if (e.key === 'j' || e.key === 'J') setAssistantActive(prev => !prev)
       else if (e.key === 'f' && !e.ctrlKey && !e.metaKey) setFocusMode(prev => !prev)
       else if (e.key === 'v' || e.key === 'V') navigate('voice')
@@ -441,6 +444,7 @@ export default function App() {
       {/* Full-screen overlays */}
       {booting && <BootSequence user={user} onComplete={() => setBooting(false)} />}
       {focusMode && <FocusMode onExit={() => setFocusMode(false)} />}
+      {searchOpen && <UniversalSearch active={searchOpen} onClose={() => setSearchOpen(false)} navigate={navigate} />}
 
       {/* Main content */}
       <main style={{ flex: 1, overflowY: 'auto', paddingBottom: 16 }}>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { colors, loadState, saveState } from '../constants'
 import { db } from '../db'
+import { generateSuggestions } from '../smartSuggestions'
 
 const greetings = (name) => {
   const h = new Date().getHours()
@@ -252,6 +253,41 @@ export default function Dashboard({ user, navigate, addMemory, startFocusMode })
           }}>{loadingBriefing ? 'Compiling briefing...' : aiBriefing}</p>
         </div>
       )}
+
+      {/* Smart Suggestions */}
+      {(() => {
+        const suggestions = generateSuggestions(user)
+        if (suggestions.length === 0) return null
+        const typeColors = {
+          warning: colors.danger, alert: colors.warning, info: colors.primary,
+          nudge: colors.secondary, success: colors.success, insight: colors.primaryLight,
+          memory: '#bb86fc',
+        }
+        return (
+          <div style={{ marginBottom: 16 }}>
+            <h3 style={sectionHeader}>JARVIS SUGGESTS</h3>
+            {suggestions.map((s, i) => (
+              <button key={i} onClick={() => s.action && navigate(s.action)} style={{
+                display: 'flex', alignItems: 'flex-start', gap: 10, width: '100%',
+                padding: '10px 12px', marginBottom: 4, textAlign: 'left',
+                background: `${typeColors[s.type] || colors.primary}08`,
+                border: `1px solid ${typeColors[s.type] || colors.primary}25`,
+                cursor: s.action ? 'pointer' : 'default',
+              }}>
+                <div style={{
+                  width: 4, height: 4, borderRadius: '50%', marginTop: 6, flexShrink: 0,
+                  background: typeColors[s.type] || colors.primary,
+                  boxShadow: `0 0 4px ${typeColors[s.type] || colors.primary}`,
+                }} />
+                <span style={{
+                  color: colors.text, fontSize: 12, lineHeight: 1.5,
+                  fontFamily: "'Exo 2', sans-serif",
+                }}>{s.text}</span>
+              </button>
+            ))}
+          </div>
+        )
+      })()}
 
       {/* Status Readout Card */}
       <div style={{
