@@ -113,13 +113,17 @@ export default function FlightTracker({ user }) {
     setAirportData(null)
     try {
       const code = airportQuery.trim().toUpperCase()
-      const [info, flights] = await Promise.all([
+      const [info, flights, weather, delays] = await Promise.all([
         aeroFetch(`/airports/${code}`).catch(() => null),
-        aeroFetch(`/airports/${code}/flights?type=departures`).catch(() => null),
+        aeroFetch(`/airports/${code}/flights/departures`).catch(() => null),
+        aeroFetch(`/airports/${code}/weather/observations`).catch(() => null),
+        aeroFetch(`/airports/${code}/delays`).catch(() => null),
       ])
       setAirportData({
-        info: info,
-        departures: flights?.departures?.slice(0, 15) || [],
+        info,
+        departures: flights?.departures?.slice(0, 15) || flights?.scheduled_departures?.slice(0, 15) || [],
+        weather: weather?.observations?.[0] || null,
+        delays: delays,
       })
     } catch (err) {
       setError(err.message)
@@ -394,6 +398,60 @@ export default function FlightTracker({ user }) {
               <div style={{ color: colors.textMuted, fontSize: 12, marginTop: 2, fontFamily: "'Exo 2', sans-serif" }}>
                 {airportData.info.city}, {airportData.info.state} {airportData.info.country_code}
               </div>
+
+              {/* Airport weather */}
+              {airportData.weather && (
+                <div style={{
+                  display: 'flex', gap: 16, marginTop: 12, paddingTop: 10,
+                  borderTop: `1px solid ${colors.border}`,
+                }}>
+                  {airportData.weather.temp_air && (
+                    <div>
+                      <div style={{ color: colors.text, fontSize: 18, fontWeight: 600, fontFamily: "'Rajdhani', sans-serif" }}>
+                        {Math.round(airportData.weather.temp_air * 9/5 + 32)}°F
+                      </div>
+                      <div style={{ color: colors.textMuted, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>TEMP</div>
+                    </div>
+                  )}
+                  {airportData.weather.wind_speed && (
+                    <div>
+                      <div style={{ color: colors.text, fontSize: 18, fontWeight: 600, fontFamily: "'Rajdhani', sans-serif" }}>
+                        {airportData.weather.wind_speed}kt
+                      </div>
+                      <div style={{ color: colors.textMuted, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>WIND</div>
+                    </div>
+                  )}
+                  {airportData.weather.visibility && (
+                    <div>
+                      <div style={{ color: colors.text, fontSize: 18, fontWeight: 600, fontFamily: "'Rajdhani', sans-serif" }}>
+                        {airportData.weather.visibility}mi
+                      </div>
+                      <div style={{ color: colors.textMuted, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>VIS</div>
+                    </div>
+                  )}
+                  {airportData.weather.cloud_friendly && (
+                    <div>
+                      <div style={{ color: colors.text, fontSize: 13, fontFamily: "'Exo 2', sans-serif" }}>
+                        {airportData.weather.cloud_friendly}
+                      </div>
+                      <div style={{ color: colors.textMuted, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>SKY</div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Delays */}
+              {airportData.delays && (
+                <div style={{
+                  marginTop: 8, padding: '6px 10px', borderRadius: 6,
+                  background: 'rgba(255,190,48,0.1)', border: `1px solid rgba(255,190,48,0.3)`,
+                  color: colors.warning, fontSize: 12, fontFamily: "'JetBrains Mono', monospace",
+                }}>
+                  {airportData.delays.delay_index != null
+                    ? `Delay index: ${airportData.delays.delay_index} // ${airportData.delays.delay_index > 3 ? 'Significant delays' : airportData.delays.delay_index > 1 ? 'Minor delays' : 'Running smoothly'}`
+                    : 'No delay data'}
+                </div>
+              )}
             </div>
           )}
 

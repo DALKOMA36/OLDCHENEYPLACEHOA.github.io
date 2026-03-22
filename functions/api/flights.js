@@ -14,8 +14,9 @@ export async function onRequestGet({ env, request, data }) {
   const path = url.searchParams.get('path')
   if (!path) return error('path parameter required')
 
-  // Only allow safe paths
-  if (!path.startsWith('/flights/') && !path.startsWith('/airports/')) {
+  // Allow all read-only AeroAPI paths available on Personal tier
+  const allowedPrefixes = ['/flights/', '/airports/', '/operators/', '/aircraft/', '/schedules/', '/disruption_counts/', '/account/']
+  if (!allowedPrefixes.some(p => path.startsWith(p))) {
     return error('Invalid API path')
   }
 
