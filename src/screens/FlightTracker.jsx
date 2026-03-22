@@ -1,20 +1,22 @@
 import { useState, useEffect } from 'react'
 import { colors, loadState, saveState } from '../constants'
+import { db } from '../db'
 
-// FlightAware AeroAPI base
-const AEROAPI_BASE = 'https://aeroapi.flightaware.com/aeroapi'
+// Proxy through our backend — API key stays server-side
+async function aeroFetch(path) {
+  const token = localStorage.getItem('jarvis_token')
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
 
-async function aeroFetch(path, apiKey) {
-  const res = await fetch(`${AEROAPI_BASE}${path}`, {
-    headers: { 'x-apikey': apiKey },
-  })
-  if (!res.ok) throw new Error(`FlightAware API error: ${res.status}`)
+  const res = await fetch(`/api/flights?path=${encodeURIComponent(path)}`, { headers })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }))
+    throw new Error(err.error || `Flight API error: ${res.status}`)
+  }
   return res.json()
 }
 
 export default function FlightTracker({ user }) {
-  const [apiKey, setApiKey] = useState(() => loadState('flightaware_key', ''))
-  const [keyInput, setKeyInput] = useState('')
   const [tab, setTab] = useState('search') // search, tracked, airports
   const [query, setQuery] = useState('')
   const [results, setResults] = useState(null)
@@ -27,22 +29,16 @@ export default function FlightTracker({ user }) {
 
   useEffect(() => { saveState('tracked_flights', trackedFlights) }, [trackedFlights])
 
-  // Save API key
-  const saveKey = () => {
-    if (!keyInput.trim()) return
-    saveState('flightaware_key', keyInput.trim())
-    setApiKey(keyInput.trim())
-    setKeyInput('')
-  }
+  // API key is now server-side (Cloudflare env var)
 
   // Search flight by number (e.g., UA123, DAL456)
   const searchFlight = async () => {
-    if (!query.trim() || !apiKey) return
+    if (!query.trim()) return
     setLoading(true)
     setError('')
     setResults(null)
     try {
-      const data = await aeroFetch(`/flights/${query.trim().toUpperCase()}`, apiKey)
+      const data = await aeroFetch(`/flights/${query.trim().toUpperCase()}`)
       setResults(data.flights || [])
     } catch (err) {
       setError(err.message)
@@ -52,13 +48,13 @@ export default function FlightTracker({ user }) {
 
   // Get flight details
   const getFlightDetail = async (faFlightId) => {
-    if (!apiKey) return
+    // auth handled server-side
     setLoading(true)
     setError('')
     try {
       const [flight, track] = await Promise.all([
-        aeroFetch(`/flights/${faFlightId}`, apiKey).catch(() => null),
-        aeroFetch(`/flights/${faFlightId}/track`, apiKey).catch(() => null),
+        aeroFetch(`/flights/${faFlightId}`).catch(() => null),
+        aeroFetch(`/flights/${faFlightId}/track`).catch(() => null),
       ])
       setSelectedFlight({ ...(flight?.flights?.[0] || {}), track: track?.positions || [] })
     } catch (err) {
@@ -90,11 +86,11 @@ export default function FlightTracker({ user }) {
 
   // Refresh tracked flights
   const refreshTracked = async () => {
-    if (!apiKey || trackedFlights.length === 0) return
+    if (trackedFlights.length === 0) return
     setLoading(true)
     for (const flight of trackedFlights) {
       try {
-        const data = await aeroFetch(`/flights/${flight.ident}`, apiKey)
+        const data = await aeroFetch(`/flights/${flight.ident}`)
         const latest = data.flights?.[0]
         if (latest) {
           setTrackedFlights(prev => prev.map(f => f.id === flight.id ? {
@@ -111,15 +107,15 @@ export default function FlightTracker({ user }) {
 
   // Airport search
   const searchAirport = async () => {
-    if (!airportQuery.trim() || !apiKey) return
+    if (!airportQuery.trim()) return
     setLoading(true)
     setError('')
     setAirportData(null)
     try {
       const code = airportQuery.trim().toUpperCase()
       const [info, flights] = await Promise.all([
-        aeroFetch(`/airports/${code}`, apiKey).catch(() => null),
-        aeroFetch(`/airports/${code}/flights?type=departures`, apiKey).catch(() => null),
+        aeroFetch(`/airports/${code}`).catch(() => null),
+        aeroFetch(`/airports/${code}/flights?type=departures`).catch(() => null),
       ])
       setAirportData({
         info: info,
@@ -132,69 +128,6 @@ export default function FlightTracker({ user }) {
   }
 
   // No API key — show setup
-  if (!apiKey) {
-    return (
-      <div style={{ padding: 20, textAlign: 'center' }}>
-        <span style={{ fontSize: 40 }}>✈️</span>
-        <h2 style={{
-          color: colors.text, fontSize: 20, fontWeight: 600, marginTop: 12, marginBottom: 8,
-          fontFamily: "'Exo 2', sans-serif",
-        }}>Flight Tracker</h2>
-        <p style={{
-          color: colors.textMuted, fontSize: 13, marginBottom: 20, lineHeight: 1.6,
-          fontFamily: "'Exo 2', sans-serif",
-        }}>
-          Track flights in real-time using FlightAware AeroAPI.
-          Enter your API key to get started.
-        </p>
-        <div style={{
-          padding: 16, background: colors.surfaceLight,
-          border: `1px solid ${colors.border}`, borderRadius: 12, textAlign: 'left',
-          marginBottom: 12,
-        }}>
-          <div style={{
-            color: colors.textMuted, fontSize: 11, marginBottom: 8, lineHeight: 1.6,
-            fontFamily: "'JetBrains Mono', monospace",
-          }}>
-            Get your free API key at flightaware.com/aeroapi
-            — as a contributor you get $10/month free usage.
-          </div>
-          <input
-            value={keyInput}
-            onChange={e => setKeyInput(e.target.value)}
-            placeholder="Paste your AeroAPI key"
-            type="password"
-            style={{
-              width: '100%', padding: '12px 14px', marginBottom: 10,
-              background: colors.surface, border: `1px solid ${colors.border}`,
-              borderRadius: 8, color: colors.text, fontSize: 14,
-              fontFamily: "'Exo 2', sans-serif",
-            }}
-          />
-          <button onClick={saveKey} disabled={!keyInput.trim()} style={{
-            width: '100%', padding: 14, borderRadius: 10,
-            background: keyInput.trim() ? colors.primaryDim : 'transparent',
-            border: `1px solid ${keyInput.trim() ? colors.primary : colors.border}`,
-            color: keyInput.trim() ? colors.primary : colors.textMuted,
-            fontSize: 14, fontWeight: 600, cursor: 'pointer',
-            fontFamily: "'Exo 2', sans-serif",
-            minHeight: 48, touchAction: 'manipulation',
-          }}>Connect FlightAware</button>
-        </div>
-
-        {/* Quick link to Flightradar24 */}
-        <button onClick={() => window.open('https://www.flightradar24.com', '_blank')} style={{
-          width: '100%', padding: 14, borderRadius: 10,
-          background: 'rgba(246, 190, 0, 0.08)',
-          border: `1px solid rgba(246, 190, 0, 0.3)`,
-          color: '#f6be00', fontSize: 14, fontWeight: 500, cursor: 'pointer',
-          fontFamily: "'Exo 2', sans-serif",
-          minHeight: 48, touchAction: 'manipulation',
-        }}>Open Flightradar24 →</button>
-      </div>
-    )
-  }
-
   // Flight detail view
   if (selectedFlight) {
     const f = selectedFlight

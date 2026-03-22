@@ -257,17 +257,17 @@ export default function MediaHub({ user }) {
                     placeholder="https://feeds.example.com/podcast.xml"
                     onKeyDown={e => e.key === 'Enter' && addPodFeed()}
                     style={{
-                      flex: 1, padding: '8px 12px',
+                      flex: 1, padding: '12px 14px', minHeight: 44, borderRadius: 8,
                       background: colors.surface, border: `1px solid ${colors.border}`,
-                      color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif",
+                      color: colors.text, fontSize: 14, fontFamily: "'Exo 2', sans-serif",
                     }}
                   />
                   <button onClick={addPodFeed} disabled={loadingFeed || !newFeedUrl.trim()} style={{
-                    padding: '8px 14px',
+                    padding: '12px 16px', minHeight: 44, borderRadius: 8,
                     background: newFeedUrl.trim() ? colors.primaryDim : 'transparent',
                     border: `1px solid ${newFeedUrl.trim() ? colors.primary : colors.border}`,
                     color: newFeedUrl.trim() ? colors.primary : colors.textMuted,
-                    fontSize: 10, cursor: 'pointer',
+                    fontSize: 12, cursor: 'pointer',
                     fontFamily: "'JetBrains Mono', monospace",
                   }}>{loadingFeed ? '...' : 'ADD'}</button>
                 </div>
@@ -300,23 +300,23 @@ export default function MediaHub({ user }) {
 
                   {feedData.items.map((ep, i) => (
                     <div key={i} style={{
-                      padding: 10, marginBottom: 4,
+                      padding: 14, marginBottom: 10, borderRadius: 10,
                       background: playing?.audioUrl === ep.audioUrl ? colors.primaryDim : colors.surfaceLight,
                       border: `1px solid ${playing?.audioUrl === ep.audioUrl ? colors.primary : colors.border}`,
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{
-                            color: colors.text, fontSize: 12, fontWeight: 500,
+                            color: colors.text, fontSize: 14, fontWeight: 500,
                             fontFamily: "'Exo 2', sans-serif", marginBottom: 2,
                           }}>{ep.title}</div>
-                          <div style={{ color: colors.textMuted, fontSize: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+                          <div style={{ color: colors.textMuted, fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
                             {ep.duration && `${ep.duration} // `}{ep.date ? new Date(ep.date).toLocaleDateString() : ''}
                           </div>
                         </div>
                         {ep.audioUrl && (
                           <button onClick={() => playEpisode(ep)} style={{
-                            width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+                            width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
                             background: colors.primaryDim, border: `1px solid ${colors.primary}`,
                             color: colors.primary, fontSize: 12, cursor: 'pointer',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -332,9 +332,9 @@ export default function MediaHub({ user }) {
                     db.media.deleteFeed(selectedFeed.id).catch(() => {})
                     setSelectedFeed(null)
                   }} style={{
-                    width: '100%', padding: 10, marginTop: 10,
+                    width: '100%', padding: '12px 16px', marginTop: 10, minHeight: 44, borderRadius: 8,
                     background: 'transparent', border: `1px solid ${colors.danger}`,
-                    color: colors.danger, fontSize: 10, cursor: 'pointer',
+                    color: colors.danger, fontSize: 12, cursor: 'pointer',
                     fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
                   }}>REMOVE PODCAST</button>
                 </div>
@@ -355,9 +355,9 @@ export default function MediaHub({ user }) {
               placeholder="Where to?"
               onKeyDown={e => e.key === 'Enter' && destination && launchers.googleMaps(destination)}
               style={{
-                flex: 1, padding: '10px 12px',
+                flex: 1, padding: '12px 14px', minHeight: 44, borderRadius: 8,
                 background: colors.surface, border: `1px solid ${colors.border}`,
-                color: colors.text, fontSize: 13, fontFamily: "'Exo 2', sans-serif",
+                color: colors.text, fontSize: 14, fontFamily: "'Exo 2', sans-serif",
               }}
             />
           </div>
@@ -375,22 +375,22 @@ export default function MediaHub({ user }) {
 
           {/* Saved places */}
           <div style={{
-            color: colors.textMuted, fontSize: 9, marginBottom: 8,
+            color: colors.textMuted, fontSize: 13, marginBottom: 8,
             fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
           }}>SAVED PLACES</div>
 
           {savedPlaces.map((place, i) => (
             <div key={i} style={{
-              display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6,
-              padding: 10, background: colors.surfaceLight, border: `1px solid ${colors.border}`,
+              display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10,
+              padding: 14, background: colors.surfaceLight, border: `1px solid ${colors.border}`, borderRadius: 10,
             }}>
               <input
                 value={place.name}
                 onChange={e => updatePlace(i, 'name', e.target.value)}
                 style={{
-                  width: 60, padding: '4px 8px',
+                  width: 70, padding: '8px 10px', minHeight: 44, borderRadius: 8,
                   background: colors.surface, border: `1px solid ${colors.border}`,
-                  color: colors.primary, fontSize: 11, fontWeight: 600,
+                  color: colors.primary, fontSize: 14, fontWeight: 600,
                   fontFamily: "'JetBrains Mono', monospace",
                 }}
               />
@@ -399,9 +399,9 @@ export default function MediaHub({ user }) {
                 onChange={e => updatePlace(i, 'address', e.target.value)}
                 placeholder="Enter address..."
                 style={{
-                  flex: 1, padding: '4px 8px',
+                  flex: 1, padding: '8px 10px', minHeight: 44, borderRadius: 8,
                   background: colors.surface, border: `1px solid ${colors.border}`,
-                  color: colors.text, fontSize: 11, fontFamily: "'Exo 2', sans-serif",
+                  color: colors.text, fontSize: 14, fontFamily: "'Exo 2', sans-serif",
                 }}
               />
               {place.address && (
@@ -414,9 +414,9 @@ export default function MediaHub({ user }) {
           ))}
 
           <button onClick={() => setSavedPlaces(prev => [...prev, { name: '', address: '' }])} style={{
-            width: '100%', padding: 8, marginTop: 4,
+            width: '100%', padding: '12px 16px', marginTop: 4, minHeight: 44, borderRadius: 8,
             background: 'transparent', border: `1px dashed ${colors.border}`,
-            color: colors.textMuted, fontSize: 9, cursor: 'pointer',
+            color: colors.textMuted, fontSize: 12, cursor: 'pointer',
             fontFamily: "'JetBrains Mono', monospace",
           }}>+ ADD PLACE</button>
         </div>
@@ -433,18 +433,18 @@ export default function MediaHub({ user }) {
 
 const linkBtn = {
   background: 'none', border: 'none', color: colors.textMuted,
-  fontSize: 9, cursor: 'pointer', padding: '4px 0',
+  fontSize: 12, cursor: 'pointer', padding: '8px 12px', minHeight: 44,
   fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
 }
 
 const tinyBtn = {
-  padding: '3px 8px', fontSize: 8, cursor: 'pointer',
+  padding: '8px 12px', fontSize: 11, cursor: 'pointer', minHeight: 36, borderRadius: 8,
   background: 'transparent', border: `1px solid ${colors.border}`,
   color: colors.textMuted, fontFamily: "'JetBrains Mono', monospace",
 }
 
 const navAppBtn = (col) => ({
-  flex: 1, padding: 12, fontSize: 10, cursor: 'pointer',
+  flex: 1, padding: '12px 16px', fontSize: 12, cursor: 'pointer', minHeight: 44, borderRadius: 8,
   background: `${col}15`, border: `1px solid ${col}`,
   color: col, fontWeight: 600,
   fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,

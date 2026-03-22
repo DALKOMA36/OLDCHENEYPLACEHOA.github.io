@@ -425,12 +425,12 @@ export default function Channels({ user, addMemory }) {
                 />
               </div>
               <button onClick={scheduleSMS} disabled={!scheduleDate || !scheduleTime} style={{
-                width: '100%', padding: 10,
+                width: '100%', padding: '12px 16px', minHeight: 44, borderRadius: 8,
                 background: scheduleDate && scheduleTime ? colors.secondaryDim : 'transparent',
                 border: `1px solid ${scheduleDate && scheduleTime ? colors.secondary : colors.border}`,
                 color: scheduleDate && scheduleTime ? colors.secondary : colors.textMuted,
-                fontSize: 10, cursor: scheduleDate && scheduleTime ? 'pointer' : 'default',
-                fontFamily: "'JetBrains Mono', monospace", letterSpacing: 2,
+                fontSize: 12, cursor: scheduleDate && scheduleTime ? 'pointer' : 'default',
+                fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
               }}>CONFIRM SCHEDULED SEND</button>
             </div>
           )}
@@ -521,9 +521,9 @@ export default function Channels({ user, addMemory }) {
                     )
                   })}
                   <button onClick={() => { setTo(thread.phone); setView('compose') }} style={{
-                    marginTop: 6, padding: '6px 14px', width: '100%',
+                    marginTop: 6, padding: '12px 16px', width: '100%', minHeight: 44, borderRadius: 8,
                     background: colors.primaryDim, border: `1px solid ${colors.primary}`,
-                    color: colors.primary, fontSize: 9, cursor: 'pointer',
+                    color: colors.primary, fontSize: 12, cursor: 'pointer',
                     fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
                   }}>REPLY TO {thread.contactName || thread.phone}</button>
                 </div>
@@ -611,7 +611,7 @@ export default function Channels({ user, addMemory }) {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 12 }}>
               {emailAccounts.map((acct, i) => (
                 <span key={acct.id || i} style={{
-                  padding: '3px 8px', fontSize: 8,
+                  padding: '6px 10px', fontSize: 11, borderRadius: 8,
                   border: `1px solid ${colors.success}`,
                   color: colors.success,
                   fontFamily: "'JetBrains Mono', monospace",
@@ -727,11 +727,11 @@ export default function Channels({ user, addMemory }) {
               />
               <div style={{ display: 'flex', gap: 6 }}>
                 <button onClick={saveContact} disabled={!contactForm.name} style={{
-                  flex: 1, padding: 10,
+                  flex: 1, padding: '12px 16px', minHeight: 44, borderRadius: 8,
                   background: contactForm.name ? colors.primaryDim : 'transparent',
                   border: `1px solid ${contactForm.name ? colors.primary : colors.border}`,
                   color: contactForm.name ? colors.primary : colors.textMuted,
-                  fontSize: 10, cursor: contactForm.name ? 'pointer' : 'default',
+                  fontSize: 12, cursor: contactForm.name ? 'pointer' : 'default',
                   fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
                 }}>{editingContactId ? 'UPDATE' : 'SAVE CONTACT'}</button>
                 {editingContactId && (
@@ -760,7 +760,7 @@ export default function Channels({ user, addMemory }) {
             <EmptyState text={contacts.length === 0 ? "Contact directory empty" : "No matches found"} />
           ) : filteredContacts.map(c => (
             <div key={c.id} style={{
-              padding: '10px 14px', marginBottom: 4,
+              padding: '14px 16px', marginBottom: 10, borderRadius: 10,
               border: `1px solid ${colors.border}`,
               background: colors.surfaceLight,
             }}>
@@ -810,8 +810,8 @@ export default function Channels({ user, addMemory }) {
                     TO: {contacts.find(c => c.phone === item.to)?.name || item.to}
                   </span>
                   <button onClick={() => cancelScheduled(item.id)} style={{
-                    background: 'transparent', border: `1px solid ${colors.danger}`,
-                    color: colors.danger, fontSize: 8, cursor: 'pointer', padding: '2px 8px',
+                    background: 'transparent', border: `1px solid ${colors.danger}`, borderRadius: 8,
+                    color: colors.danger, fontSize: 11, cursor: 'pointer', padding: '8px 12px', minHeight: 36,
                     fontFamily: "'JetBrains Mono', monospace",
                   }}>CANCEL</button>
                 </div>
