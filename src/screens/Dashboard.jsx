@@ -407,8 +407,13 @@ export default function Dashboard({ user, navigate, addMemory, startFocusMode })
             ['AP', 'Apps', 'builder', colors.primary],
             ['FO', 'Focus', '__focus__', colors.danger],
             ['SY', 'Settings', 'settings', colors.textMuted],
+            ['AS', 'Work', '__arrow__', '#e67e22'],
           ].map(([icon, label, target, col]) => (
-            <button key={target} onClick={() => target === '__focus__' ? startFocusMode?.() : navigate(target)} style={{
+            <button key={target} onClick={() => {
+              if (target === '__focus__') startFocusMode?.()
+              else if (target === '__arrow__') window.open('https://customer.arrowstagelines.com/driverportal/diary', '_blank')
+              else navigate(target)
+            }} style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
               padding: '12px 8px', background: 'transparent',
               border: `1px solid ${colors.border}`, color: col, cursor: 'pointer',
