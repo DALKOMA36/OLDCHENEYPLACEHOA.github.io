@@ -378,10 +378,11 @@ export default function App() {
             }} />
           )}
           <button onClick={() => setAssistantActive(!assistantActive)} style={{
-            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            background: 'none', border: 'none', cursor: 'pointer',
+            padding: '6px 8px', margin: '-6px -8px',
             color: assistantActive ? colors.success : colors.primary, fontSize: 14, fontWeight: 500,
             fontFamily: "'JetBrains Mono', monospace",
-            letterSpacing: 3,
+            letterSpacing: 3, position: 'relative', zIndex: 101,
             textShadow: assistantActive ? `0 0 10px ${colors.success}` : 'none',
           }}>JARVIS</button>
         </div>

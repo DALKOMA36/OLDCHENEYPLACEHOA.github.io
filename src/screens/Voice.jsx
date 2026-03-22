@@ -403,8 +403,18 @@ export default function Voice({ user, addMemory, navigate, startFocusMode }) {
     }
 
     recognition.onerror = (event) => {
-      if (event.error !== 'aborted') {
-        setError(`Recognition error: ${event.error}`)
+      if (event.error === 'aborted') return
+      if (event.error === 'audio-capture') {
+        setError('Microphone not available. Close other apps using the mic, or try reloading the page. Make sure mic permissions are granted in your browser settings.')
+      } else if (event.error === 'not-allowed') {
+        setError('Microphone access denied. Please allow microphone access in your browser and try again.')
+      } else if (event.error === 'no-speech') {
+        // Silent — just restart
+        setError('')
+        try { recognition.start() } catch {}
+        return
+      } else {
+        setError(`Voice error: ${event.error}. Try reloading the page.`)
       }
       setListening(false)
       stopMicAnalyser()
