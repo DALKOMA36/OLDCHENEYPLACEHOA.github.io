@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { colors, loadState, saveState } from './constants'
 import { db } from './db'
+import JarvisAvatar from './JarvisAvatar'
 
 // JARVIS Always-On Assistant
 // Persistent overlay that listens, watches what screen you're on,
@@ -210,6 +211,13 @@ export default function JarvisAssistant({ active, onClose, currentScreen, user }
           }}>DISMISS</button>
         </div>
 
+        {/* Mini avatar + content */}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <div style={{ flexShrink: 0 }}>
+            <JarvisAvatar speaking={!!response} listening={listening} size={50} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+
         {/* Live transcript */}
         {transcript && (
           <div style={{
@@ -226,6 +234,9 @@ export default function JarvisAssistant({ active, onClose, currentScreen, user }
           lineHeight: 1.5,
         }}>
           {response || suggestion}
+        </div>
+
+          </div>
         </div>
       </div>
 

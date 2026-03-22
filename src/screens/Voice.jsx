@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { colors, loadState, saveState } from '../constants'
 import { db } from '../db'
+import JarvisAvatar from '../JarvisAvatar'
 
 // Check for Web Speech API support
 const SpeechRecognition = typeof window !== 'undefined'
@@ -560,81 +561,23 @@ export default function Voice({ user, addMemory, navigate, startFocusMode }) {
         </div>
       )}
 
-      {/* Voice Orb with waveform */}
-      <div style={{ position: 'relative', width: ringSize + 80, height: ringSize + 80, marginBottom: 8 }}>
-        {/* Outer pulse rings */}
-        {[1, 0.75, 0.5].map((scale, i) => (
-          <div key={i} style={{
-            position: 'absolute', top: '50%', left: '50%',
-            width: ringSize * (1 + (listening || speaking ? amplitude * 0.25 * (i + 1) : 0)),
-            height: ringSize * (1 + (listening || speaking ? amplitude * 0.25 * (i + 1) : 0)),
-            borderRadius: '50%',
-            border: `1px solid ${listening ? `rgba(0, 212, 255, ${0.5 - i * 0.15})` : speaking ? `rgba(0, 230, 118, ${0.4 - i * 0.1})` : processing ? `rgba(255, 190, 48, ${0.2})` : `rgba(0, 212, 255, ${0.08})`}`,
-            transform: 'translate(-50%, -50%)',
-            transition: listening || speaking ? 'none' : 'all 0.3s ease',
-          }} />
-        ))}
-
-        {/* Main orb button */}
-        <button
-          onClick={() => {
-            if (speaking) { stopSpeaking(); return }
-            if (listening) { stopListening(); return }
-            if (!processing) startListening()
-          }}
-          disabled={processing || !supported}
-          style={{
-            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-            width: ringSize, height: ringSize, borderRadius: '50%',
-            background: listening ? 'rgba(0, 212, 255, 0.12)' : speaking ? 'rgba(0, 230, 118, 0.08)' : processing ? 'rgba(255, 190, 48, 0.06)' : 'rgba(0, 212, 255, 0.03)',
-            border: `1px solid ${listening ? colors.primary : speaking ? colors.success : processing ? colors.warning : colors.border}`,
-            cursor: processing ? 'wait' : 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4,
-            boxShadow: listening ? `0 0 50px rgba(0, 212, 255, 0.25), inset 0 0 30px rgba(0, 212, 255, 0.05)` : speaking ? `0 0 40px rgba(0, 230, 118, 0.2), inset 0 0 20px rgba(0, 230, 118, 0.03)` : 'none',
-            transition: 'all 0.3s ease',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Waveform bars inside the orb */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5,
-            height: 40, position: 'absolute',
-          }}>
-            {micAmplitudes.map((amp, i) => (
-              <div key={i} style={{
-                width: 2.5,
-                height: Math.max(2, amp * 36),
-                background: listening ? colors.primary : speaking ? colors.success : colors.textMuted,
-                opacity: listening || speaking ? 0.6 + amp * 0.4 : 0.15,
-                borderRadius: 1,
-                transition: listening || speaking ? 'none' : 'all 0.3s ease',
-              }} />
-            ))}
-          </div>
-          {/* Core dot */}
-          <div style={{
-            width: 8, height: 8, borderRadius: '50%', position: 'absolute', bottom: 20,
-            background: listening ? colors.primary : speaking ? colors.success : processing ? colors.warning : colors.textMuted,
-            boxShadow: listening ? `0 0 12px ${colors.primary}` : speaking ? `0 0 10px ${colors.success}` : 'none',
-            animation: processing ? 'pulse 1s ease-in-out infinite' : 'none',
-          }} />
-        </button>
-      </div>
-
-      {/* Status indicator */}
-      <div style={{
-        color: statusColor,
-        fontSize: 10, marginBottom: 4, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 3,
-        display: 'flex', alignItems: 'center', gap: 8,
-      }}>
-        <div style={{
-          width: 6, height: 6, borderRadius: '50%',
-          background: statusColor,
-          boxShadow: `0 0 8px ${statusColor}`,
-          animation: processing ? 'pulse 1s ease-in-out infinite' : listening ? 'pulse 2s ease-in-out infinite' : 'none',
-        }} />
-        {statusText}
-      </div>
+      {/* JARVIS Avatar — tap to speak */}
+      <button
+        onClick={() => {
+          if (speaking) { stopSpeaking(); return }
+          if (listening) { stopListening(); return }
+          if (!processing) startListening()
+        }}
+        disabled={processing || !supported}
+        style={{
+          background: 'none', border: 'none', cursor: processing ? 'wait' : 'pointer',
+          padding: 0, marginBottom: 8,
+          WebkitTapHighlightColor: 'rgba(0,212,255,0.2)',
+          touchAction: 'manipulation',
+        }}
+      >
+        <JarvisAvatar speaking={speaking} listening={listening} size={Math.min(220, window.innerWidth - 80)} />
+      </button>
 
       {/* Live transcript with command detection */}
       {transcript && (
