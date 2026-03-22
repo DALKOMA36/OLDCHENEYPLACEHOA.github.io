@@ -82,9 +82,9 @@ export default function Settings({ user, updateUser, addMemory }) {
   return (
     <div style={{ padding: 16 }}>
       <h2 style={{
-        color: colors.primary, fontSize: 12, fontWeight: 600, marginBottom: 20,
+        color: colors.primary, fontSize: 14, fontWeight: 600, marginBottom: 20,
         fontFamily: "'JetBrains Mono', monospace",
-        letterSpacing: 3, textTransform: 'uppercase',
+        letterSpacing: 1, textTransform: 'uppercase',
       }}>System Configuration</h2>
 
       {/* Profile */}
@@ -109,8 +109,8 @@ export default function Settings({ user, updateUser, addMemory }) {
               <>
                 <div style={{ color: colors.text, fontSize: 15, fontWeight: 500, fontFamily: "'Exo 2', sans-serif" }}>{user.name}</div>
                 <button onClick={() => setEditName(true)} style={{
-                  background: 'none', border: 'none', color: colors.textMuted, fontSize: 10, cursor: 'pointer',
-                  fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+                  background: 'none', border: 'none', color: colors.textMuted, fontSize: 11, cursor: 'pointer',
+                  fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1, padding: '12px 16px', minHeight: 44,
                 }}>
                   MODIFY
                 </button>
@@ -128,17 +128,17 @@ export default function Settings({ user, updateUser, addMemory }) {
         <div style={{ padding: '10px 14px', display: 'flex', gap: 6 }}>
           {[['auto', 'AUTO'], ['dark', 'DARK'], ['sun', 'SUN']].map(([t, label]) => (
             <button key={t} onClick={() => { setTheme(t); setThemeState(t); window.location.reload() }} style={{
-              flex: 1, padding: '8px 0',
+              flex: 1, padding: '12px 0', minHeight: 44,
               background: theme === t ? colors.primaryDim : 'transparent',
               border: `1px solid ${theme === t ? colors.primary : colors.border}`,
               color: theme === t ? colors.primary : colors.textMuted,
-              fontSize: 10, cursor: 'pointer',
+              fontSize: 11, cursor: 'pointer', borderRadius: 8,
               fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
             }}>{label}</button>
           ))}
         </div>
         <div style={{
-          padding: '4px 14px 10px', color: colors.textMuted, fontSize: 9,
+          padding: '4px 14px 10px', color: colors.textMuted, fontSize: 11,
           fontFamily: "'JetBrains Mono', monospace",
         }}>
           Auto detects system preference. Sun mode for outdoor readability.
@@ -149,7 +149,7 @@ export default function Settings({ user, updateUser, addMemory }) {
       <Section title="TRUSTED CONTACTS">
         <div style={{ padding: '8px 14px' }}>
           <p style={{
-            color: colors.textMuted, fontSize: 11, marginBottom: 12,
+            color: colors.textMuted, fontSize: 14, marginBottom: 12,
             fontFamily: "'JetBrains Mono', monospace",
           }}>
             Add personnel to delegate tasks and share calendars.
@@ -176,7 +176,7 @@ export default function Settings({ user, updateUser, addMemory }) {
               <button onClick={() => removeCircleMember(member.id)} style={{
                 background: 'none', border: `1px solid ${colors.border}`,
                 color: colors.textMuted, fontSize: 11, cursor: 'pointer',
-                padding: '2px 6px', fontFamily: "'JetBrains Mono', monospace",
+                padding: '8px 10px', fontFamily: "'JetBrains Mono', monospace", minHeight: 44, borderRadius: 8,
               }}>X</button>
             </div>
           ))}
@@ -198,7 +198,7 @@ export default function Settings({ user, updateUser, addMemory }) {
         <div style={{ padding: '10px 14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             <span style={{
-              color: colors.textMuted, fontSize: 10,
+              color: colors.textMuted, fontSize: 11,
               fontFamily: "'JetBrains Mono', monospace",
               letterSpacing: 1,
             }}>TIME:</span>
@@ -213,11 +213,11 @@ export default function Settings({ user, updateUser, addMemory }) {
                 saveState('briefingDays', updated)
                 db.user.update({ briefing_days: updated }).catch(() => {})
               }} style={{
-                padding: '5px 10px',
+                padding: '10px 12px', minHeight: 44,
                 background: briefingDays.includes(day) ? colors.primaryDim : 'transparent',
                 border: `1px solid ${briefingDays.includes(day) ? colors.primary : colors.border}`,
                 color: briefingDays.includes(day) ? colors.primary : colors.textMuted,
-                fontSize: 10, cursor: 'pointer',
+                fontSize: 11, cursor: 'pointer', borderRadius: 8,
                 fontFamily: "'JetBrains Mono', monospace",
                 letterSpacing: 0.5,
                 transition: 'all 0.15s ease',
@@ -239,20 +239,20 @@ export default function Settings({ user, updateUser, addMemory }) {
           { name: 'Instacart', url: 'https://www.instacart.com', icon: 'IC', col: '#43b02a' },
         ].map(link => (
           <button key={link.name} onClick={() => window.open(link.url, '_blank')} style={{
-            display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px',
+            display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', minHeight: 44,
             borderBottom: `1px solid ${colors.border}`,
             width: '100%', background: 'transparent', border: 'none', borderBottom: `1px solid ${colors.border}`,
             cursor: 'pointer', textAlign: 'left',
           }}>
             <span style={{
-              fontSize: 10, width: 24, textAlign: 'center',
+              fontSize: 11, width: 24, textAlign: 'center',
               fontFamily: "'JetBrains Mono', monospace",
               color: link.col, fontWeight: 600,
             }}>{link.icon}</span>
             <div style={{ flex: 1 }}>
-              <div style={{ color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif" }}>{link.name}</div>
+              <div style={{ color: colors.text, fontSize: 14, fontFamily: "'Exo 2', sans-serif" }}>{link.name}</div>
             </div>
-            <span style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace" }}>OPEN →</span>
+            <span style={{ color: colors.textMuted, fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>OPEN →</span>
           </button>
         ))}
       </Section>
@@ -261,7 +261,7 @@ export default function Settings({ user, updateUser, addMemory }) {
       <Section title="MEMORY BANK">
         <div style={{ padding: '10px 14px' }}>
           <p style={{
-            color: colors.textMuted, fontSize: 10, marginBottom: 10,
+            color: colors.textMuted, fontSize: 11, marginBottom: 10,
             fontFamily: "'JetBrains Mono', monospace",
           }}>
             System learns preferences and routines. {user.memory.length} entries stored.
@@ -269,9 +269,9 @@ export default function Settings({ user, updateUser, addMemory }) {
           <button onClick={() => setShowMemory(!showMemory)} style={{
             background: 'transparent',
             border: `1px solid ${colors.border}`,
-            padding: '6px 14px', color: colors.textSecondary, fontSize: 10, cursor: 'pointer',
+            padding: '12px 16px', color: colors.textSecondary, fontSize: 11, cursor: 'pointer',
             fontFamily: "'JetBrains Mono', monospace",
-            letterSpacing: 1,
+            letterSpacing: 1, borderRadius: 8, minHeight: 44,
             transition: 'all 0.15s ease',
           }}>
             {showMemory ? 'COLLAPSE' : 'EXPAND'} LOG
@@ -280,14 +280,14 @@ export default function Settings({ user, updateUser, addMemory }) {
             <div style={{ marginTop: 10, maxHeight: 200, overflowY: 'auto' }}>
               {user.memory.length === 0 ? (
                 <div style={{
-                  color: colors.textMuted, fontSize: 10,
+                  color: colors.textMuted, fontSize: 11,
                   fontFamily: "'JetBrains Mono', monospace",
                 }}>No entries. System will learn from usage.</div>
               ) : (
                 user.memory.map((m, i) => (
                   <div key={i} style={{
                     padding: '5px 0', borderBottom: `1px solid ${colors.border}`,
-                    fontSize: 10, color: colors.textSecondary,
+                    fontSize: 11, color: colors.textSecondary,
                     fontFamily: "'JetBrains Mono', monospace",
                   }}>
                     <span style={{ color: colors.textMuted }}>{new Date(m.date).toLocaleDateString()}</span>
@@ -319,8 +319,8 @@ export default function Settings({ user, updateUser, addMemory }) {
                 sendLocalNotification('J.A.R.V.I.S.', 'Notification system operational, sir.', { tag: 'test' })
               }} style={{
                 background: 'transparent', border: `1px solid ${colors.border}`,
-                color: colors.textMuted, fontSize: 10, cursor: 'pointer', padding: '6px 14px',
-                fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+                color: colors.textMuted, fontSize: 11, cursor: 'pointer', padding: '12px 16px',
+                fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1, borderRadius: 8, minHeight: 44,
               }}>SEND TEST</button>
             </div>
           ) : pushState === 'denied' ? (
@@ -333,11 +333,11 @@ export default function Settings({ user, updateUser, addMemory }) {
               setPushState(granted ? 'granted' : 'denied')
               if (granted) sendLocalNotification('J.A.R.V.I.S.', 'Notification system online, sir.')
             }} style={{
-              width: '100%', padding: 10,
+              width: '100%', padding: '12px 16px',
               background: colors.primaryDim,
               border: `1px solid ${colors.primary}`,
               color: colors.primary, fontSize: 11, cursor: 'pointer',
-              fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+              fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1, borderRadius: 8, minHeight: 44,
             }}>ENABLE NOTIFICATIONS</button>
           )}
         </div>
@@ -348,12 +348,12 @@ export default function Settings({ user, updateUser, addMemory }) {
         <div style={{ padding: '10px 14px' }}>
           {!showChangePin ? (
             <button onClick={() => setShowChangePin(true)} style={{
-              width: '100%', padding: 10,
+              width: '100%', padding: '12px 16px',
               background: 'transparent',
               border: `1px solid ${colors.border}`,
               color: colors.text, fontSize: 11, cursor: 'pointer',
               fontFamily: "'JetBrains Mono', monospace",
-              letterSpacing: 1,
+              letterSpacing: 1, borderRadius: 8, minHeight: 44,
               transition: 'all 0.15s ease',
             }}>CHANGE ACCESS CODE</button>
           ) : (
@@ -377,22 +377,22 @@ export default function Settings({ user, updateUser, addMemory }) {
               />
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={handleChangePin} style={{
-                  flex: 1, padding: 10,
+                  flex: 1, padding: '12px 16px',
                   background: colors.primaryDim,
                   color: colors.primary,
                   border: `1px solid ${colors.primary}`,
                   fontSize: 11, cursor: 'pointer',
                   fontFamily: "'JetBrains Mono', monospace",
-                  letterSpacing: 1,
+                  letterSpacing: 1, borderRadius: 8, minHeight: 44,
                 }}>CONFIRM</button>
                 <button onClick={() => { setShowChangePin(false); setCurrentPin(''); setNewPin(''); setPinMsg('') }} style={{
-                  padding: '10px 16px',
+                  padding: '12px 16px',
                   background: 'transparent',
                   color: colors.textMuted,
                   border: `1px solid ${colors.border}`,
                   fontSize: 11, cursor: 'pointer',
                   fontFamily: "'JetBrains Mono', monospace",
-                  letterSpacing: 1,
+                  letterSpacing: 1, borderRadius: 8, minHeight: 44,
                 }}>ABORT</button>
               </div>
               {pinMsg && <p style={{
@@ -409,12 +409,12 @@ export default function Settings({ user, updateUser, addMemory }) {
       <Section title="SYSTEM RESET">
         <div style={{ padding: '10px 14px' }}>
           <button onClick={clearAllData} style={{
-            width: '100%', padding: 10,
+            width: '100%', padding: '12px 16px',
             background: 'transparent',
             border: `1px solid ${colors.danger}30`,
             color: colors.danger, fontSize: 11, cursor: 'pointer',
             fontFamily: "'JetBrains Mono', monospace",
-            letterSpacing: 1,
+            letterSpacing: 1, borderRadius: 8, minHeight: 44,
             transition: 'all 0.15s ease',
           }}>PURGE ALL DATA</button>
         </div>
@@ -423,7 +423,7 @@ export default function Settings({ user, updateUser, addMemory }) {
       {/* Data Export / Backup */}
       <Section title="DATA // BACKUP">
         <div style={{ padding: '10px 14px' }}>
-          <div style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace", marginBottom: 10, lineHeight: 1.6 }}>
+          <div style={{ color: colors.textMuted, fontSize: 11, fontFamily: "'JetBrains Mono', monospace", marginBottom: 10, lineHeight: 1.6 }}>
             Export all your JARVIS data as a JSON file. Use it to backup or migrate.
           </div>
           <button onClick={() => {
@@ -443,10 +443,10 @@ export default function Settings({ user, updateUser, addMemory }) {
             a.click()
             URL.revokeObjectURL(url)
           }} style={{
-            width: '100%', padding: 10, marginBottom: 6,
+            width: '100%', padding: '12px 16px', marginBottom: 6,
             background: colors.primaryDim, border: `1px solid ${colors.primary}`,
-            color: colors.primary, fontSize: 10, cursor: 'pointer',
-            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+            color: colors.primary, fontSize: 11, cursor: 'pointer',
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1, borderRadius: 8, minHeight: 44,
           }}>EXPORT ALL DATA</button>
           <div style={{ position: 'relative' }}>
             <input
@@ -476,10 +476,10 @@ export default function Settings({ user, updateUser, addMemory }) {
               id="backup-import"
             />
             <button onClick={() => document.getElementById('backup-import')?.click()} style={{
-              width: '100%', padding: 10,
+              width: '100%', padding: '12px 16px',
               background: 'transparent', border: `1px solid ${colors.border}`,
-              color: colors.textMuted, fontSize: 10, cursor: 'pointer',
-              fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+              color: colors.textMuted, fontSize: 11, cursor: 'pointer',
+              fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1, borderRadius: 8, minHeight: 44,
             }}>IMPORT BACKUP</button>
           </div>
         </div>
@@ -489,15 +489,15 @@ export default function Settings({ user, updateUser, addMemory }) {
       <Section title="ABOUT // VERSION">
         <div style={{ padding: '14px 14px 16px', textAlign: 'center' }}>
           <div style={{
-            color: colors.primary, fontSize: 13, fontWeight: 600,
-            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 2, marginBottom: 6,
+            color: colors.primary, fontSize: 14, fontWeight: 600,
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1, marginBottom: 6,
           }}>J.A.R.V.I.S. v2.0</div>
           <div style={{
-            color: colors.textMuted, fontSize: 9,
+            color: colors.textMuted, fontSize: 11,
             fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1, marginBottom: 4,
           }}>Just A Rather Very Intelligent System</div>
           <div style={{
-            color: colors.textSecondary, fontSize: 9,
+            color: colors.textSecondary, fontSize: 11,
             fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.8,
           }}>
             Powered by Anthropic Claude // Built by Tony Stark (you)
@@ -507,7 +507,7 @@ export default function Settings({ user, updateUser, addMemory }) {
             background: colors.border, margin: '10px auto',
           }} />
           <div style={{
-            color: colors.textMuted, fontSize: 9,
+            color: colors.textMuted, fontSize: 11,
             fontFamily: "'JetBrains Mono', monospace", letterSpacing: 0.5,
           }}>
             {(() => {
@@ -596,12 +596,12 @@ function CalendarSyncSettings() {
   return (
     <Section title="CALENDAR SYNC">
       <div style={{ padding: '10px 14px' }}>
-        <div style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8, lineHeight: 1.6 }}>
+        <div style={{ color: colors.textMuted, fontSize: 11, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8, lineHeight: 1.6 }}>
           Import calendars from Google, Apple, or Outlook. One-way pull — your JARVIS data is never shared. Auto-syncs every 30 minutes.
         </div>
 
         {lastSync && (
-          <div style={{ color: colors.textMuted, fontSize: 8, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8 }}>
+          <div style={{ color: colors.textMuted, fontSize: 11, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8 }}>
             LAST AUTO-SYNC: {new Date(lastSync).toLocaleString()}
           </div>
         )}
@@ -614,21 +614,21 @@ function CalendarSyncSettings() {
           }}>
             <span style={{
               color: feed.provider === 'google' ? '#4285f4' : feed.provider === 'apple' ? '#a0a0a0' : colors.primary,
-              fontSize: 9, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 11, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace",
             }}>{feed.provider === 'google' ? 'GC' : feed.provider === 'apple' ? 'AP' : feed.provider === 'outlook' ? 'OL' : 'IC'}</span>
             <div style={{ flex: 1 }}>
               <div style={{ color: colors.text, fontSize: 11, fontFamily: "'Exo 2', sans-serif" }}>{feed.name}</div>
-              <div style={{ color: colors.textMuted, fontSize: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+              <div style={{ color: colors.textMuted, fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
                 {feed.eventCount} events // synced {feed.lastSync ? new Date(feed.lastSync).toLocaleDateString() : 'never'}
               </div>
             </div>
             <button onClick={() => syncNow(feed)} disabled={syncing} style={{
-              padding: '3px 8px', fontSize: 8, background: 'transparent',
+              padding: '8px 10px', fontSize: 11, background: 'transparent',
               border: `1px solid ${colors.border}`, color: colors.textMuted,
-              cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace",
+              cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace", borderRadius: 8, minHeight: 44,
             }}>SYNC</button>
             <button onClick={() => removeFeed(feed.id)} style={{
-              padding: '3px 8px', fontSize: 8, background: 'transparent',
+              padding: '8px 10px', fontSize: 11, background: 'transparent', borderRadius: 8, minHeight: 44,
               border: `1px solid ${colors.danger}`, color: colors.danger,
               cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace",
             }}>DEL</button>
@@ -640,8 +640,8 @@ function CalendarSyncSettings() {
           <button onClick={() => setShowAdd(true)} style={{
             width: '100%', padding: 10, marginTop: 6,
             background: 'transparent', border: `1px dashed ${colors.border}`,
-            color: colors.textMuted, fontSize: 9, cursor: 'pointer',
-            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+            color: colors.textMuted, fontSize: 11, cursor: 'pointer',
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1, borderRadius: 8, minHeight: 44,
           }}>+ ADD CALENDAR FEED</button>
         ) : (
           <div style={{ marginTop: 8, padding: 10, border: `1px solid ${colors.border}`, background: colors.surfaceLight }}>
@@ -649,7 +649,7 @@ function CalendarSyncSettings() {
             <div style={{ display: 'flex', gap: 4, marginBottom: 8, flexWrap: 'wrap' }}>
               {CAL_PROVIDERS.map(p => (
                 <button key={p.id} onClick={() => setProvider(p.id)} style={{
-                  padding: '4px 10px', fontSize: 9,
+                  padding: '8px 12px', fontSize: 11, minHeight: 44, borderRadius: 8,
                   background: provider === p.id ? colors.primaryDim : 'transparent',
                   border: `1px solid ${provider === p.id ? colors.primary : colors.border}`,
                   color: provider === p.id ? colors.primary : colors.textMuted,
@@ -660,7 +660,7 @@ function CalendarSyncSettings() {
 
             {/* Provider help */}
             <div style={{
-              color: colors.textSecondary, fontSize: 9, marginBottom: 8, lineHeight: 1.6,
+              color: colors.textSecondary, fontSize: 11, marginBottom: 8, lineHeight: 1.6,
               fontFamily: "'JetBrains Mono', monospace", padding: 8,
               background: colors.primaryDim, border: `1px solid ${colors.border}`,
             }}>
@@ -699,7 +699,7 @@ function CalendarSyncSettings() {
 
         {syncResult && <div style={{
           color: syncResult.includes('Error') || syncResult.includes('failed') ? colors.danger : colors.success,
-          fontSize: 9, marginTop: 6, fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 11, marginTop: 6, fontFamily: "'JetBrains Mono', monospace",
         }}>{syncResult}</div>}
       </div>
     </Section>
@@ -772,11 +772,11 @@ function EmailAccounts() {
 
   const providerBtnStyle = (isSelected) => ({
     display: 'flex', alignItems: 'center', gap: 8,
-    width: '100%', padding: '8px 10px', marginBottom: 4,
+    width: '100%', padding: '12px 14px', marginBottom: 4, minHeight: 44,
     background: isSelected ? colors.primaryDim : 'transparent',
     border: `1px solid ${isSelected ? colors.primary : colors.border}`,
     color: isSelected ? colors.primary : colors.textSecondary,
-    fontSize: 10, cursor: 'pointer', textAlign: 'left',
+    fontSize: 11, cursor: 'pointer', textAlign: 'left', borderRadius: 8,
     fontFamily: "'JetBrains Mono', monospace", letterSpacing: 0.5,
     transition: 'all 0.15s ease',
   })
@@ -801,7 +801,7 @@ function EmailAccounts() {
             }}>@</div>
             <div style={{ flex: 1 }}>
               <div style={{ color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif" }}>{acc.display_name || acc.email}</div>
-              <div style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace" }}>
+              <div style={{ color: colors.textMuted, fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
                 {acc.imap_host} {acc.last_sync ? `// synced ${new Date(acc.last_sync).toLocaleDateString()}` : '// not synced yet'}
               </div>
             </div>
@@ -818,13 +818,13 @@ function EmailAccounts() {
             {/* Provider Selection Step */}
             {!selectedProvider ? (
               <div>
-                <div style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8, letterSpacing: 1 }}>
+                <div style={{ color: colors.textMuted, fontSize: 11, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8, letterSpacing: 1 }}>
                   SELECT PROVIDER:
                 </div>
                 {EMAIL_PROVIDERS.map(p => (
                   <button key={p.key} onClick={() => selectProvider(p)} style={providerBtnStyle(false)}>
                     <span style={{
-                      width: 22, textAlign: 'center', fontSize: 9, fontWeight: 600,
+                      width: 22, textAlign: 'center', fontSize: 11, fontWeight: 600,
                       color: colors.textMuted,
                     }}>{p.icon}</span>
                     <span>{p.name}</span>
@@ -845,7 +845,7 @@ function EmailAccounts() {
                   padding: '6px 10px', background: colors.primaryDim,
                   border: `1px solid ${colors.primary}40`,
                 }}>
-                  <span style={{ color: colors.primary, fontSize: 9, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>
+                  <span style={{ color: colors.primary, fontSize: 11, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>
                     {selectedProvider.icon}
                   </span>
                   <span style={{ color: colors.primary, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", flex: 1 }}>
@@ -862,7 +862,7 @@ function EmailAccounts() {
                   <div style={{
                     padding: '6px 10px', marginBottom: 8,
                     background: `${colors.warning}10`, border: `1px solid ${colors.warning}30`,
-                    color: colors.warning, fontSize: 9,
+                    color: colors.warning, fontSize: 11,
                     fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.6,
                   }}>
                     {selectedProvider.help}
@@ -882,7 +882,7 @@ function EmailAccounts() {
 
                 {/* IMAP / SMTP fields - editable for custom, pre-filled for presets */}
                 <div style={{
-                  color: colors.textMuted, fontSize: 8, fontFamily: "'JetBrains Mono', monospace",
+                  color: colors.textMuted, fontSize: 11, fontFamily: "'JetBrains Mono', monospace",
                   letterSpacing: 1, marginBottom: 4, marginTop: 4,
                 }}>IMAP SETTINGS</div>
                 <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
@@ -897,7 +897,7 @@ function EmailAccounts() {
                 </div>
 
                 <div style={{
-                  color: colors.textMuted, fontSize: 8, fontFamily: "'JetBrains Mono', monospace",
+                  color: colors.textMuted, fontSize: 11, fontFamily: "'JetBrains Mono', monospace",
                   letterSpacing: 1, marginBottom: 4,
                 }}>SMTP SETTINGS</div>
                 <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
@@ -923,7 +923,7 @@ function EmailAccounts() {
                     fontFamily: "'JetBrains Mono', monospace",
                   }}>CANCEL</button>
                 </div>
-                {error && <div style={{ color: error.includes('Requires') ? colors.warning : colors.danger, fontSize: 9, marginTop: 6, fontFamily: "'JetBrains Mono', monospace" }}>{error}</div>}
+                {error && <div style={{ color: error.includes('Requires') ? colors.warning : colors.danger, fontSize: 11, marginTop: 6, fontFamily: "'JetBrains Mono', monospace" }}>{error}</div>}
               </div>
             )}
           </div>
@@ -945,16 +945,16 @@ function Section({ title, children }) {
     <div style={{
       background: colors.surfaceLight,
       border: `1px solid ${colors.border}`,
-      marginBottom: 10, overflow: 'hidden',
+      marginBottom: 10, overflow: 'hidden', borderRadius: 10,
     }}>
       <div style={{
-        padding: '8px 14px',
+        padding: '10px 14px',
         borderBottom: `1px solid ${colors.border}`,
         background: colors.primaryDim,
       }}>
         <h3 style={{
-          color: colors.textMuted, fontSize: 9, fontWeight: 600,
-          letterSpacing: 2,
+          color: colors.textMuted, fontSize: 13, fontWeight: 600,
+          letterSpacing: 1,
           fontFamily: "'JetBrains Mono', monospace",
         }}>{title}</h3>
       </div>
@@ -964,21 +964,23 @@ function Section({ title, children }) {
 }
 
 const inputStyle = {
-  padding: '8px 10px',
+  padding: '12px 14px',
   background: colors.surface,
   border: `1px solid ${colors.border}`,
   color: colors.text,
-  fontSize: 12,
+  fontSize: 14,
   fontFamily: "'JetBrains Mono', monospace",
   marginBottom: 0,
   transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+  borderRadius: 8,
 }
 const smBtn = {
-  padding: '8px 14px',
+  padding: '12px 16px',
   background: colors.primaryDim,
   color: colors.primary,
   border: `1px solid ${colors.primary}`,
-  fontSize: 10, cursor: 'pointer',
+  fontSize: 11, cursor: 'pointer',
   fontFamily: "'JetBrains Mono', monospace",
   whiteSpace: 'nowrap', letterSpacing: 1,
+  borderRadius: 8, minHeight: 44,
 }

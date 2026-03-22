@@ -336,7 +336,7 @@ export default function Notes({ user }) {
       border: `1px solid ${colors.border}`,
       borderRadius: 8,
       color: colors.primary,
-      padding: '6px 12px',
+      padding: '10px 16px', minHeight: 44,
       cursor: 'pointer',
       fontFamily: "'JetBrains Mono', monospace",
       fontSize: 12,
@@ -366,7 +366,7 @@ export default function Notes({ user }) {
       paddingBottom: 4,
     },
     categoryPill: (active, color) => ({
-      padding: '4px 12px',
+      padding: '8px 14px', minHeight: 36,
       borderRadius: 20,
       border: `1px solid ${active ? color : colors.border}`,
       background: active ? color + '22' : 'transparent',
@@ -394,7 +394,7 @@ export default function Notes({ user }) {
       letterSpacing: 1,
     },
     sortBtn: (active) => ({
-      padding: '2px 8px',
+      padding: '6px 12px', minHeight: 36, borderRadius: 8,
       borderRadius: 4,
       border: 'none',
       background: active ? 'rgba(0, 212, 255, 0.15)' : 'transparent',
@@ -433,7 +433,7 @@ export default function Notes({ user }) {
     },
     notePreview: {
       fontFamily: "'Exo 2', sans-serif",
-      fontSize: 13,
+      fontSize: 14,
       color: colors.textMuted,
       lineHeight: 1.4,
       maxHeight: 40,
@@ -460,8 +460,9 @@ export default function Notes({ user }) {
       color: color || colors.textMuted,
       cursor: 'pointer',
       fontSize: 12,
-      padding: '2px 6px',
-      borderRadius: 4,
+      padding: '8px 10px',
+      minHeight: 36,
+      borderRadius: 8,
       fontFamily: "'JetBrains Mono', monospace",
       fontWeight: 600,
     }),
@@ -471,12 +472,12 @@ export default function Notes({ user }) {
     },
     categoryTag: (color) => ({
       display: 'inline-block',
-      padding: '1px 6px',
-      borderRadius: 4,
+      padding: '4px 8px',
+      borderRadius: 6,
       background: color + '22',
       color: color,
       fontFamily: "'JetBrains Mono', monospace",
-      fontSize: 9,
+      fontSize: 11,
       fontWeight: 700,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
@@ -790,7 +791,7 @@ export default function Notes({ user }) {
             }}>
               <div style={{
                 fontFamily: "'JetBrains Mono', monospace",
-                fontSize: 9,
+                fontSize: 13,
                 color: colors.textMuted,
                 textTransform: 'uppercase',
                 letterSpacing: 1,
@@ -798,7 +799,7 @@ export default function Notes({ user }) {
               }}>
                 PREVIEW
               </div>
-              <div style={{ fontFamily: "'Exo 2', sans-serif", fontSize: 13, color: colors.textSecondary, lineHeight: 1.5 }}>
+              <div style={{ fontFamily: "'Exo 2', sans-serif", fontSize: 14, color: colors.textSecondary, lineHeight: 1.5 }}>
                 {renderMarkdownLite(editingNote.body)}
               </div>
             </div>

@@ -205,6 +205,7 @@ export default function Dashboard({ user, navigate, addMemory, startFocusMode })
     { icon: '🎵', label: 'Media', key: 'media', col: colors.primary },
     { icon: '📝', label: 'Notes', key: 'notes', col: colors.secondary },
     { icon: '🔧', label: 'Apps', key: 'builder', col: colors.primary },
+    { icon: '✈', label: 'Flights', key: 'flights', col: '#0084c8' },
     { icon: '🎯', label: 'Focus', key: '__focus__', col: colors.danger },
   ]
 

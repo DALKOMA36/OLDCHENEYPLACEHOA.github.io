@@ -428,8 +428,8 @@ export default function TravelPlanner({ user, addMemory }) {
     return (
       <div style={{ padding: 16 }}>
         <button onClick={() => { setActiveTrip(null); setWeather(null); setCalendarAdded(false) }} style={{
-          background: 'none', border: 'none', color: colors.primaryLight, fontSize: 13,
-          cursor: 'pointer', marginBottom: 12, fontFamily: 'inherit',
+          background: 'none', border: 'none', color: colors.primaryLight, fontSize: 14,
+          cursor: 'pointer', marginBottom: 12, fontFamily: 'inherit', padding: '12px 16px', minHeight: 44,
         }}>&#8249; Back to Trips</button>
 
         <h2 style={{ color: colors.text, fontSize: 22, fontWeight: 700, marginBottom: 4 }}>
@@ -454,7 +454,7 @@ export default function TravelPlanner({ user, addMemory }) {
             border: `1px solid ${countdown > 0 ? colors.primary : countdown === 0 ? colors.success : colors.border}40`,
             borderRadius: 12, textAlign: 'center',
           }}>
-            <div style={{ color: colors.textMuted, fontSize: 10, fontWeight: 600, letterSpacing: 1.5, marginBottom: 4 }}>
+            <div style={{ color: colors.textMuted, fontSize: 13, fontWeight: 600, letterSpacing: 1, marginBottom: 4 }}>
               MISSION COUNTDOWN
             </div>
             {countdown > 0 ? (
@@ -473,16 +473,16 @@ export default function TravelPlanner({ user, addMemory }) {
         {/* ACTION BUTTONS ROW */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
           <button onClick={addToCalendar} disabled={calendarAdded || calendarAdding} style={{
-            flex: 1, minWidth: 130, padding: '10px 14px', background: calendarAdded ? `${colors.success}20` : colors.gradient1,
+            flex: 1, minWidth: 130, padding: '12px 16px', background: calendarAdded ? `${colors.success}20` : colors.gradient1,
             color: calendarAdded ? colors.success : '#fff', border: `1px solid ${calendarAdded ? colors.success : colors.primary}40`,
-            borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: calendarAdded ? 'default' : 'pointer', fontFamily: 'inherit',
+            borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: calendarAdded ? 'default' : 'pointer', fontFamily: 'inherit', minHeight: 44,
           }}>
             {calendarAdding ? 'Syncing...' : calendarAdded ? 'Added to Calendar' : 'Add to Calendar'}
           </button>
           <button onClick={() => fetchWeather(itin.destination)} disabled={weatherLoading} style={{
-            flex: 1, minWidth: 130, padding: '10px 14px', background: colors.gradient3,
+            flex: 1, minWidth: 130, padding: '12px 16px', background: colors.gradient3,
             color: '#fff', border: `1px solid ${colors.secondary}40`, borderRadius: 10,
-            fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+            fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', minHeight: 44,
           }}>
             {weatherLoading ? 'Scanning...' : 'Weather Recon'}
           </button>
@@ -500,7 +500,7 @@ export default function TravelPlanner({ user, addMemory }) {
                   minWidth: 80, padding: '10px 8px', background: colors.surfaceLight,
                   border: `1px solid ${colors.border}`, borderRadius: 10, textAlign: 'center', flexShrink: 0,
                 }}>
-                  <div style={{ color: colors.textMuted, fontSize: 9, fontWeight: 600 }}>
+                  <div style={{ color: colors.textMuted, fontSize: 11, fontWeight: 600 }}>
                     {new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                   </div>
                   <div style={{ fontSize: 22, margin: '4px 0' }}>{weatherIcon(weather.weathercode[i])}</div>
@@ -510,7 +510,7 @@ export default function TravelPlanner({ user, addMemory }) {
                   <div style={{ color: colors.textMuted, fontSize: 11 }}>
                     {Math.round(weather.temperature_2m_min[i])}F
                   </div>
-                  <div style={{ color: colors.textSecondary, fontSize: 8, marginTop: 2 }}>
+                  <div style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>
                     {weatherLabel(weather.weathercode[i])}
                   </div>
                 </div>
@@ -525,7 +525,7 @@ export default function TravelPlanner({ user, addMemory }) {
           borderRadius: 12, marginBottom: 16,
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ color: colors.textMuted, fontSize: 10, fontWeight: 600, letterSpacing: 1.5 }}>COST ANALYSIS</span>
+            <span style={{ color: colors.textMuted, fontSize: 13, fontWeight: 600, letterSpacing: 1 }}>COST ANALYSIS</span>
             <span style={{ color: colors.text, fontSize: 14, fontWeight: 700 }}>
               ${totalCost.toLocaleString()} <span style={{ color: colors.textMuted, fontSize: 11, fontWeight: 400 }}>/ {itin.budget}</span>
             </span>
@@ -540,8 +540,8 @@ export default function TravelPlanner({ user, addMemory }) {
             }} />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-            <span style={{ color: colors.textMuted, fontSize: 10 }}>{Math.round(budgetPct)}% utilized</span>
-            <span style={{ color: budgetNum - totalCost >= 0 ? colors.success : colors.danger, fontSize: 10, fontWeight: 600 }}>
+            <span style={{ color: colors.textMuted, fontSize: 11 }}>{Math.round(budgetPct)}% utilized</span>
+            <span style={{ color: budgetNum - totalCost >= 0 ? colors.success : colors.danger, fontSize: 11, fontWeight: 600 }}>
               {budgetNum - totalCost >= 0 ? `$${(budgetNum - totalCost).toLocaleString()} remaining` : `$${Math.abs(budgetNum - totalCost).toLocaleString()} over budget`}
             </span>
           </div>
@@ -550,14 +550,14 @@ export default function TravelPlanner({ user, addMemory }) {
         {/* ITINERARY */}
         <h3 style={{ color: colors.text, fontSize: 14, fontWeight: 600, marginBottom: 12 }}>
           MISSION ITINERARY
-          <span style={{ color: colors.textMuted, fontSize: 10, fontWeight: 400, marginLeft: 8 }}>tap activity to edit</span>
+          <span style={{ color: colors.textMuted, fontSize: 11, fontWeight: 400, marginLeft: 8 }}>tap activity to edit</span>
         </h3>
         {itin.days.map((day, dayIdx) => {
           const dayCost = day.activities.reduce((s, a) => s + (a.cost || 0), 0)
           return (
             <div key={day.day} style={{
               padding: 14, background: colors.surfaceLight, border: `1px solid ${colors.border}`,
-              borderRadius: 10, marginBottom: 8, borderLeft: `3px solid ${colors.primary}`,
+              borderRadius: 10, marginBottom: 10, borderLeft: `3px solid ${colors.primary}`,
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, alignItems: 'center' }}>
                 <div>
@@ -601,11 +601,11 @@ export default function TravelPlanner({ user, addMemory }) {
                     onMouseEnter={e => e.currentTarget.style.background = `${colors.primary}10`}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   >
-                    <span style={{ color: colors.textMuted, fontSize: 8 }}>{'\u25CF'}</span>
+                    <span style={{ color: colors.textMuted, fontSize: 11 }}>{'\u25CF'}</span>
                     <span onClick={() => startEditActivity(dayIdx, actIdx, act)}
-                      style={{ color: colors.textSecondary, fontSize: 12, flex: 1, cursor: 'pointer' }}>{act.text}</span>
+                      style={{ color: colors.textSecondary, fontSize: 14, flex: 1, cursor: 'pointer' }}>{act.text}</span>
                     {act.cost > 0 && (
-                      <span style={{ color: colors.warning, fontSize: 10, fontWeight: 600, minWidth: 36, textAlign: 'right' }}>${act.cost}</span>
+                      <span style={{ color: colors.warning, fontSize: 11, fontWeight: 600, minWidth: 36, textAlign: 'right' }}>${act.cost}</span>
                     )}
                     <button onClick={() => moveActivity(dayIdx, actIdx, -1)}
                       style={{ ...microBtnStyle }} title="Move up">{'\u25B2'}</button>
@@ -623,7 +623,7 @@ export default function TravelPlanner({ user, addMemory }) {
         {/* PACKING LIST */}
         <h3 style={{ color: colors.text, fontSize: 14, fontWeight: 600, marginTop: 20, marginBottom: 8 }}>
           PACKING CHECKLIST
-          <span style={{ color: colors.textMuted, fontSize: 10, fontWeight: 400, marginLeft: 8 }}>
+          <span style={{ color: colors.textMuted, fontSize: 11, fontWeight: 400, marginLeft: 8 }}>
             {checkedCount}/{packingItems.length} packed ({packingPct}%)
           </span>
         </h3>
@@ -642,9 +642,9 @@ export default function TravelPlanner({ user, addMemory }) {
             const checked = isPackingChecked(item)
             return (
               <div key={item} style={{
-                display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px',
+                display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
                 background: colors.surfaceLight, border: `1px solid ${colors.border}`,
-                borderRadius: 8, cursor: 'pointer',
+                borderRadius: 8, cursor: 'pointer', minHeight: 44,
               }} onClick={() => togglePackingItem(item)}>
                 <div style={{
                   width: 18, height: 18, borderRadius: 4,
@@ -656,7 +656,7 @@ export default function TravelPlanner({ user, addMemory }) {
                   {checked ? '\u2713' : ''}
                 </div>
                 <span style={{
-                  color: checked ? colors.textMuted : colors.textSecondary, fontSize: 12,
+                  color: checked ? colors.textMuted : colors.textSecondary, fontSize: 14,
                   textDecoration: checked ? 'line-through' : 'none', flex: 1,
                 }}>{item}</span>
                 <button onClick={(e) => { e.stopPropagation(); removePackingItem(item) }}
@@ -673,9 +673,9 @@ export default function TravelPlanner({ user, addMemory }) {
             onKeyDown={e => { if (e.key === 'Enter') addPackingItem() }}
           />
           <button onClick={addPackingItem} style={{
-            padding: '8px 14px', background: colors.gradient1, color: '#fff',
-            border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600,
-            cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+            padding: '12px 16px', background: colors.gradient1, color: '#fff',
+            border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600,
+            cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', minHeight: 44,
           }}>+ Add</button>
         </div>
 
@@ -688,7 +688,7 @@ export default function TravelPlanner({ user, addMemory }) {
             <span style={{ color: colors.primary }}>{'\u25C9'}</span>
             <span style={{ color: colors.primaryLight, fontSize: 11, fontWeight: 600 }}>JARVIS MISSION BRIEF</span>
           </div>
-          <div style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 1.5 }}>
+          <div style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 1.5 }}>
             All systems nominal, sir. Tap any activity to edit details and costs inline. Use "Add to Calendar" to sync this mission
             to your schedule. Weather recon provides a 7-day forecast for your destination. The cost tracker monitors budget
             utilization in real-time. Pack smart -- check items off as you load out.
@@ -703,13 +703,13 @@ export default function TravelPlanner({ user, addMemory }) {
     <div style={{ padding: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
         <h2 style={{ color: colors.text, fontSize: 20, fontWeight: 700 }}>Travel Planner</h2>
-        <span style={{ fontSize: 9, color: colors.accent, background: `${colors.accent}22`, padding: '3px 8px', borderRadius: 8, fontWeight: 600 }}>JARVIS</span>
+        <span style={{ fontSize: 11, color: colors.accent, background: `${colors.accent}22`, padding: '6px 10px', borderRadius: 8, fontWeight: 600 }}>JARVIS</span>
       </div>
-      <p style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 16 }}>Mission planning with AI-powered itineraries, weather recon, cost tracking, and loadout checklists.</p>
+      <p style={{ color: colors.textSecondary, fontSize: 14, marginBottom: 16 }}>Mission planning with AI-powered itineraries, weather recon, cost tracking, and loadout checklists.</p>
 
       <button onClick={() => setPlanning(true)} style={{
-        width: '100%', padding: 16, background: colors.gradient1, color: '#fff',
-        border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 600,
+        width: '100%', padding: '12px 16px', background: colors.gradient1, color: '#fff',
+        border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600, minHeight: 44,
         cursor: 'pointer', marginBottom: 20, fontFamily: 'inherit',
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
       }}>
@@ -719,7 +719,7 @@ export default function TravelPlanner({ user, addMemory }) {
       {/* Saved Trips */}
       {trips.length > 0 && (
         <div>
-          <h3 style={{ color: colors.text, fontSize: 14, fontWeight: 600, marginBottom: 10 }}>YOUR MISSIONS</h3>
+          <h3 style={{ color: colors.text, fontSize: 14, fontWeight: 600, marginBottom: 10, letterSpacing: 1 }}>YOUR MISSIONS</h3>
           {trips.map(trip => {
             const tripItin = normalizeItinerary(trip.itinerary)
             const countdown = getCountdown(trip.startDate)
@@ -727,7 +727,7 @@ export default function TravelPlanner({ user, addMemory }) {
             return (
               <button key={trip.id} onClick={() => { setActiveTrip(trip); setCalendarAdded(false); setWeather(null) }} style={{
                 width: '100%', padding: 16, background: colors.surfaceLight,
-                border: `1px solid ${colors.border}`, borderRadius: 12, marginBottom: 8,
+                border: `1px solid ${colors.border}`, borderRadius: 10, marginBottom: 10,
                 cursor: 'pointer', textAlign: 'left',
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -764,7 +764,7 @@ export default function TravelPlanner({ user, addMemory }) {
       {/* Quick Inspiration */}
       {trips.length === 0 && (
         <div>
-          <h3 style={{ color: colors.text, fontSize: 14, fontWeight: 600, marginBottom: 10 }}>MISSION TEMPLATES</h3>
+          <h3 style={{ color: colors.text, fontSize: 14, fontWeight: 600, marginBottom: 10, letterSpacing: 1 }}>MISSION TEMPLATES</h3>
           {[
             ['\uD83C\uDFD6\uFE0F', 'Beach Getaway', 'Maui, Bali, Maldives', 'beach'],
             ['\uD83C\uDFD9\uFE0F', 'City Explorer', 'Tokyo, Paris, NYC', 'city'],
@@ -773,12 +773,12 @@ export default function TravelPlanner({ user, addMemory }) {
             <button key={style} onClick={() => { setPlanning(true); setTripForm(prev => ({ ...prev, style })) }} style={{
               display: 'flex', alignItems: 'center', gap: 14, width: '100%', padding: 16,
               background: colors.surfaceLight, border: `1px solid ${colors.border}`,
-              borderRadius: 12, marginBottom: 8, cursor: 'pointer', textAlign: 'left',
+              borderRadius: 10, marginBottom: 10, cursor: 'pointer', textAlign: 'left',
             }}>
               <span style={{ fontSize: 28 }}>{icon}</span>
               <div>
                 <div style={{ color: colors.text, fontSize: 14, fontWeight: 500 }}>{title}</div>
-                <div style={{ color: colors.textSecondary, fontSize: 12 }}>{places}</div>
+                <div style={{ color: colors.textSecondary, fontSize: 14 }}>{places}</div>
               </div>
             </button>
           ))}
@@ -818,18 +818,18 @@ export default function TravelPlanner({ user, addMemory }) {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
               {INTERESTS.map(interest => (
                 <button key={interest} onClick={() => toggleInterest(interest)} style={{
-                  padding: '6px 14px', borderRadius: 16,
+                  padding: '10px 16px', borderRadius: 16, minHeight: 44,
                   background: tripForm.interests.includes(interest) ? `${colors.primary}30` : colors.surfaceLight,
                   border: `1px solid ${tripForm.interests.includes(interest) ? colors.primary : colors.border}`,
                   color: tripForm.interests.includes(interest) ? colors.primaryLight : colors.textSecondary,
-                  fontSize: 12, cursor: 'pointer', fontFamily: 'inherit',
+                  fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
                 }}>{interest}</button>
               ))}
             </div>
 
             <button onClick={generateTrip} disabled={generating} style={{
-              width: '100%', padding: 14, background: colors.gradient1, color: '#fff',
-              border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 600,
+              width: '100%', padding: '12px 16px', background: colors.gradient1, color: '#fff',
+              border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, minHeight: 44,
               cursor: 'pointer', fontFamily: 'inherit',
             }}>
               {generating ? 'JARVIS is planning...' : '\u25C9 Generate Mission with AI'}
@@ -850,17 +850,17 @@ const modalContent = {
   border: `1px solid ${colors.border}`,
 }
 const inputStyle = {
-  width: '100%', padding: '12px 14px', background: colors.surfaceLight,
+  width: '100%', padding: '12px 16px', background: colors.surfaceLight,
   border: `1px solid ${colors.border}`, borderRadius: 10, color: colors.text,
-  fontSize: 14, fontFamily: 'inherit', marginBottom: 10,
+  fontSize: 14, fontFamily: 'inherit', marginBottom: 10, minHeight: 44,
 }
 const smallBtnStyle = {
-  padding: '4px 12px', background: colors.gradient1, color: '#fff',
-  border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600,
-  cursor: 'pointer', fontFamily: 'inherit',
+  padding: '12px 16px', background: colors.gradient1, color: '#fff',
+  border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 600,
+  cursor: 'pointer', fontFamily: 'inherit', minHeight: 44,
 }
 const microBtnStyle = {
   background: 'none', border: 'none', color: colors.textMuted,
-  fontSize: 10, cursor: 'pointer', padding: '2px 4px', fontFamily: 'inherit',
-  lineHeight: 1, borderRadius: 4, opacity: 0.6,
+  fontSize: 14, cursor: 'pointer', padding: '8px 8px', fontFamily: 'inherit',
+  lineHeight: 1, borderRadius: 8, opacity: 0.6, minHeight: 44, minWidth: 44,
 }

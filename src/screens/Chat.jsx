@@ -511,8 +511,8 @@ export default function Chat({ user, addMemory, navigate, startFocusMode }) {
             animation: 'pulse 2s ease-in-out infinite',
           }} />
           <span style={{
-            color: colors.primary, fontSize: 10, fontWeight: 600,
-            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 2,
+            color: colors.primary, fontSize: 12, fontWeight: 600,
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
           }}>J.A.R.V.I.S. INTERFACE</span>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -533,12 +533,12 @@ export default function Chat({ user, addMemory, navigate, startFocusMode }) {
             autoFocus
             style={{
               width: '100%', padding: '8px 12px',
-              background: colors.surface, border: `1px solid ${colors.border}`,
-              color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif",
+              background: colors.surface, border: `1px solid ${colors.border}`, borderRadius: 8,
+              color: colors.text, fontSize: 14, fontFamily: "'Exo 2', sans-serif",
             }}
           />
           {searchQuery && (
-            <div style={{ color: colors.textMuted, fontSize: 9, marginTop: 4, fontFamily: "'JetBrains Mono', monospace" }}>
+            <div style={{ color: colors.textMuted, fontSize: 11, marginTop: 4, fontFamily: "'JetBrains Mono', monospace" }}>
               {filteredMessages.length} result{filteredMessages.length !== 1 ? 's' : ''}
             </div>
           )}
@@ -557,7 +557,7 @@ export default function Chat({ user, addMemory, navigate, startFocusMode }) {
           <span style={{
             color: actionFeedback.type === 'success' ? colors.success :
               actionFeedback.type === 'error' ? colors.danger : colors.primary,
-            fontSize: 10, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+            fontSize: 12, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
           }}>{actionFeedback.text}</span>
         </div>
       )}
@@ -570,7 +570,7 @@ export default function Chat({ user, addMemory, navigate, startFocusMode }) {
             marginBottom: 12, animation: 'fadeIn 0.3s ease',
           }}>
             <div style={{
-              maxWidth: '85%', padding: '10px 14px',
+              maxWidth: '85%', padding: '12px 16px', borderRadius: 10,
               background: msg.role === 'user' ? colors.primaryDim : colors.surfaceLight,
               border: `1px solid ${msg.role === 'user' ? 'rgba(0, 212, 255, 0.3)' : colors.border}`,
             }}>
@@ -581,13 +581,13 @@ export default function Chat({ user, addMemory, navigate, startFocusMode }) {
                     background: colors.primary, boxShadow: `0 0 6px ${colors.primary}`,
                   }} />
                   <span style={{
-                    color: colors.primary, fontSize: 10,
+                    color: colors.primary, fontSize: 12,
                     fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
                   }}>JARVIS</span>
                 </div>
               )}
               <p style={{
-                color: colors.text, fontSize: 13, lineHeight: 1.6, margin: 0,
+                color: colors.text, fontSize: 14, lineHeight: 1.6, margin: 0,
                 fontFamily: "'Exo 2', sans-serif", whiteSpace: 'pre-wrap',
               }}>{msg.text}</p>
 
@@ -596,7 +596,7 @@ export default function Chat({ user, addMemory, navigate, startFocusMode }) {
                 <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                   {msg.actions.slice(0, 5).map((action, ai) => (
                     <button key={ai} onClick={() => executeAction(action)} style={{
-                      padding: '4px 10px', fontSize: 9,
+                      padding: '8px 12px', fontSize: 11, borderRadius: 8, minHeight: 36,
                       background: 'rgba(0, 230, 118, 0.1)',
                       border: `1px solid ${colors.success}`,
                       color: colors.success, cursor: 'pointer',
@@ -609,7 +609,7 @@ export default function Chat({ user, addMemory, navigate, startFocusMode }) {
               )}
 
               <div style={{
-                color: colors.textMuted, fontSize: 9, marginTop: 6, textAlign: 'right',
+                color: colors.textMuted, fontSize: 11, marginTop: 6, textAlign: 'right',
                 fontFamily: "'JetBrains Mono', monospace",
               }}>{msg.time}</div>
             </div>
@@ -627,7 +627,7 @@ export default function Chat({ user, addMemory, navigate, startFocusMode }) {
                   animation: 'pulse 1s ease-in-out infinite',
                 }} />
                 <span style={{
-                  color: colors.textMuted, fontSize: 10,
+                  color: colors.textMuted, fontSize: 12,
                   fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
                 }}>PROCESSING</span>
               </div>
@@ -641,9 +641,9 @@ export default function Chat({ user, addMemory, navigate, startFocusMode }) {
       <div style={{ padding: '6px 16px', display: 'flex', gap: 6, overflowX: 'auto', flexShrink: 0 }}>
         {smartPrompts.map(s => (
           <button key={s} onClick={() => { setInput(s); setTimeout(() => inputRef.current?.focus(), 50) }} style={{
-            padding: '5px 12px', background: 'transparent',
-            border: `1px solid ${colors.border}`,
-            color: colors.textMuted, fontSize: 10, cursor: 'pointer',
+            padding: '10px 14px', background: 'transparent',
+            border: `1px solid ${colors.border}`, borderRadius: 8,
+            color: colors.textMuted, fontSize: 12, cursor: 'pointer', minHeight: 40,
             whiteSpace: 'nowrap', fontFamily: "'JetBrains Mono', monospace",
             letterSpacing: 0.5, transition: 'all 0.15s ease',
           }}>{s}</button>
@@ -660,14 +660,14 @@ export default function Chat({ user, addMemory, navigate, startFocusMode }) {
           placeholder="Speak, sir..."
           disabled={typing}
           style={{
-            flex: 1, padding: '11px 14px',
+            flex: 1, padding: '12px 14px', borderRadius: 8,
             background: colors.surface, border: `1px solid ${colors.border}`,
-            color: colors.text, fontSize: 13, fontFamily: "'Exo 2', sans-serif",
+            color: colors.text, fontSize: 14, fontFamily: "'Exo 2', sans-serif", minHeight: 44,
             transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
           }}
         />
         <button onClick={send} disabled={!input.trim() || typing} style={{
-          width: 42, height: 42,
+          width: 44, height: 44, borderRadius: 8,
           background: input.trim() && !typing ? colors.primaryDim : 'transparent',
           border: `1px solid ${input.trim() && !typing ? colors.primary : colors.border}`,
           color: input.trim() && !typing ? colors.primary : colors.textMuted,
@@ -688,8 +688,8 @@ export default function Chat({ user, addMemory, navigate, startFocusMode }) {
 }
 
 const headerBtn = {
-  padding: '4px 10px', background: 'transparent',
+  padding: '10px 14px', background: 'transparent',
   border: `1px solid ${colors.border}`, color: colors.textMuted,
-  fontSize: 8, cursor: 'pointer',
+  fontSize: 11, cursor: 'pointer', minHeight: 44, borderRadius: 8,
   fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
 }

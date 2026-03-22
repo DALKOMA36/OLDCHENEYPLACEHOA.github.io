@@ -462,7 +462,7 @@ export default function Channels({ user, addMemory }) {
             <EmptyState text="No conversation threads yet" />
           ) : getThreads().map(thread => (
             <div key={thread.phone} style={{
-              marginBottom: 6, border: `1px solid ${colors.border}`,
+              marginBottom: 10, border: `1px solid ${colors.border}`, borderRadius: 10,
               background: expandedThread === thread.phone ? colors.surfaceLight : 'transparent',
               transition: 'all 0.15s ease',
             }}>
@@ -541,9 +541,9 @@ export default function Channels({ user, addMemory }) {
           {sentMessages.length === 0 ? (
             <EmptyState text="No transmitted messages" />
           ) : sentMessages.map((msg, i) => (
-            <div key={msg.id || i} style={{ padding: '10px 14px', marginBottom: 4, border: `1px solid ${colors.border}`, background: colors.surfaceLight }}>
+            <div key={msg.id || i} style={{ padding: '14px 16px', marginBottom: 10, border: `1px solid ${colors.border}`, background: colors.surfaceLight, borderRadius: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ color: colors.primary, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
+                <span style={{ color: colors.primary, fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
                   TO: {contacts.find(c => c.phone === msg.recipient)?.name || msg.recipient}
                 </span>
                 <span style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace" }}>
@@ -569,9 +569,9 @@ export default function Channels({ user, addMemory }) {
           {inboundMessages.length === 0 ? (
             <EmptyState text="No incoming transmissions" />
           ) : inboundMessages.map((msg, i) => (
-            <div key={msg.id || i} style={{ padding: '10px 14px', marginBottom: 4, border: `1px solid ${colors.border}`, background: colors.surfaceLight }}>
+            <div key={msg.id || i} style={{ padding: '14px 16px', marginBottom: 10, border: `1px solid ${colors.border}`, background: colors.surfaceLight, borderRadius: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ color: colors.success, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
+                <span style={{ color: colors.success, fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
                   FROM: {contacts.find(c => c.phone === msg.recipient)?.name || msg.recipient}
                 </span>
                 <span style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace" }}>INBOUND</span>

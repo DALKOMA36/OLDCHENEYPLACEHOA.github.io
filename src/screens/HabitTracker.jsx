@@ -92,21 +92,21 @@ export default function HabitTracker({ user }) {
     <div style={{ padding: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
         <h2 style={{
-          color: colors.primary, fontSize: 11, fontWeight: 600,
-          fontFamily: "'JetBrains Mono', monospace", letterSpacing: 3,
+          color: colors.primary, fontSize: 13, fontWeight: 600,
+          fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
         }}>Habit Tracker</h2>
         <button onClick={() => setShowAdd(!showAdd)} style={linkBtn}>
           {showAdd ? 'CANCEL' : '+ NEW HABIT'}
         </button>
       </div>
       <p style={{
-        color: colors.textMuted, fontSize: 10, marginBottom: 16,
+        color: colors.textMuted, fontSize: 12, marginBottom: 16,
         fontFamily: "'JetBrains Mono', monospace",
       }}>Build streaks. Break limits. One day at a time.</p>
 
       {/* Stats */}
       <div style={{
-        display: 'flex', gap: 12, marginBottom: 16, padding: 14,
+        display: 'flex', gap: 12, marginBottom: 16, padding: 16, borderRadius: 10,
         background: colors.gradient1, border: `1px solid ${colors.borderBright}`,
       }}>
         {[
@@ -120,7 +120,7 @@ export default function HabitTracker({ user }) {
               fontFamily: "'Rajdhani', sans-serif",
             }}>{val}<span style={{ fontSize: 12, color: colors.textMuted }}>/{sub}</span></div>
             <div style={{
-              fontSize: 8, color: colors.textMuted,
+              fontSize: 11, color: colors.textMuted,
               fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
             }}>{label}</div>
           </div>
@@ -140,9 +140,9 @@ export default function HabitTracker({ user }) {
             onKeyDown={e => e.key === 'Enter' && addHabit()}
             autoFocus
             style={{
-              width: '100%', padding: '8px 12px', marginBottom: 10,
+              width: '100%', padding: '12px 14px', marginBottom: 10, minHeight: 44, borderRadius: 8,
               background: colors.surface, border: `1px solid ${colors.border}`,
-              color: colors.text, fontSize: 13, fontFamily: "'Exo 2', sans-serif",
+              color: colors.text, fontSize: 14, fontFamily: "'Exo 2', sans-serif",
             }}
           />
           <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
@@ -157,7 +157,7 @@ export default function HabitTracker({ user }) {
           <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
             {['daily', 'weekdays', 'weekly'].map(f => (
               <button key={f} onClick={() => setNewFreq(f)} style={{
-                flex: 1, padding: '6px 0', fontSize: 9,
+                flex: 1, padding: '10px 0', fontSize: 11, minHeight: 44, borderRadius: 8,
                 background: newFreq === f ? colors.primaryDim : 'transparent',
                 border: `1px solid ${newFreq === f ? colors.primary : colors.border}`,
                 color: newFreq === f ? colors.primary : colors.textMuted,
@@ -166,12 +166,12 @@ export default function HabitTracker({ user }) {
             ))}
           </div>
           <button onClick={addHabit} disabled={!newName.trim()} style={{
-            width: '100%', padding: 10,
+            width: '100%', padding: '12px 16px', minHeight: 44, borderRadius: 8,
             background: newName.trim() ? colors.primaryDim : 'transparent',
             border: `1px solid ${newName.trim() ? colors.primary : colors.border}`,
             color: newName.trim() ? colors.primary : colors.textMuted,
-            fontSize: 10, cursor: 'pointer',
-            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 2,
+            fontSize: 12, cursor: 'pointer',
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
           }}>CREATE HABIT</button>
         </div>
       )}
@@ -180,7 +180,7 @@ export default function HabitTracker({ user }) {
       <div style={{ display: 'flex', gap: 0, marginBottom: 12, border: `1px solid ${colors.border}`, overflow: 'hidden' }}>
         {[['today', 'TODAY'], ['grid', 'STREAK GRID']].map(([v, label]) => (
           <button key={v} onClick={() => setView(v)} style={{
-            flex: 1, padding: '7px 0', fontSize: 9,
+            flex: 1, padding: '10px 0', fontSize: 11, minHeight: 44,
             background: view === v ? colors.primaryDim : 'transparent',
             color: view === v ? colors.primary : colors.textMuted,
             border: 'none', borderBottom: view === v ? `1px solid ${colors.primary}` : '1px solid transparent',
@@ -195,12 +195,12 @@ export default function HabitTracker({ user }) {
         const streak = getStreak(habit.log, last30)
         return (
           <div key={habit.id} style={{
-            display: 'flex', alignItems: 'center', gap: 12, padding: 14, marginBottom: 6,
+            display: 'flex', alignItems: 'center', gap: 12, padding: 16, marginBottom: 10, borderRadius: 10,
             background: done ? `${habit.color}10` : colors.surfaceLight,
             border: `1px solid ${done ? habit.color + '40' : colors.border}`,
           }}>
             <button onClick={() => toggleDay(habit.id, today)} style={{
-              width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+              width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
               background: done ? habit.color : 'transparent',
               border: `2px solid ${habit.color}`,
               color: done ? '#fff' : habit.color,
@@ -215,7 +215,7 @@ export default function HabitTracker({ user }) {
                 opacity: done ? 0.7 : 1,
               }}>{habit.name}</div>
               <div style={{
-                color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace",
+                color: colors.textMuted, fontSize: 12, fontFamily: "'JetBrains Mono', monospace",
               }}>{streak > 0 ? `${streak} day streak` : 'Start your streak!'} // {habit.frequency}</div>
             </div>
             <button onClick={() => deleteHabit(habit.id)} style={{
@@ -234,11 +234,11 @@ export default function HabitTracker({ user }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: habit.color }} />
-                <span style={{ color: colors.text, fontSize: 12, fontWeight: 500, fontFamily: "'Exo 2', sans-serif" }}>
+                <span style={{ color: colors.text, fontSize: 14, fontWeight: 500, fontFamily: "'Exo 2', sans-serif" }}>
                   {habit.name}
                 </span>
               </div>
-              <span style={{ color: habit.color, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
+              <span style={{ color: habit.color, fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}>
                 {streak}d streak
               </span>
             </div>
@@ -270,6 +270,6 @@ export default function HabitTracker({ user }) {
 
 const linkBtn = {
   background: 'none', border: 'none', color: colors.textMuted,
-  fontSize: 9, cursor: 'pointer',
+  fontSize: 12, cursor: 'pointer', minHeight: 44, padding: '8px 12px',
   fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
 }

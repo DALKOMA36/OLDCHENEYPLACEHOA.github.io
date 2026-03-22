@@ -339,7 +339,7 @@ export default function Tasks({ user, addMemory }) {
           [tasks.filter(t => !!t.assignee).length, 'Delegated', colors.primary],
         ].map(([n, l, c]) => (
           <div key={l} style={{
-            flex: 1, padding: '12px 8px', background: `${c}15`, border: `1px solid ${c}30`,
+            flex: 1, padding: '14px 10px', background: `${c}15`, border: `1px solid ${c}30`,
             borderRadius: 10, textAlign: 'center',
           }}>
             <div style={{ color: c, fontSize: 20, fontWeight: 700 }}>{n}</div>
@@ -379,7 +379,7 @@ export default function Tasks({ user, addMemory }) {
 
       {/* Task List */}
       {filtered.length === 0 ? (
-        <div style={{ padding: 40, textAlign: 'center', color: colors.textMuted, fontSize: 13 }}>
+        <div style={{ padding: 40, textAlign: 'center', color: colors.textMuted, fontSize: 14 }}>
           {filter === 'all' ? 'No tasks yet. Tap "+ Task" to create one.' : `No ${filter} tasks.`}
         </div>
       ) : (

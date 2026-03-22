@@ -521,12 +521,12 @@ export default function Voice({ user, addMemory, navigate, startFocusMode }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: 500, marginBottom: 20 }}>
         <div>
           <h2 style={{
-            color: colors.primary, fontSize: 11, fontWeight: 600, marginBottom: 4,
-            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 3, textTransform: 'uppercase',
+            color: colors.primary, fontSize: 13, fontWeight: 600, marginBottom: 4,
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1, textTransform: 'uppercase',
             margin: 0,
           }}>J.A.R.V.I.S. Voice Interface</h2>
           <p style={{
-            color: colors.textMuted, fontSize: 10, margin: '4px 0 0 0',
+            color: colors.textMuted, fontSize: 12, margin: '4px 0 0 0',
             fontFamily: "'JetBrains Mono', monospace",
           }}>
             {supported ? 'At your service, sir. Tap the orb to speak.' : 'Speech recognition not available in this browser.'}
@@ -537,10 +537,11 @@ export default function Voice({ user, addMemory, navigate, startFocusMode }) {
           onClick={() => setUseCloudTTS(!useCloudTTS)}
           title={useCloudTTS ? 'Using OpenAI TTS (Onyx voice)' : 'Using browser TTS'}
           style={{
-            padding: '4px 10px', background: useCloudTTS ? 'rgba(0, 230, 118, 0.15)' : 'transparent',
+            padding: '10px 14px', minHeight: 44, borderRadius: 8,
+            background: useCloudTTS ? 'rgba(0, 230, 118, 0.15)' : 'transparent',
             border: `1px solid ${useCloudTTS ? colors.success : colors.border}`,
             color: useCloudTTS ? colors.success : colors.textMuted,
-            fontSize: 8, cursor: 'pointer', flexShrink: 0,
+            fontSize: 11, cursor: 'pointer', flexShrink: 0,
             fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
             transition: 'all 0.2s ease',
           }}
@@ -589,7 +590,7 @@ export default function Voice({ user, addMemory, navigate, startFocusMode }) {
           }}>"{transcript}"</div>
           {commandPreview && (
             <div style={{
-              color: colors.secondary, fontSize: 9, padding: '4px 10px',
+              color: colors.secondary, fontSize: 11, padding: '8px 12px', borderRadius: 8,
               background: colors.secondaryDim, border: `1px solid rgba(240, 165, 0, 0.3)`,
               fontFamily: "'JetBrains Mono', monospace", letterSpacing: 0.5,
               animation: 'fadeIn 0.2s ease',
@@ -602,7 +603,7 @@ export default function Voice({ user, addMemory, navigate, startFocusMode }) {
 
       {error && (
         <div style={{
-          color: colors.danger, fontSize: 10, marginBottom: 12,
+          color: colors.danger, fontSize: 12, marginBottom: 12,
           fontFamily: "'JetBrains Mono', monospace",
         }}>[ERROR] {error}</div>
       )}
@@ -610,12 +611,12 @@ export default function Voice({ user, addMemory, navigate, startFocusMode }) {
       {/* Quick command hints */}
       {!listening && !processing && !speaking && conversation.length === 0 && (
         <div style={{
-          width: '100%', maxWidth: 500, marginTop: 12, padding: 12,
+          width: '100%', maxWidth: 500, marginTop: 12, padding: 16, borderRadius: 10,
           background: colors.surfaceLight, border: `1px solid ${colors.border}`,
         }}>
           <div style={{
-            color: colors.textMuted, fontSize: 9, marginBottom: 10,
-            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 2,
+            color: colors.textMuted, fontSize: 13, marginBottom: 10,
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
           }}>VOICE COMMANDS</div>
           {[
             '"Add task [title]" — create a new task',
@@ -626,12 +627,12 @@ export default function Voice({ user, addMemory, navigate, startFocusMode }) {
             '"Navigate to [screen]" — switch screens',
           ].map((hint, i) => (
             <div key={i} style={{
-              color: colors.textSecondary, fontSize: 11, marginBottom: 4, paddingLeft: 8,
+              color: colors.textSecondary, fontSize: 14, marginBottom: 6, paddingLeft: 8,
               fontFamily: "'Exo 2', sans-serif", borderLeft: `2px solid ${colors.border}`,
             }}>{hint}</div>
           ))}
           <div style={{
-            color: colors.textMuted, fontSize: 9, marginTop: 8,
+            color: colors.textMuted, fontSize: 12, marginTop: 8,
             fontFamily: "'JetBrains Mono', monospace", fontStyle: 'italic',
           }}>Any other input routes to the AI core for natural conversation.</div>
         </div>
@@ -644,8 +645,8 @@ export default function Voice({ user, addMemory, navigate, startFocusMode }) {
           overflowY: 'auto', maxHeight: 'calc(100vh - 520px)',
         }}>
           <div style={{
-            color: colors.textMuted, fontSize: 9, marginBottom: 10,
-            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 2,
+            color: colors.textMuted, fontSize: 13, marginBottom: 10,
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
           }}>TRANSCRIPT LOG</div>
           {conversation.map((msg, i) => (
             <div key={i} style={{
@@ -653,7 +654,7 @@ export default function Voice({ user, addMemory, navigate, startFocusMode }) {
               marginBottom: 8, animation: 'fadeIn 0.3s ease',
             }}>
               <div style={{
-                maxWidth: '85%', padding: '8px 12px',
+                maxWidth: '85%', padding: '12px 16px', borderRadius: 10,
                 background: msg.role === 'user' ? colors.primaryDim :
                   msg.isCommand ? 'rgba(240, 165, 0, 0.08)' : colors.surfaceLight,
                 border: `1px solid ${msg.role === 'user' ? 'rgba(0, 212, 255, 0.3)' :
@@ -667,13 +668,13 @@ export default function Voice({ user, addMemory, navigate, startFocusMode }) {
                       boxShadow: `0 0 6px ${msg.isCommand ? colors.secondary : colors.primary}`,
                     }} />
                     <span style={{
-                      color: msg.isCommand ? colors.secondary : colors.primary, fontSize: 9,
+                      color: msg.isCommand ? colors.secondary : colors.primary, fontSize: 11,
                       fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
                     }}>{msg.isCommand ? 'JARVIS // COMMAND' : 'JARVIS'}</span>
                   </div>
                 )}
                 <p style={{
-                  color: colors.text, fontSize: 12, margin: 0, lineHeight: 1.5,
+                  color: colors.text, fontSize: 14, margin: 0, lineHeight: 1.5,
                   fontFamily: "'Exo 2', sans-serif",
                 }}>{msg.text}</p>
               </div>
@@ -709,9 +710,9 @@ function TimerDisplay({ timer, onClear }) {
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 10, padding: '6px 12px',
+      display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderRadius: 10,
       background: 'rgba(255, 190, 48, 0.08)', border: `1px solid rgba(255, 190, 48, 0.25)`,
-      marginBottom: 6,
+      marginBottom: 10,
     }}>
       <div style={{
         width: 6, height: 6, borderRadius: '50%',
@@ -720,7 +721,7 @@ function TimerDisplay({ timer, onClear }) {
       }} />
       <div style={{ flex: 1 }}>
         <div style={{
-          color: colors.warning, fontSize: 9,
+          color: colors.warning, fontSize: 12,
           fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
         }}>
           TIMER {timer.minutes}m — {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')} remaining
@@ -736,8 +737,8 @@ function TimerDisplay({ timer, onClear }) {
         </div>
       </div>
       <button onClick={onClear} style={{
-        background: 'none', border: `1px solid rgba(255, 190, 48, 0.3)`,
-        color: colors.warning, fontSize: 8, padding: '2px 6px', cursor: 'pointer',
+        background: 'none', border: `1px solid rgba(255, 190, 48, 0.3)`, borderRadius: 8,
+        color: colors.warning, fontSize: 11, padding: '8px 12px', minHeight: 36, cursor: 'pointer',
         fontFamily: "'JetBrains Mono', monospace",
       }}>CLEAR</button>
     </div>

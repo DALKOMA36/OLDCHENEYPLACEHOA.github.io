@@ -96,15 +96,15 @@ export default function Finance({ user }) {
     <div style={{ padding: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
         <h2 style={{
-          color: colors.primary, fontSize: 11, fontWeight: 600,
-          fontFamily: "'JetBrains Mono', monospace", letterSpacing: 3,
+          color: colors.primary, fontSize: 13, fontWeight: 600,
+          fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
         }}>Finance</h2>
         <button onClick={() => setShowAdd(!showAdd)} style={linkBtn}>
           {showAdd ? 'CANCEL' : '+ ADD'}
         </button>
       </div>
       <p style={{
-        color: colors.textMuted, fontSize: 10, marginBottom: 16,
+        color: colors.textMuted, fontSize: 12, marginBottom: 16,
         fontFamily: "'JetBrains Mono', monospace",
       }}>{monthLabel} // Track spending. Stay sharp.</p>
 
@@ -115,7 +115,7 @@ export default function Finance({ user }) {
           d.setMonth(d.getMonth() - 1)
           setMonth(getMonthStr(d))
         }} style={navBtn}>&lt;</button>
-        <span style={{ color: colors.text, fontSize: 12, fontFamily: "'JetBrains Mono', monospace", flex: 1, textAlign: 'center' }}>
+        <span style={{ color: colors.text, fontSize: 14, fontFamily: "'JetBrains Mono', monospace", flex: 1, textAlign: 'center' }}>
           {monthLabel.toUpperCase()}
         </span>
         <button onClick={() => {
@@ -127,20 +127,20 @@ export default function Finance({ user }) {
 
       {/* Overview stats */}
       <div style={{
-        display: 'flex', gap: 8, marginBottom: 16, padding: 16,
+        display: 'flex', gap: 8, marginBottom: 16, padding: 16, borderRadius: 10,
         background: colors.gradient1, border: `1px solid ${colors.borderBright}`,
       }}>
         <div style={{ flex: 1, textAlign: 'center' }}>
           <div style={{ fontSize: 20, fontWeight: 300, color: colors.success, fontFamily: "'Rajdhani', sans-serif" }}>
             {formatMoney(totalIncome)}
           </div>
-          <div style={{ fontSize: 8, color: colors.textMuted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1 }}>INCOME</div>
+          <div style={{ fontSize: 11, color: colors.textMuted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1 }}>INCOME</div>
         </div>
         <div style={{ flex: 1, textAlign: 'center' }}>
           <div style={{ fontSize: 20, fontWeight: 300, color: colors.danger, fontFamily: "'Rajdhani', sans-serif" }}>
             {formatMoney(totalExpense)}
           </div>
-          <div style={{ fontSize: 8, color: colors.textMuted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1 }}>SPENT</div>
+          <div style={{ fontSize: 11, color: colors.textMuted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1 }}>SPENT</div>
         </div>
         <div style={{ flex: 1, textAlign: 'center' }}>
           <div style={{
@@ -149,7 +149,7 @@ export default function Finance({ user }) {
           }}>
             {netFlow >= 0 ? '+' : '-'}{formatMoney(netFlow)}
           </div>
-          <div style={{ fontSize: 8, color: colors.textMuted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1 }}>NET</div>
+          <div style={{ fontSize: 11, color: colors.textMuted, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1 }}>NET</div>
         </div>
       </div>
 
@@ -163,7 +163,7 @@ export default function Finance({ user }) {
           <div style={{ display: 'flex', gap: 0, marginBottom: 10, border: `1px solid ${colors.border}`, overflow: 'hidden' }}>
             {[[false, 'EXPENSE'], [true, 'INCOME']].map(([val, label]) => (
               <button key={label} onClick={() => setIsIncome(val)} style={{
-                flex: 1, padding: '6px 0', fontSize: 9,
+                flex: 1, padding: '10px 0', fontSize: 11, minHeight: 44,
                 background: isIncome === val ? (val ? 'rgba(0,230,118,0.15)' : 'rgba(255,77,77,0.15)') : 'transparent',
                 color: isIncome === val ? (val ? colors.success : colors.danger) : colors.textMuted,
                 border: 'none', cursor: 'pointer',
@@ -193,9 +193,9 @@ export default function Finance({ user }) {
               placeholder="Description"
               onKeyDown={e => e.key === 'Enter' && addTransaction()}
               style={{
-                flex: 1, padding: '8px 12px',
+                flex: 1, padding: '12px 14px', minHeight: 44, borderRadius: 8,
                 background: colors.surface, border: `1px solid ${colors.border}`,
-                color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif",
+                color: colors.text, fontSize: 14, fontFamily: "'Exo 2', sans-serif",
               }}
             />
           </div>
@@ -204,7 +204,7 @@ export default function Finance({ user }) {
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
               {CATEGORIES.filter(c => c.id !== 'income').map(c => (
                 <button key={c.id} onClick={() => setCategory(c.id)} style={{
-                  padding: '4px 10px', fontSize: 8,
+                  padding: '8px 12px', fontSize: 11, minHeight: 36, borderRadius: 8,
                   background: category === c.id ? c.color + '20' : 'transparent',
                   border: `1px solid ${category === c.id ? c.color : colors.border}`,
                   color: category === c.id ? c.color : colors.textMuted,
@@ -215,12 +215,12 @@ export default function Finance({ user }) {
           )}
 
           <button onClick={addTransaction} disabled={!amount} style={{
-            width: '100%', padding: 10,
+            width: '100%', padding: '12px 16px', minHeight: 44, borderRadius: 8,
             background: amount ? (isIncome ? 'rgba(0,230,118,0.15)' : colors.primaryDim) : 'transparent',
             border: `1px solid ${amount ? (isIncome ? colors.success : colors.primary) : colors.border}`,
             color: amount ? (isIncome ? colors.success : colors.primary) : colors.textMuted,
-            fontSize: 10, cursor: 'pointer',
-            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 2,
+            fontSize: 12, cursor: 'pointer',
+            fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
           }}>LOG {isIncome ? 'INCOME' : 'EXPENSE'}</button>
         </div>
       )}
@@ -229,7 +229,7 @@ export default function Finance({ user }) {
       <div style={{ display: 'flex', gap: 0, marginBottom: 12, border: `1px solid ${colors.border}`, overflow: 'hidden' }}>
         {[['overview', 'BREAKDOWN'], ['transactions', 'HISTORY'], ['budget', 'BUDGETS']].map(([v, label]) => (
           <button key={v} onClick={() => setView(v)} style={{
-            flex: 1, padding: '7px 0', fontSize: 9,
+            flex: 1, padding: '10px 0', fontSize: 11, minHeight: 44,
             background: view === v ? colors.primaryDim : 'transparent',
             color: view === v ? colors.primary : colors.textMuted,
             border: 'none', borderBottom: view === v ? `1px solid ${colors.primary}` : '1px solid transparent',
@@ -249,7 +249,7 @@ export default function Finance({ user }) {
 
             return (
               <div key={cat.id} style={{
-                padding: 12, marginBottom: 6,
+                padding: 16, marginBottom: 10, borderRadius: 10,
                 background: colors.surfaceLight, border: `1px solid ${overBudget ? colors.danger + '60' : colors.border}`,
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
@@ -258,7 +258,7 @@ export default function Finance({ user }) {
                       color: cat.color, fontSize: 10, fontWeight: 600,
                       fontFamily: "'JetBrains Mono', monospace",
                     }}>{cat.icon}</span>
-                    <span style={{ color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif" }}>
+                    <span style={{ color: colors.text, fontSize: 14, fontFamily: "'Exo 2', sans-serif" }}>
                       {cat.name}
                     </span>
                   </div>
@@ -276,7 +276,7 @@ export default function Finance({ user }) {
                 </div>
                 <div style={{
                   display: 'flex', justifyContent: 'space-between', marginTop: 4,
-                  color: colors.textMuted, fontSize: 8, fontFamily: "'JetBrains Mono', monospace",
+                  color: colors.textMuted, fontSize: 11, fontFamily: "'JetBrains Mono', monospace",
                 }}>
                   <span>{pct}% of spending</span>
                   {budget > 0 && <span style={{ color: overBudget ? colors.danger : colors.success }}>
@@ -301,7 +301,7 @@ export default function Finance({ user }) {
             const cat = CATEGORIES.find(c => c.id === txn.category)
             return (
               <div key={txn.id} style={{
-                display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', marginBottom: 4,
+                display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', marginBottom: 10, borderRadius: 10,
                 background: colors.surfaceLight, border: `1px solid ${colors.border}`,
               }}>
                 <span style={{
@@ -309,10 +309,10 @@ export default function Finance({ user }) {
                   fontFamily: "'JetBrains Mono', monospace",
                 }}>{cat?.icon || '??'}</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif" }}>
+                  <div style={{ color: colors.text, fontSize: 14, fontFamily: "'Exo 2', sans-serif" }}>
                     {txn.description}
                   </div>
-                  <div style={{ color: colors.textMuted, fontSize: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+                  <div style={{ color: colors.textMuted, fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
                     {txn.date} {txn.time}
                   </div>
                 </div>
@@ -339,30 +339,30 @@ export default function Finance({ user }) {
       {view === 'budget' && (
         <div>
           <p style={{
-            color: colors.textMuted, fontSize: 10, marginBottom: 12,
+            color: colors.textMuted, fontSize: 12, marginBottom: 12,
             fontFamily: "'JetBrains Mono', monospace",
           }}>Set monthly budget limits per category</p>
           {CATEGORIES.filter(c => c.id !== 'income').map(cat => (
             <div key={cat.id} style={{
-              display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', marginBottom: 4,
+              display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', marginBottom: 10, borderRadius: 10,
               background: colors.surfaceLight, border: `1px solid ${colors.border}`,
             }}>
               <span style={{ color: cat.color, fontSize: 10, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace", width: 20 }}>
                 {cat.icon}
               </span>
-              <span style={{ color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif", flex: 1 }}>
+              <span style={{ color: colors.text, fontSize: 14, fontFamily: "'Exo 2', sans-serif", flex: 1 }}>
                 {cat.name}
               </span>
-              <span style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace" }}>$</span>
+              <span style={{ color: colors.textMuted, fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}>$</span>
               <input
                 value={budgets[cat.id] || ''}
                 onChange={e => setBudget(cat.id, e.target.value)}
                 placeholder="0"
                 type="number"
                 style={{
-                  width: 70, padding: '4px 8px', textAlign: 'right',
+                  width: 80, padding: '8px 10px', textAlign: 'right', minHeight: 44, borderRadius: 8,
                   background: colors.surface, border: `1px solid ${colors.border}`,
-                  color: colors.text, fontSize: 12, fontFamily: "'JetBrains Mono', monospace",
+                  color: colors.text, fontSize: 14, fontFamily: "'JetBrains Mono', monospace",
                 }}
               />
             </div>
@@ -375,13 +375,13 @@ export default function Finance({ user }) {
 
 const linkBtn = {
   background: 'none', border: 'none', color: colors.textMuted,
-  fontSize: 9, cursor: 'pointer',
+  fontSize: 12, cursor: 'pointer', minHeight: 44, padding: '8px 12px',
   fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
 }
 
 const navBtn = {
-  width: 32, height: 32, background: 'transparent',
+  width: 44, height: 44, background: 'transparent', borderRadius: 8,
   border: `1px solid ${colors.border}`, color: colors.textMuted,
-  fontSize: 14, cursor: 'pointer',
+  fontSize: 16, cursor: 'pointer',
   fontFamily: "'JetBrains Mono', monospace",
 }

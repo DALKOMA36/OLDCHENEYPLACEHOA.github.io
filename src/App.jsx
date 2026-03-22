@@ -17,6 +17,7 @@ import HabitTracker from './screens/HabitTracker'
 import Finance from './screens/Finance'
 import MediaHub from './screens/MediaHub'
 import Notes from './screens/Notes'
+import FlightTracker from './screens/FlightTracker'
 import JarvisCheckin from './JarvisCheckin'
 import CalendarSync from './CalendarSync'
 import BootSequence from './BootSequence'
@@ -47,6 +48,7 @@ const SCREENS = {
   finance: { label: 'Finance', icon: 'FN', component: Finance },
   media: { label: 'Media', icon: 'MD', component: MediaHub },
   notes: { label: 'Notes', icon: 'NT', component: Notes },
+  flights: { label: 'Flights', icon: 'FL', component: FlightTracker },
   settings: { label: 'Settings', icon: 'SY', component: Settings },
 }
 

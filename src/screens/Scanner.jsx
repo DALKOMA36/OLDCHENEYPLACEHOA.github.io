@@ -422,7 +422,7 @@ export default function Scanner({ user, addMemory }) {
         }} />
       </div>
       <div style={{
-        color: colors.primary, fontSize: 10, fontFamily: monoFont, letterSpacing: 3,
+        color: colors.primary, fontSize: 11, fontFamily: monoFont, letterSpacing: 1,
         textShadow: `0 0 10px ${colors.primary}`,
       }}>
         {scanProgress || 'AI PROCESSING'}
@@ -480,18 +480,18 @@ export default function Scanner({ user, addMemory }) {
       </div>
       <div style={{ display: 'flex', gap: 0 }}>
         <button onClick={capturePhoto} style={{
-          flex: 1, padding: 12,
+          flex: 1, padding: '12px 16px', minHeight: 44,
           background: colors.primaryDim,
           border: `1px solid ${colors.primary}`, borderTop: 'none',
-          color: colors.primary, fontSize: 11, cursor: 'pointer',
-          fontFamily: monoFont, letterSpacing: 2,
+          color: colors.primary, fontSize: 13, cursor: 'pointer',
+          fontFamily: monoFont, letterSpacing: 1, borderRadius: 8,
         }}>CAPTURE</button>
         <button onClick={cancelCamera} style={{
-          flex: 1, padding: 12,
+          flex: 1, padding: '12px 16px', minHeight: 44,
           background: 'transparent',
           border: `1px solid ${colors.border}`, borderTop: 'none',
-          color: colors.textMuted, fontSize: 11, cursor: 'pointer',
-          fontFamily: monoFont, letterSpacing: 2,
+          color: colors.textMuted, fontSize: 13, cursor: 'pointer',
+          fontFamily: monoFont, letterSpacing: 1, borderRadius: 8,
         }}>CANCEL</button>
       </div>
     </div>
@@ -952,12 +952,12 @@ export default function Scanner({ user, addMemory }) {
   return (
     <div style={{ padding: 16 }}>
       <h2 style={{
-        color: colors.primary, fontSize: 11, fontWeight: 600, marginBottom: 4,
-        fontFamily: monoFont, letterSpacing: 3,
+        color: colors.primary, fontSize: 14, fontWeight: 600, marginBottom: 4,
+        fontFamily: monoFont, letterSpacing: 1,
         textShadow: `0 0 8px ${colors.primary}`,
       }}>J.A.R.V.I.S. Document Scanner</h2>
       <p style={{
-        color: colors.textMuted, fontSize: 11, marginBottom: 16,
+        color: colors.textMuted, fontSize: 14, marginBottom: 16,
         fontFamily: monoFont,
       }}>Multi-spectrum analysis. Documents, receipts, and business cards.</p>
 
@@ -968,12 +968,12 @@ export default function Scanner({ user, addMemory }) {
       }}>
         {SCAN_MODES.map(({ key, label }) => (
           <button key={key} onClick={() => setScanType(key)} style={{
-            flex: 1, padding: '7px 0',
+            flex: 1, padding: '12px 0', minHeight: 44,
             background: scanType === key ? colors.primaryDim : 'transparent',
             color: scanType === key ? colors.primary : colors.textMuted,
             border: 'none',
             borderBottom: scanType === key ? `2px solid ${colors.primary}` : '2px solid transparent',
-            fontSize: 9, cursor: 'pointer',
+            fontSize: 11, cursor: 'pointer',
             fontFamily: monoFont, letterSpacing: 1,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
           }}>
@@ -990,12 +990,12 @@ export default function Scanner({ user, addMemory }) {
       }}>
         {INPUT_MODES.map(({ key, label }) => (
           <button key={key} onClick={() => setInputMode(key)} style={{
-            flex: 1, padding: '8px 0',
+            flex: 1, padding: '12px 0', minHeight: 44,
             background: inputMode === key ? colors.primaryDim : 'transparent',
             color: inputMode === key ? colors.primary : colors.textMuted,
             border: 'none',
             borderBottom: inputMode === key ? `1px solid ${colors.primary}` : '1px solid transparent',
-            fontSize: 10, cursor: 'pointer',
+            fontSize: 11, cursor: 'pointer',
             fontFamily: monoFont, letterSpacing: 1,
           }}>{label}</button>
         ))}
@@ -1021,17 +1021,17 @@ export default function Scanner({ user, addMemory }) {
               width: '100%', minHeight: 120, padding: 12, boxSizing: 'border-box',
               background: colors.surface,
               border: `1px solid ${colors.border}`,
-              color: colors.text, fontSize: 13, fontFamily: bodyFont,
-              resize: 'vertical',
+              color: colors.text, fontSize: 14, fontFamily: bodyFont,
+              resize: 'vertical', borderRadius: 8,
             }}
           />
           <button onClick={() => scanText(textInput, 'text paste')} disabled={!textInput.trim() || scanning} style={{
-            width: '100%', padding: 10, marginTop: 8,
+            width: '100%', padding: '12px 16px', marginTop: 8, minHeight: 44,
             background: textInput.trim() && !scanning ? colors.primaryDim : 'transparent',
             border: `1px solid ${textInput.trim() && !scanning ? colors.primary : colors.border}`,
             color: textInput.trim() && !scanning ? colors.primary : colors.textMuted,
-            fontSize: 11, cursor: textInput.trim() && !scanning ? 'pointer' : 'default',
-            fontFamily: monoFont, letterSpacing: 2,
+            fontSize: 13, cursor: textInput.trim() && !scanning ? 'pointer' : 'default',
+            fontFamily: monoFont, letterSpacing: 1, borderRadius: 8,
           }}>{scanning ? 'ANALYZING...' : `SCAN ${scanType.toUpperCase()}`}</button>
         </div>
       )}
@@ -1046,15 +1046,15 @@ export default function Scanner({ user, addMemory }) {
             style={{ display: 'none' }}
           />
           <button onClick={() => fileRef.current?.click()} disabled={scanning} style={{
-            width: '100%', padding: 24,
+            width: '100%', padding: 24, minHeight: 44,
             background: 'transparent',
             border: `1px dashed ${colors.border}`,
-            color: colors.textMuted, fontSize: 11, cursor: 'pointer',
-            fontFamily: monoFont, letterSpacing: 1,
+            color: colors.textMuted, fontSize: 13, cursor: 'pointer',
+            fontFamily: monoFont, letterSpacing: 1, borderRadius: 8,
           }}>
             {scanning ? 'ANALYZING...' : `TAP TO SELECT FILE (${scanType.toUpperCase()} MODE)`}
           </button>
-          <p style={{ color: colors.textMuted, fontSize: 9, marginTop: 6, fontFamily: monoFont }}>
+          <p style={{ color: colors.textMuted, fontSize: 11, marginTop: 6, fontFamily: monoFont }}>
             Text: .txt, .csv, .json, .md, .html, .xml, .eml | Images: .jpg, .png (OCR)
           </p>
         </div>
@@ -1062,11 +1062,11 @@ export default function Scanner({ user, addMemory }) {
 
       {inputMode === 'camera' && !showCamera && (
         <button onClick={openCamera} disabled={scanning} style={{
-          width: '100%', padding: 24,
+          width: '100%', padding: 24, minHeight: 44,
           background: 'transparent',
           border: `1px dashed ${colors.border}`,
-          color: colors.textMuted, fontSize: 11, cursor: 'pointer',
-          fontFamily: monoFont, letterSpacing: 1,
+          color: colors.textMuted, fontSize: 13, cursor: 'pointer',
+          fontFamily: monoFont, letterSpacing: 1, borderRadius: 8,
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
         }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

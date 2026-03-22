@@ -300,7 +300,7 @@ export default function Calendar({ user, addMemory }) {
           {/* Day Headers */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
             {DAYS.map(d => (
-              <div key={d} style={{ textAlign: 'center', color: colors.textMuted, fontSize: 11, padding: 4 }}>{d}</div>
+              <div key={d} style={{ textAlign: 'center', color: colors.textMuted, fontSize: 12, padding: 6 }}>{d}</div>
             ))}
           </div>
 
@@ -317,7 +317,7 @@ export default function Calendar({ user, addMemory }) {
                   key={i}
                   onClick={() => setSelectedDate(dateStr)}
                   style={{
-                    padding: '8px 0', background: isSelected ? colors.primary : 'transparent',
+                    padding: '10px 0', background: isSelected ? colors.primary : 'transparent', minHeight: 44,
                     border: isToday && !isSelected ? `1px solid ${colors.primary}` : `1px solid transparent`,
                     borderRadius: 8, color: isSelected ? '#fff' : colors.text,
                     fontSize: 13, cursor: 'pointer', position: 'relative',
@@ -358,7 +358,7 @@ export default function Calendar({ user, addMemory }) {
                   textAlign: 'center', padding: '4px 0', background: isSel ? `${colors.primary}33` : 'transparent',
                   border: 'none', borderRadius: 6, cursor: 'pointer',
                 }}>
-                  <div style={{ fontSize: 10, color: colors.textMuted }}>{DAYS[d.getDay()]}</div>
+                  <div style={{ fontSize: 12, color: colors.textMuted }}>{DAYS[d.getDay()]}</div>
                   <div style={{
                     fontSize: 14, fontWeight: isToday ? 700 : 500,
                     color: isToday ? colors.accent : colors.text,
@@ -374,7 +374,7 @@ export default function Calendar({ user, addMemory }) {
               {HOUR_LABELS.map(h => {
                 const hour = h.split(':')[0]
                 return [
-                  <div key={`lbl-${h}`} style={{ fontSize: 9, color: colors.textMuted, padding: '2px 4px', textAlign: 'right', borderTop: `1px solid ${colors.border}15`, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                  <div key={`lbl-${h}`} style={{ fontSize: 11, color: colors.textMuted, padding: '2px 4px', textAlign: 'right', borderTop: `1px solid ${colors.border}15`, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
                     {Number(hour) % 2 === 0 ? fmt12(h).replace(':00 ', ' ') : ''}
                   </div>,
                   ...weekDays.map(ds => {
@@ -389,7 +389,7 @@ export default function Calendar({ user, addMemory }) {
                             position: 'absolute', top: 1, left: 1, right: 1,
                             height: ev.end_time ? Math.max(14, (toMin(ev.end_time) - toMin(ev.time)) / 60 * 28) : 14,
                             background: `${ev.color || colors.primary}88`,
-                            borderRadius: 3, fontSize: 8, color: '#fff', padding: '1px 3px',
+                            borderRadius: 3, fontSize: 11, color: '#fff', padding: '1px 3px',
                             overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', cursor: 'pointer',
                             zIndex: 2, borderLeft: `2px solid ${ev.color || colors.primary}`,
                           }}>
@@ -412,7 +412,7 @@ export default function Calendar({ user, addMemory }) {
           {selectedDate === todayStr ? 'Today' : new Date(selectedDate + 'T12:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
         </h3>
         {dayEvents.length === 0 ? (
-          <div style={{ padding: 24, textAlign: 'center', color: colors.textMuted, fontSize: 13 }}>
+          <div style={{ padding: 24, textAlign: 'center', color: colors.textMuted, fontSize: 14 }}>
             No events scheduled. Tap "+ Event" to create one, sir.
           </div>
         ) : (
@@ -420,28 +420,28 @@ export default function Calendar({ user, addMemory }) {
             <div key={e.id} onClick={() => openEdit(e)} style={{
               display: 'flex', alignItems: 'flex-start', gap: 12, padding: 14,
               background: colors.surfaceLight, border: `1px solid ${colors.border}`,
-              borderRadius: 10, marginBottom: 8, borderLeft: `3px solid ${e.color || colors.primary}`,
+              borderRadius: 10, marginBottom: 10, borderLeft: `3px solid ${e.color || colors.primary}`,
               cursor: 'pointer', transition: 'background 0.15s',
             }}>
               <div style={{ flex: 1 }}>
                 <div style={{ color: colors.text, fontSize: 14, fontWeight: 500 }}>{e.title}</div>
-                <div style={{ color: colors.primaryLight, fontSize: 12, marginTop: 2 }}>
+                <div style={{ color: colors.primaryLight, fontSize: 13, marginTop: 2 }}>
                   {fmtTimeRange(e.time, e.end_time)}
                 </div>
-                {e.location && <div style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>{e.location}</div>}
+                {e.location && <div style={{ color: colors.textSecondary, fontSize: 13, marginTop: 2 }}>{e.location}</div>}
                 <div style={{ marginTop: 4, display: 'flex', gap: 6, alignItems: 'center' }}>
                   <span style={{
-                    fontSize: 10, padding: '2px 6px', borderRadius: 8,
+                    fontSize: 11, padding: '3px 8px', borderRadius: 8,
                     background: `${e.color || colors.primary}22`, color: e.color || colors.primaryLight,
                   }}>{e.calendar}</span>
                   {e.repeat && e.repeat !== 'none' && (
                     <span style={{
-                      fontSize: 9, padding: '2px 6px', borderRadius: 8,
+                      fontSize: 11, padding: '3px 8px', borderRadius: 8,
                       background: `${colors.accent}18`, color: colors.accent, letterSpacing: 0.5,
                     }}>REPEATS {e.repeat.toUpperCase()}</span>
                   )}
                   {e._virtualOf && (
-                    <span style={{ fontSize: 9, color: colors.textMuted, fontStyle: 'italic' }}>recurring instance</span>
+                    <span style={{ fontSize: 11, color: colors.textMuted, fontStyle: 'italic' }}>recurring instance</span>
                   )}
                 </div>
               </div>
@@ -460,8 +460,8 @@ export default function Calendar({ user, addMemory }) {
       }}>
         <span style={{ color: colors.primary, fontSize: 16 }}>◉</span>
         <div>
-          <div style={{ color: colors.primaryLight, fontSize: 11, fontWeight: 600, letterSpacing: 1 }}>JARVIS ANALYSIS</div>
-          <div style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>
+          <div style={{ color: colors.primaryLight, fontSize: 13, fontWeight: 600, letterSpacing: 1 }}>JARVIS ANALYSIS</div>
+          <div style={{ color: colors.textSecondary, fontSize: 14, marginTop: 2 }}>
             {dayEvents.length > 3 ? "Heavy schedule detected, sir. I'd recommend blocking recovery time between engagements." :
              dayEvents.length > 1 ? "Moderate day ahead. All systems nominal." :
              "Light schedule. Shall I find optimal slots for a focus block, sir?"}
@@ -476,7 +476,7 @@ export default function Calendar({ user, addMemory }) {
             <h3 style={{ color: colors.text, fontSize: 18, fontWeight: 600, marginBottom: 4 }}>
               {editingEvent ? 'Edit Event' : 'New Event'}
             </h3>
-            <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: 16, letterSpacing: 1 }}>
+            <div style={{ color: colors.textMuted, fontSize: 12, marginBottom: 16, letterSpacing: 1 }}>
               {editingEvent ? `MODIFYING // ${editingEvent.date}` : `SCHEDULING // ${selectedDate}`}
             </div>
 
@@ -556,8 +556,8 @@ export default function Calendar({ user, addMemory }) {
               }}>
                 <span style={{ color: colors.warning, fontSize: 16, lineHeight: 1 }}>&#9888;</span>
                 <div>
-                  <div style={{ color: colors.warning, fontSize: 12, fontWeight: 600, letterSpacing: 0.5 }}>TEMPORAL CONFLICT DETECTED</div>
-                  <div style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2 }}>
+                  <div style={{ color: colors.warning, fontSize: 13, fontWeight: 600, letterSpacing: 0.5 }}>TEMPORAL CONFLICT DETECTED</div>
+                  <div style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>
                     Overlaps with: {formConflicts.map(c => c.title).join(', ')}
                   </div>
                 </div>
@@ -580,11 +580,11 @@ export default function Calendar({ user, addMemory }) {
 }
 
 const smallBtn = {
-  padding: '6px 14px', background: colors.surfaceLight, border: `1px solid ${colors.border}`,
-  borderRadius: 8, color: colors.textSecondary, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit',
+  padding: '10px 16px', background: colors.surfaceLight, border: `1px solid ${colors.border}`,
+  borderRadius: 8, color: colors.textSecondary, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', minHeight: 44,
 }
 const navBtn = {
-  background: 'none', border: 'none', color: colors.text, fontSize: 22, cursor: 'pointer', padding: '4px 12px',
+  background: 'none', border: 'none', color: colors.text, fontSize: 22, cursor: 'pointer', padding: '10px 16px', minHeight: 44,
 }
 const modalOverlay = {
   position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)',
@@ -600,10 +600,10 @@ const inputStyle = {
   fontSize: 14, fontFamily: 'inherit', marginBottom: 10, boxSizing: 'border-box',
 }
 const labelStyle = {
-  display: 'block', fontSize: 10, color: colors.textMuted, letterSpacing: 1.2,
+  display: 'block', fontSize: 12, color: colors.textMuted, letterSpacing: 1,
   marginBottom: 4, fontWeight: 600,
 }
 const actionBtn = {
   flex: 1, padding: '12px 16px', border: 'none', borderRadius: 10,
-  fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+  fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', minHeight: 44,
 }

@@ -292,7 +292,7 @@ export default function MealPlanner({ user, addMemory }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h2 style={{ color: colors.text, fontSize: 20, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>
           STARK KITCHEN
-          <span style={{ color: colors.primary, fontSize: 10, display: 'block', letterSpacing: 3, fontWeight: 400 }}>MEAL PROTOCOL v3.1</span>
+          <span style={{ color: colors.primary, fontSize: 11, display: 'block', letterSpacing: 1, fontWeight: 400 }}>MEAL PROTOCOL v3.1</span>
         </h2>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => setView('plan')} style={{
@@ -316,13 +316,13 @@ export default function MealPlanner({ user, addMemory }) {
             <div style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10,
             }}>
-              <span style={{ color: colors.primary, fontSize: 10, fontWeight: 700, letterSpacing: 2, fontFamily: "'JetBrains Mono', monospace" }}>
+              <span style={{ color: colors.primary, fontSize: 13, fontWeight: 700, letterSpacing: 1, fontFamily: "'JetBrains Mono', monospace" }}>
                 WEEKLY OVERVIEW
               </span>
               <button onClick={shareMealPlan} style={{
-                background: 'none', border: `1px solid ${colors.border}`, borderRadius: 6,
-                color: colors.primaryLight, fontSize: 10, padding: '4px 10px', cursor: 'pointer',
-                fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+                background: 'none', border: `1px solid ${colors.border}`, borderRadius: 8,
+                color: colors.primaryLight, fontSize: 11, padding: '12px 16px', cursor: 'pointer',
+                fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1, minHeight: 44,
               }}>SHARE</button>
             </div>
             {shareMsg && (
@@ -337,11 +337,11 @@ export default function MealPlanner({ user, addMemory }) {
                   background: d.filled === 3 ? `${colors.success}15` : d.filled > 0 ? `${colors.warning}10` : 'transparent',
                   borderRadius: 6, border: `1px solid ${d.filled === 3 ? colors.success + '30' : colors.border}`,
                 }}>
-                  <div style={{ color: colors.textMuted, fontSize: 9, fontWeight: 600, marginBottom: 4 }}>{d.day}</div>
+                  <div style={{ color: colors.textMuted, fontSize: 11, fontWeight: 600, marginBottom: 4 }}>{d.day}</div>
                   <div style={{ color: d.totalCal > 0 ? colors.text : colors.textMuted, fontSize: 12, fontWeight: 600 }}>
                     {d.totalCal > 0 ? d.totalCal : '--'}
                   </div>
-                  <div style={{ color: colors.textMuted, fontSize: 8 }}>cal</div>
+                  <div style={{ color: colors.textMuted, fontSize: 11 }}>cal</div>
                   <div style={{ display: 'flex', gap: 2, justifyContent: 'center', marginTop: 4 }}>
                     {MEAL_TYPES.map(t => (
                       <span key={t} style={{
@@ -357,14 +357,14 @@ export default function MealPlanner({ user, addMemory }) {
 
           {/* AI Generate + Share row */}
           <button onClick={generateWeek} disabled={generating} style={{
-            width: '100%', padding: 12,
+            width: '100%', padding: '12px 16px',
             background: generating ? 'transparent' : colors.primaryDim,
             color: colors.primary,
             border: `1px solid ${colors.primary}`,
-            fontSize: 11, fontWeight: 600,
+            fontSize: 13, fontWeight: 600, minHeight: 44,
             cursor: generating ? 'wait' : 'pointer', marginBottom: 14,
             fontFamily: "'JetBrains Mono', monospace",
-            letterSpacing: 2,
+            letterSpacing: 1, borderRadius: 8,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}>
             {generating ? 'J.A.R.V.I.S. GENERATING...' : 'GENERATE MEAL PLAN'}
@@ -374,11 +374,11 @@ export default function MealPlanner({ user, addMemory }) {
           <div style={{ display: 'flex', gap: 6, marginBottom: 14, overflowX: 'auto', paddingBottom: 4 }}>
             {FILTERS.map(f => (
               <button key={f.key} onClick={() => setActiveFilter(f.key)} style={{
-                padding: '5px 10px', whiteSpace: 'nowrap',
+                padding: '8px 12px', whiteSpace: 'nowrap',
                 background: activeFilter === f.key ? colors.primary : 'transparent',
                 border: `1px solid ${activeFilter === f.key ? colors.primary : colors.border}`,
                 borderRadius: 20, color: activeFilter === f.key ? '#fff' : colors.textSecondary,
-                fontSize: 9, fontWeight: 600, cursor: 'pointer',
+                fontSize: 11, fontWeight: 600, cursor: 'pointer', minHeight: 44,
                 fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
               }}>{f.label}</button>
             ))}
@@ -388,7 +388,7 @@ export default function MealPlanner({ user, addMemory }) {
           <div style={{ display: 'flex', gap: 4, marginBottom: 16, overflowX: 'auto' }}>
             {DAYS.map(d => (
               <button key={d} onClick={() => setSelectedDay(d)} style={{
-                flex: 1, padding: '8px 4px', minWidth: 40,
+                flex: 1, padding: '10px 4px', minWidth: 40, minHeight: 44,
                 background: selectedDay === d ? colors.primary : colors.surfaceLight,
                 border: `1px solid ${selectedDay === d ? colors.primary : colors.border}`,
                 borderRadius: 8, color: selectedDay === d ? '#fff' : colors.textSecondary,
@@ -405,7 +405,7 @@ export default function MealPlanner({ user, addMemory }) {
                 padding: 14, background: colors.surfaceLight, border: `1px solid ${colors.border}`,
                 borderRadius: 10, marginBottom: 10,
               }}>
-                <div style={{ color: colors.textMuted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', marginBottom: 8 }}>
+                <div style={{ color: colors.textMuted, fontSize: 13, fontWeight: 600, textTransform: 'uppercase', marginBottom: 8 }}>
                   {type}
                 </div>
                 {meal ? (
@@ -416,19 +416,19 @@ export default function MealPlanner({ user, addMemory }) {
                         style={{ color: colors.text, fontSize: 15, fontWeight: 500, cursor: 'pointer', borderBottom: `1px dashed ${colors.border}` }}
                       >{meal.name}</span>
                       <button onClick={() => setShowPicker({ day: selectedDay, mealType: type })} style={{
-                        background: 'none', border: 'none', color: colors.primaryLight, fontSize: 12, cursor: 'pointer',
+                        background: 'none', border: 'none', color: colors.primaryLight, fontSize: 12, cursor: 'pointer', minHeight: 44, padding: '12px 16px',
                       }}>Change</button>
                     </div>
                     <div style={{ display: 'flex', gap: 12, marginTop: 6 }}>
                       <span style={{ color: colors.textSecondary, fontSize: 11 }}>{meal.time}</span>
                       <span style={{ color: colors.textSecondary, fontSize: 11 }}>{meal.cal} cal</span>
-                      {meal.custom && <span style={{ color: colors.secondary, fontSize: 9, fontWeight: 700, letterSpacing: 1 }}>CUSTOM</span>}
+                      {meal.custom && <span style={{ color: colors.secondary, fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>CUSTOM</span>}
                     </div>
                   </div>
                 ) : (
                   <button onClick={() => setShowPicker({ day: selectedDay, mealType: type })} style={{
                     background: 'none', border: `1px dashed ${colors.border}`, borderRadius: 8,
-                    padding: '12px 16px', color: colors.textMuted, fontSize: 13, cursor: 'pointer',
+                    padding: '12px 16px', color: colors.textMuted, fontSize: 14, cursor: 'pointer', minHeight: 44,
                     width: '100%', fontFamily: 'inherit',
                   }}>+ Add {type}</button>
                 )}
@@ -439,8 +439,8 @@ export default function MealPlanner({ user, addMemory }) {
           {/* Generate grocery list */}
           {Object.keys(mealPlan).length > 0 && (
             <button onClick={generateGroceryList} style={{
-              width: '100%', padding: 14, background: colors.gradient2, color: '#000',
-              border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 600,
+              width: '100%', padding: '12px 16px', background: colors.gradient2, color: '#000',
+              border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, minHeight: 44,
               cursor: 'pointer', marginTop: 8, fontFamily: 'inherit',
             }}>Generate Grocery List</button>
           )}
@@ -461,9 +461,9 @@ export default function MealPlanner({ user, addMemory }) {
                 </div>
                 {checkedCount > 0 && (
                   <button onClick={clearCheckedGroceries} style={{
-                    padding: '6px 14px', background: `${colors.danger}20`,
+                    padding: '12px 16px', background: `${colors.danger}20`,
                     border: `1px solid ${colors.danger}40`, borderRadius: 8,
-                    color: colors.danger, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                    color: colors.danger, fontSize: 11, fontWeight: 600, cursor: 'pointer', minHeight: 44,
                     fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
                   }}>CLEAR CHECKED</button>
                 )}
@@ -514,7 +514,7 @@ export default function MealPlanner({ user, addMemory }) {
             <h3 style={{ color: colors.text, fontSize: 18, fontWeight: 600, marginBottom: 4, fontFamily: "'JetBrains Mono', monospace" }}>
               Choose {showPicker.mealType} for {showPicker.day}
             </h3>
-            <div style={{ color: colors.textMuted, fontSize: 10, marginBottom: 14, letterSpacing: 1, fontFamily: "'JetBrains Mono', monospace" }}>
+            <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: 14, letterSpacing: 1, fontFamily: "'JetBrains Mono', monospace" }}>
               FILTER: {FILTERS.find(f => f.key === activeFilter)?.label || 'ALL'}
             </div>
 
@@ -527,7 +527,7 @@ export default function MealPlanner({ user, addMemory }) {
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ color: colors.text, fontSize: 14, fontWeight: 500 }}>{meal.name}</span>
-                  {meal.custom && <span style={{ color: colors.secondary, fontSize: 8, fontWeight: 700, letterSpacing: 1 }}>CUSTOM</span>}
+                  {meal.custom && <span style={{ color: colors.secondary, fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>CUSTOM</span>}
                 </div>
                 <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
                   <span style={{ color: colors.textSecondary, fontSize: 11 }}>{meal.time}</span>
@@ -546,7 +546,7 @@ export default function MealPlanner({ user, addMemory }) {
             {/* Add Custom Meal Toggle */}
             {showAddCustom !== showPicker.mealType ? (
               <button onClick={() => setShowAddCustom(showPicker.mealType)} style={{
-                width: '100%', padding: 12, marginTop: 4,
+                width: '100%', padding: '12px 16px', marginTop: 4, minHeight: 44,
                 background: colors.primaryDim, border: `1px dashed ${colors.primary}`,
                 borderRadius: 10, color: colors.primary, fontSize: 12, fontWeight: 600,
                 cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
@@ -556,7 +556,7 @@ export default function MealPlanner({ user, addMemory }) {
                 padding: 14, background: `${colors.primary}08`, border: `1px solid ${colors.primary}30`,
                 borderRadius: 10, marginTop: 4,
               }}>
-                <div style={{ color: colors.primary, fontSize: 10, fontWeight: 700, letterSpacing: 2, marginBottom: 10, fontFamily: "'JetBrains Mono', monospace" }}>
+                <div style={{ color: colors.primary, fontSize: 13, fontWeight: 700, letterSpacing: 1, marginBottom: 10, fontFamily: "'JetBrains Mono', monospace" }}>
                   NEW RECIPE PROTOCOL
                 </div>
                 <input
@@ -600,7 +600,7 @@ export default function MealPlanner({ user, addMemory }) {
                         tags: f.tags.includes(tag) ? f.tags.filter(t => t !== tag) : [...f.tags, tag],
                       }))
                     }} style={{
-                      padding: '3px 8px', borderRadius: 12, fontSize: 9, fontWeight: 600, cursor: 'pointer',
+                      padding: '8px 12px', borderRadius: 12, fontSize: 11, fontWeight: 600, cursor: 'pointer', minHeight: 44,
                       background: customForm.tags.includes(tag) ? colors.primary : 'transparent',
                       border: `1px solid ${customForm.tags.includes(tag) ? colors.primary : colors.border}`,
                       color: customForm.tags.includes(tag) ? '#fff' : colors.textMuted,
@@ -610,13 +610,13 @@ export default function MealPlanner({ user, addMemory }) {
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button onClick={() => handleAddCustomMeal(showPicker.mealType)} style={{
-                    flex: 1, padding: 10, background: colors.primary, border: 'none', borderRadius: 8,
-                    color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    flex: 1, padding: '12px 16px', background: colors.primary, border: 'none', borderRadius: 8,
+                    color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', minHeight: 44,
                     fontFamily: "'JetBrains Mono', monospace",
                   }}>SAVE RECIPE</button>
                   <button onClick={() => setShowAddCustom(null)} style={{
-                    padding: '10px 14px', background: 'transparent', border: `1px solid ${colors.border}`,
-                    borderRadius: 8, color: colors.textMuted, fontSize: 12, cursor: 'pointer',
+                    padding: '12px 16px', background: 'transparent', border: `1px solid ${colors.border}`,
+                    borderRadius: 8, color: colors.textMuted, fontSize: 12, cursor: 'pointer', minHeight: 44,
                   }}>Cancel</button>
                 </div>
               </div>
@@ -637,7 +637,7 @@ export default function MealPlanner({ user, addMemory }) {
                 <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
                   <span style={{ color: colors.textSecondary, fontSize: 11 }}>{selectedMealDetail.time}</span>
                   <span style={{ color: colors.textSecondary, fontSize: 11 }}>{selectedMealDetail.cal} cal</span>
-                  {selectedMealDetail.custom && <span style={{ color: colors.secondary, fontSize: 9, fontWeight: 700, letterSpacing: 1 }}>CUSTOM</span>}
+                  {selectedMealDetail.custom && <span style={{ color: colors.secondary, fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>CUSTOM</span>}
                 </div>
               </div>
               <button onClick={() => setSelectedMealDetail(null)} style={{
@@ -658,14 +658,14 @@ export default function MealPlanner({ user, addMemory }) {
               ].map(n => (
                 <div key={n.label} style={{ flex: 1, textAlign: 'center' }}>
                   <div style={{ color: n.color, fontSize: 16, fontWeight: 700 }}>{n.val}{n.unit}</div>
-                  <div style={{ color: colors.textMuted, fontSize: 8, fontWeight: 600, letterSpacing: 1, fontFamily: "'JetBrains Mono', monospace" }}>{n.label}</div>
+                  <div style={{ color: colors.textMuted, fontSize: 11, fontWeight: 600, letterSpacing: 1, fontFamily: "'JetBrains Mono', monospace" }}>{n.label}</div>
                 </div>
               ))}
             </div>
 
             {/* Ingredients */}
             <div style={{ marginBottom: 16 }}>
-              <div style={{ color: colors.primary, fontSize: 10, fontWeight: 700, letterSpacing: 2, marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+              <div style={{ color: colors.primary, fontSize: 13, fontWeight: 700, letterSpacing: 1, marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
                 INGREDIENTS
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -680,7 +680,7 @@ export default function MealPlanner({ user, addMemory }) {
 
             {/* Cooking Instructions */}
             <div>
-              <div style={{ color: colors.primary, fontSize: 10, fontWeight: 700, letterSpacing: 2, marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+              <div style={{ color: colors.primary, fontSize: 13, fontWeight: 700, letterSpacing: 1, marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
                 COOKING PROTOCOL
               </div>
               {loadingRecipe ? (
@@ -703,7 +703,7 @@ export default function MealPlanner({ user, addMemory }) {
               <div style={{ display: 'flex', gap: 4, marginTop: 12, flexWrap: 'wrap' }}>
                 {selectedMealDetail.tags.map(tag => (
                   <span key={tag} style={{
-                    padding: '2px 8px', borderRadius: 10, fontSize: 9, fontWeight: 600,
+                    padding: '4px 10px', borderRadius: 10, fontSize: 11, fontWeight: 600,
                     background: colors.primaryDim, color: colors.primary, letterSpacing: 1,
                     fontFamily: "'JetBrains Mono', monospace",
                   }}>{tag.toUpperCase()}</span>

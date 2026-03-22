@@ -255,20 +255,20 @@ export default function Reminders({ user, addMemory }) {
           Reminders
         </h2>
         <button onClick={() => setShowAdd(true)} style={{
-          padding: '8px 16px', background: colors.gradient1, color: '#fff',
-          border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+          padding: '12px 16px', background: colors.gradient1, color: '#fff',
+          border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', minHeight: 44,
         }}>+ Reminder</button>
       </div>
 
       {/* Smart Reminders Info */}
       <div style={{
-        padding: 14, background: `${colors.warning}10`, border: `1px solid ${colors.warning}25`,
+        padding: 16, background: `${colors.warning}10`, border: `1px solid ${colors.warning}25`,
         borderRadius: 12, marginBottom: 16, display: 'flex', gap: 10, alignItems: 'flex-start',
       }}>
         <span style={{ color: colors.warning, fontSize: 18 }}>&#9673;</span>
         <div>
-          <div style={{ color: colors.warning, fontSize: 11, fontWeight: 600, letterSpacing: 1 }}>STARK TACTICAL REMINDER SYSTEM</div>
-          <div style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>
+          <div style={{ color: colors.warning, fontSize: 13, fontWeight: 600, letterSpacing: 1 }}>STARK TACTICAL REMINDER SYSTEM</div>
+          <div style={{ color: colors.textSecondary, fontSize: 14, marginTop: 2 }}>
             Jarvis nudges you before things become urgent, sends day-of prompts, and follows up on lingering items.
           </div>
         </div>
@@ -294,29 +294,29 @@ export default function Reminders({ user, addMemory }) {
               <div key={r.id} style={{
                 display: 'flex', alignItems: 'flex-start', gap: 12, padding: 14,
                 background: `${colors.danger}08`, border: `1px solid ${colors.danger}40`,
-                borderRadius: 10, marginBottom: 8,
+                borderRadius: 10, marginBottom: 10,
                 borderLeft: `3px solid ${colors.danger}`,
                 animation: 'jarvisPulseGlow 2s ease-in-out infinite',
               }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ color: colors.text, fontSize: 14, fontWeight: 600 }}>{r.text}</div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                    {r.date && <span style={{ fontSize: 11, color: colors.danger, fontWeight: 600 }}>{r.date}</span>}
-                    <span style={{ fontSize: 11, color: colors.danger }}>{r.time}</span>
+                    {r.date && <span style={{ fontSize: 12, color: colors.danger, fontWeight: 600 }}>{r.date}</span>}
+                    <span style={{ fontSize: 12, color: colors.danger }}>{r.time}</span>
                     <span style={{
-                      fontSize: 10, padding: '1px 8px', borderRadius: 8,
+                      fontSize: 11, padding: '3px 10px', borderRadius: 8,
                       background: `${cat.color}20`, color: cat.color, fontWeight: 600,
                     }}>{cat.label}</span>
                     {r.repeat !== 'none' && (
                       <span style={{
-                        fontSize: 10, padding: '1px 6px', borderRadius: 6,
+                        fontSize: 11, padding: '3px 8px', borderRadius: 6,
                         background: `${colors.secondary}22`, color: colors.secondary,
                       }}>&#8635; {r.repeat}</span>
                     )}
                   </div>
                   {/* Snooze bar for overdue */}
                   <div style={{ display: 'flex', gap: 4, marginTop: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 10, color: colors.textMuted, lineHeight: '22px', marginRight: 4 }}>SNOOZE:</span>
+                    <span style={{ fontSize: 12, color: colors.textMuted, lineHeight: '22px', marginRight: 4 }}>SNOOZE:</span>
                     {snoozeOptions.map(s => (
                       <button key={s.label} onClick={() => snoozeReminder(r.id, s.mins)} style={snoozePillStyle}>
                         {s.label}
@@ -335,11 +335,11 @@ export default function Reminders({ user, addMemory }) {
       )}
 
       {/* ── Active / Upcoming Reminders ────────────────────────────── */}
-      <h3 style={{ color: colors.text, fontSize: 14, fontWeight: 600, marginBottom: 10, letterSpacing: 1 }}>
+      <h3 style={{ color: colors.text, fontSize: 15, fontWeight: 600, marginBottom: 10, letterSpacing: 1 }}>
         ACTIVE ({upcoming.length})
       </h3>
       {upcoming.length === 0 ? (
-        <div style={{ padding: 30, textAlign: 'center', color: colors.textMuted, fontSize: 13 }}>
+        <div style={{ padding: 30, textAlign: 'center', color: colors.textMuted, fontSize: 14 }}>
           No active reminders. Set one to get nudged at the right time.
         </div>
       ) : (
@@ -350,22 +350,22 @@ export default function Reminders({ user, addMemory }) {
             <div key={r.id} style={{
               display: 'flex', alignItems: 'flex-start', gap: 12, padding: 14,
               background: colors.surfaceLight, border: `1px solid ${colors.border}`,
-              borderRadius: 10, marginBottom: 8,
+              borderRadius: 10, marginBottom: 10,
               borderLeft: `3px solid ${r.priority === 'urgent' ? colors.danger : r.priority === 'important' ? colors.warning : colors.primary}`,
               animation: 'jarvisSlideUp 0.3s ease-out',
             }}>
               <div style={{ flex: 1 }}>
                 <div style={{ color: colors.text, fontSize: 14, fontWeight: 500 }}>{r.text}</div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                  {r.date && <span style={{ fontSize: 11, color: colors.primaryLight }}>{r.date}</span>}
-                  <span style={{ fontSize: 11, color: colors.textSecondary }}>{r.time}</span>
+                  {r.date && <span style={{ fontSize: 12, color: colors.primaryLight }}>{r.date}</span>}
+                  <span style={{ fontSize: 12, color: colors.textSecondary }}>{r.time}</span>
                   <span style={{
-                    fontSize: 10, padding: '1px 8px', borderRadius: 8,
+                    fontSize: 11, padding: '3px 10px', borderRadius: 8,
                     background: `${cat.color}20`, color: cat.color, fontWeight: 600,
                   }}>{cat.label}</span>
                   {r.repeat !== 'none' && (
                     <span style={{
-                      fontSize: 10, padding: '1px 6px', borderRadius: 6,
+                      fontSize: 11, padding: '3px 8px', borderRadius: 6,
                       background: `${colors.secondary}22`, color: colors.secondary,
                     }}>&#8635; {r.repeat}</span>
                   )}
@@ -373,7 +373,7 @@ export default function Reminders({ user, addMemory }) {
                 {/* Snooze row — toggleable */}
                 {isSnoozeOpen && (
                   <div style={{ display: 'flex', gap: 4, marginTop: 8, flexWrap: 'wrap', animation: 'jarvisSlideUp 0.2s ease-out' }}>
-                    <span style={{ fontSize: 10, color: colors.textMuted, lineHeight: '22px', marginRight: 4 }}>SNOOZE:</span>
+                    <span style={{ fontSize: 12, color: colors.textMuted, lineHeight: '22px', marginRight: 4 }}>SNOOZE:</span>
                     {snoozeOptions.map(s => (
                       <button key={s.label} onClick={() => snoozeReminder(r.id, s.mins)} style={snoozePillStyle}>
                         {s.label}
@@ -404,10 +404,10 @@ export default function Reminders({ user, addMemory }) {
           </h3>
           {dismissed.slice(0, 5).map(r => (
             <div key={r.id} style={{
-              padding: 10, background: colors.surfaceLight, border: `1px solid ${colors.border}`,
-              borderRadius: 8, marginBottom: 6, opacity: 0.5,
+              padding: 14, background: colors.surfaceLight, border: `1px solid ${colors.border}`,
+              borderRadius: 10, marginBottom: 10, opacity: 0.5,
             }}>
-              <div style={{ color: colors.text, fontSize: 13, textDecoration: 'line-through' }}>{r.text}</div>
+              <div style={{ color: colors.text, fontSize: 14, textDecoration: 'line-through' }}>{r.text}</div>
             </div>
           ))}
         </div>
@@ -418,7 +418,7 @@ export default function Reminders({ user, addMemory }) {
         <div style={modalOverlay} onClick={() => setShowAdd(false)}>
           <div style={modalContent} onClick={e => e.stopPropagation()}>
             <h3 style={{ color: colors.text, fontSize: 18, fontWeight: 600, marginBottom: 4 }}>New Reminder</h3>
-            <div style={{ color: colors.textMuted, fontSize: 11, marginBottom: 14, letterSpacing: 0.5 }}>
+            <div style={{ color: colors.textMuted, fontSize: 12, marginBottom: 14, letterSpacing: 0.5 }}>
               JARVIS SCHEDULING PROTOCOL
             </div>
 
@@ -432,11 +432,11 @@ export default function Reminders({ user, addMemory }) {
 
             {/* Smart time suggestion pills */}
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 10, color: colors.textMuted, marginBottom: 6, letterSpacing: 0.5, fontWeight: 600 }}>QUICK SET</div>
+              <div style={{ fontSize: 12, color: colors.textMuted, marginBottom: 6, letterSpacing: 0.5, fontWeight: 600 }}>QUICK SET</div>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {smartTimes.map(st => (
                   <button key={st.label} onClick={() => setNewReminder({ ...newReminder, date: st.date, time: st.time })} style={{
-                    padding: '5px 10px', fontSize: 11, fontWeight: 500,
+                    padding: '8px 12px', fontSize: 12, fontWeight: 500, minHeight: 36,
                     background: (newReminder.date === st.date && newReminder.time === st.time) ? `${colors.primary}30` : `${colors.primary}10`,
                     color: colors.primaryLight, border: `1px solid ${colors.primary}30`,
                     borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit',
@@ -459,11 +459,11 @@ export default function Reminders({ user, addMemory }) {
 
             {/* Category pills */}
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 10, color: colors.textMuted, marginBottom: 6, letterSpacing: 0.5, fontWeight: 600 }}>CATEGORY</div>
+              <div style={{ fontSize: 12, color: colors.textMuted, marginBottom: 6, letterSpacing: 0.5, fontWeight: 600 }}>CATEGORY</div>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {CATEGORIES.map(cat => (
                   <button key={cat.key} onClick={() => setNewReminder({ ...newReminder, category: cat.key })} style={{
-                    padding: '5px 12px', fontSize: 11, fontWeight: 600,
+                    padding: '8px 14px', fontSize: 12, fontWeight: 600, minHeight: 36,
                     background: newReminder.category === cat.key ? `${cat.color}30` : `${cat.color}10`,
                     color: cat.color,
                     border: newReminder.category === cat.key ? `1.5px solid ${cat.color}` : `1px solid ${cat.color}30`,
@@ -501,7 +501,7 @@ export default function Reminders({ user, addMemory }) {
       {showQuickAdd && (
         <div style={modalOverlay} onClick={() => setShowQuickAdd(false)}>
           <div style={{ ...modalContent, maxWidth: 360, animation: 'jarvisSlideUp 0.25s ease-out' }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 10, color: colors.primary, fontWeight: 700, letterSpacing: 1.5, marginBottom: 10 }}>
+            <div style={{ fontSize: 13, color: colors.primary, fontWeight: 700, letterSpacing: 1, marginBottom: 10 }}>
               QUICK DEPLOY REMINDER
             </div>
             <input
@@ -522,7 +522,7 @@ export default function Reminders({ user, addMemory }) {
             <div style={{ display: 'flex', gap: 5, marginBottom: 10, flexWrap: 'wrap' }}>
               {CATEGORIES.map(cat => (
                 <button key={cat.key} onClick={() => setQuickCategory(cat.key)} style={{
-                  padding: '4px 10px', fontSize: 10, fontWeight: 600,
+                  padding: '8px 12px', fontSize: 12, fontWeight: 600, minHeight: 36,
                   background: quickCategory === cat.key ? `${cat.color}30` : 'transparent',
                   color: cat.color,
                   border: quickCategory === cat.key ? `1.5px solid ${cat.color}` : `1px solid ${cat.color}25`,
@@ -573,12 +573,12 @@ export default function Reminders({ user, addMemory }) {
 
 // ── Shared styles ─────────────────────────────────────────────────────
 const iconBtn = {
-  width: 28, height: 28, borderRadius: 6, background: `${colors.success}15`,
-  border: 'none', color: colors.success, fontSize: 12, cursor: 'pointer',
+  width: 36, height: 36, borderRadius: 8, background: `${colors.success}15`,
+  border: 'none', color: colors.success, fontSize: 14, cursor: 'pointer',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
 }
 const snoozePillStyle = {
-  padding: '3px 10px', fontSize: 10, fontWeight: 600,
+  padding: '6px 12px', fontSize: 12, fontWeight: 600, minHeight: 32,
   background: `${colors.warning}15`, color: colors.warning,
   border: `1px solid ${colors.warning}30`, borderRadius: 8,
   cursor: 'pointer', fontFamily: 'inherit',
@@ -598,5 +598,5 @@ const inputStyle = {
 }
 const actionBtn = {
   flex: 1, padding: '12px 16px', border: 'none', borderRadius: 10,
-  fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+  fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', minHeight: 44,
 }
