@@ -119,6 +119,23 @@ export default function App() {
 
   const navigate = useCallback((s) => { setScreen(s); setMenuOpen(false) }, [])
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e) => {
+      // Don't trigger in input/textarea
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return
+
+      if (e.key === 'Escape') { navigate('dashboard'); setAssistantActive(false); setFocusMode(false) }
+      else if (e.key === 'j' || e.key === 'J') setAssistantActive(prev => !prev)
+      else if (e.key === 'f' && !e.ctrlKey && !e.metaKey) setFocusMode(prev => !prev)
+      else if (e.key === 'v' || e.key === 'V') navigate('voice')
+      else if (e.key === 'c' && !e.ctrlKey && !e.metaKey) navigate('chat')
+      else if (e.key === 'h' || e.key === 'H') navigate('dashboard')
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
   const updateUser = useCallback((updates) => {
     setUser(prev => ({ ...prev, ...updates }))
   }, [])
@@ -349,59 +366,60 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', minHeight: '100dvh', background: colors.bg, display: 'flex', flexDirection: 'column' }}>
-      {/* HUD Status Bar */}
-      <StatusBar />
-
-      {/* Header — clean, no hamburger */}
+      {/* Combined Header + Status */}
       <header style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 16px',
         background: colors.surface,
         borderBottom: `1px solid ${colors.border}`,
         position: 'sticky', top: 0, zIndex: 100,
         backdropFilter: 'blur(12px)',
         boxShadow: `0 1px 20px rgba(0, 212, 255, 0.05)`,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {screen !== 'dashboard' ? (
-            <button onClick={() => navigate('dashboard')} style={{
-              background: 'none', border: 'none', color: colors.primary,
-              fontSize: 14, cursor: 'pointer', padding: 0,
-              fontFamily: "'JetBrains Mono', monospace",
-            }}>{'<'}</button>
-          ) : (
-            <div style={{
-              width: 8, height: 8, borderRadius: '50%',
-              background: colors.primary,
-              boxShadow: `0 0 8px ${colors.primary}`,
-              animation: 'pulse 2s ease-in-out infinite',
-            }} />
-          )}
-          <button onClick={() => setAssistantActive(!assistantActive)} style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            padding: '6px 8px', margin: '-6px -8px',
-            color: assistantActive ? colors.success : colors.primary, fontSize: 14, fontWeight: 500,
-            fontFamily: "'JetBrains Mono', monospace",
-            letterSpacing: 3, position: 'relative', zIndex: 101,
-            textShadow: assistantActive ? `0 0 10px ${colors.success}` : 'none',
-          }}>JARVIS</button>
-        </div>
+        {/* Main header row */}
         <div style={{
-          color: colors.textSecondary, fontSize: 11,
-          fontFamily: "'JetBrains Mono', monospace",
-          letterSpacing: 1, textTransform: 'uppercase',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 16px',
         }}>
-          {screen === 'dashboard' ? '' : SCREENS[screen]?.label}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {screen !== 'dashboard' && (
+              <button onClick={() => navigate('dashboard')} style={{
+                background: 'none', border: 'none', color: colors.primary,
+                fontSize: 16, cursor: 'pointer', padding: '4px 8px', margin: '-4px -8px',
+                fontFamily: "'JetBrains Mono', monospace",
+              }}>{'<'}</button>
+            )}
+            <button onClick={() => setAssistantActive(!assistantActive)} style={{
+              background: assistantActive ? `${colors.success}15` : 'none',
+              border: assistantActive ? `1px solid ${colors.success}40` : '1px solid transparent',
+              cursor: 'pointer',
+              padding: '6px 12px',
+              color: assistantActive ? colors.success : colors.primary, fontSize: 15, fontWeight: 600,
+              fontFamily: "'JetBrains Mono', monospace",
+              letterSpacing: 3,
+              textShadow: assistantActive ? `0 0 10px ${colors.success}` : `0 0 6px ${colors.primary}30`,
+            }}>
+              {assistantActive && <span style={{ marginRight: 6, fontSize: 8, verticalAlign: 'middle' }}>●</span>}
+              JARVIS
+            </button>
+          </div>
+          <div style={{
+            color: colors.textSecondary, fontSize: 11,
+            fontFamily: "'JetBrains Mono', monospace",
+            letterSpacing: 1, textTransform: 'uppercase',
+          }}>
+            {screen === 'dashboard' ? '' : SCREENS[screen]?.label}
+          </div>
+          <button
+            onClick={() => navigate('settings')}
+            style={{
+              background: 'none', border: `1px solid ${colors.border}`,
+              color: colors.textMuted, fontSize: 9, cursor: 'pointer',
+              padding: '6px 10px', fontFamily: "'JetBrains Mono', monospace",
+              letterSpacing: 1,
+            }}
+          >SYS</button>
         </div>
-        <button
-          onClick={() => navigate('settings')}
-          style={{
-            background: 'none', border: `1px solid ${colors.border}`,
-            color: colors.textMuted, fontSize: 9, cursor: 'pointer',
-            padding: '4px 8px', fontFamily: "'JetBrains Mono', monospace",
-            letterSpacing: 1,
-          }}
-        >SYS</button>
+        {/* Status strip */}
+        <StatusBar />
       </header>
 
       {/* Full-screen overlays */}

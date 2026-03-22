@@ -75,12 +75,9 @@ export default function StatusBar() {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '4px 12px',
-      background: 'rgba(5, 8, 16, 0.9)',
-      borderBottom: `1px solid ${colors.border}`,
-      minHeight: 24,
-      backdropFilter: 'blur(8px)',
-      zIndex: 60,
+      padding: '3px 12px',
+      borderTop: `1px solid ${colors.border}`,
+      minHeight: 20,
       flexShrink: 0,
     }}>
       {/* Left: connection status */}
