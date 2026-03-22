@@ -130,11 +130,11 @@ export default function MediaHub({ user }) {
   return (
     <div style={{ padding: 16 }}>
       <h2 style={{
-        color: colors.primary, fontSize: 11, fontWeight: 600,
-        fontFamily: "'JetBrains Mono', monospace", letterSpacing: 3, marginBottom: 4,
+        color: colors.primary, fontSize: 13, fontWeight: 600,
+        fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1, marginBottom: 4,
       }}>Media & Navigation</h2>
       <p style={{
-        color: colors.textMuted, fontSize: 10, marginBottom: 16,
+        color: colors.textMuted, fontSize: 12, marginBottom: 16,
         fontFamily: "'JetBrains Mono', monospace",
       }}>Music, podcasts, and directions — all in one place</p>
 
@@ -142,7 +142,7 @@ export default function MediaHub({ user }) {
       <div style={{ display: 'flex', gap: 0, marginBottom: 14, border: `1px solid ${colors.border}`, overflow: 'hidden' }}>
         {[['launch', 'QUICK LAUNCH'], ['podcasts', 'PODCASTS'], ['navigate', 'NAVIGATE']].map(([t, label]) => (
           <button key={t} onClick={() => setTab(t)} style={{
-            flex: 1, padding: '8px 0', fontSize: 9,
+            flex: 1, padding: '10px 0', fontSize: 11, minHeight: 44,
             background: tab === t ? colors.primaryDim : 'transparent',
             color: tab === t ? colors.primary : colors.textMuted,
             border: 'none', borderBottom: tab === t ? `1px solid ${colors.primary}` : '1px solid transparent',
@@ -154,7 +154,7 @@ export default function MediaHub({ user }) {
       {/* Now Playing bar */}
       {playing && (
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 10, padding: 10, marginBottom: 12,
+          display: 'flex', alignItems: 'center', gap: 10, padding: 14, marginBottom: 12, borderRadius: 10,
           background: colors.primaryDim, border: `1px solid ${colors.primary}`,
         }}>
           <button onClick={togglePause} style={{
@@ -165,11 +165,11 @@ export default function MediaHub({ user }) {
           }}>{audioPaused ? '\u25B6' : '\u2016'}</button>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
-              color: colors.text, fontSize: 11, fontWeight: 500,
+              color: colors.text, fontSize: 14, fontWeight: 500,
               fontFamily: "'Exo 2', sans-serif",
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>{playing.title}</div>
-            <div style={{ color: colors.textMuted, fontSize: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+            <div style={{ color: colors.textMuted, fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
               NOW PLAYING
             </div>
           </div>
@@ -188,9 +188,9 @@ export default function MediaHub({ user }) {
             onChange={e => setQuery(e.target.value)}
             placeholder="Search or type a destination..."
             style={{
-              width: '100%', padding: '10px 12px', marginBottom: 12,
+              width: '100%', padding: '12px 14px', marginBottom: 12, minHeight: 44, borderRadius: 8,
               background: colors.surface, border: `1px solid ${colors.border}`,
-              color: colors.text, fontSize: 13, fontFamily: "'Exo 2', sans-serif",
+              color: colors.text, fontSize: 14, fontFamily: "'Exo 2', sans-serif",
             }}
           />
 
@@ -204,16 +204,16 @@ export default function MediaHub({ user }) {
               ['Podcast Addict', 'Find podcasts', '#f0a500', () => launchers.podcastAddict(query || 'top podcasts')],
             ].map(([name, desc, col, action]) => (
               <button key={name} onClick={action} style={{
-                padding: 14, background: 'transparent',
+                padding: 16, background: 'transparent', borderRadius: 10, minHeight: 44,
                 border: `1px solid ${colors.border}`, textAlign: 'left',
                 cursor: 'pointer', transition: 'all 0.15s ease',
               }}>
                 <div style={{
-                  color: col, fontSize: 12, fontWeight: 600, marginBottom: 4,
+                  color: col, fontSize: 14, fontWeight: 600, marginBottom: 4,
                   fontFamily: "'JetBrains Mono', monospace",
                 }}>{name}</div>
                 <div style={{
-                  color: colors.textMuted, fontSize: 9,
+                  color: colors.textMuted, fontSize: 12,
                   fontFamily: "'JetBrains Mono', monospace",
                 }}>{query ? `"${query}"` : desc}</div>
               </button>
@@ -231,13 +231,13 @@ export default function MediaHub({ user }) {
               {podFeeds.map(feed => (
                 <button key={feed.id} onClick={() => setSelectedFeed(feed)} style={{
                   display: 'flex', alignItems: 'center', gap: 10, width: '100%',
-                  padding: 12, marginBottom: 6, textAlign: 'left',
+                  padding: 14, marginBottom: 10, textAlign: 'left', borderRadius: 10, minHeight: 44,
                   background: colors.surfaceLight, border: `1px solid ${colors.border}`,
                   cursor: 'pointer',
                 }}>
                   {feed.image && <img src={feed.image} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 4 }} />}
                   <div>
-                    <div style={{ color: colors.text, fontSize: 13, fontFamily: "'Exo 2', sans-serif" }}>{feed.title}</div>
+                    <div style={{ color: colors.text, fontSize: 14, fontFamily: "'Exo 2', sans-serif" }}>{feed.title}</div>
                   </div>
                 </button>
               ))}
@@ -245,7 +245,7 @@ export default function MediaHub({ user }) {
               {/* Add feed */}
               <div style={{ marginTop: 10 }}>
                 <div style={{
-                  color: colors.textMuted, fontSize: 9, marginBottom: 6,
+                  color: colors.textMuted, fontSize: 12, marginBottom: 6,
                   fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.6,
                 }}>
                   Add a podcast RSS feed URL. Find it on the podcast's website or search "[podcast name] RSS feed".

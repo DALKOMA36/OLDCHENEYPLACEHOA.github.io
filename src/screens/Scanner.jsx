@@ -508,10 +508,10 @@ export default function Scanner({ user, addMemory }) {
         padding: '10px 14px', borderBottom: `1px solid ${colors.border}`,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
-        <span style={{ color: colors.secondary, fontSize: 10, fontFamily: monoFont, letterSpacing: 2 }}>
+        <span style={{ color: colors.secondary, fontSize: 13, fontFamily: monoFont, letterSpacing: 1 }}>
           RECEIPT SCAN
         </span>
-        <span style={{ color: colors.textMuted, fontSize: 9, fontFamily: monoFont }}>
+        <span style={{ color: colors.textMuted, fontSize: 11, fontFamily: monoFont }}>
           {data.date || 'No date'}
         </span>
       </div>
@@ -559,7 +559,7 @@ export default function Scanner({ user, addMemory }) {
           padding: '10px 14px', borderBottom: `1px solid ${colors.border}`,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
-          <span style={{ color: colors.primary, fontSize: 10, fontFamily: monoFont, letterSpacing: 2 }}>
+          <span style={{ color: colors.primary, fontSize: 13, fontFamily: monoFont, letterSpacing: 1 }}>
             BUSINESS CARD SCAN
           </span>
           <span style={{ color: colors.textMuted, fontSize: 14 }}>{ICONS.card}</span>
@@ -596,12 +596,12 @@ export default function Scanner({ user, addMemory }) {
             }}
             disabled={saved}
             style={{
-              width: '100%', marginTop: 12, padding: 10,
+              width: '100%', marginTop: 12, padding: '12px 16px', minHeight: 44,
               background: saved ? colors.primaryDim : 'transparent',
               border: `1px solid ${saved ? colors.success : colors.primary}`,
               color: saved ? colors.success : colors.primary,
-              fontSize: 10, cursor: saved ? 'default' : 'pointer',
-              fontFamily: monoFont, letterSpacing: 2,
+              fontSize: 13, cursor: saved ? 'default' : 'pointer',
+              fontFamily: monoFont, letterSpacing: 1, borderRadius: 8,
             }}
           >
             {saved ? 'CONTACT SAVED' : 'ADD TO CONTACTS'}
@@ -625,10 +625,10 @@ export default function Scanner({ user, addMemory }) {
           padding: '8px 14px', borderBottom: `1px solid ${colors.border}`,
           background: colors.primaryDim, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
-          <span style={{ color: colors.primary, fontSize: 10, fontFamily: monoFont, letterSpacing: 2 }}>
+          <span style={{ color: colors.primary, fontSize: 13, fontFamily: monoFont, letterSpacing: 1 }}>
             REVIEW EXTRACTED DATA
           </span>
-          <span style={{ color: colors.textMuted, fontSize: 9, fontFamily: monoFont }}>
+          <span style={{ color: colors.textMuted, fontSize: 11, fontFamily: monoFont }}>
             Edit before confirming
           </span>
         </div>
@@ -642,7 +642,7 @@ export default function Scanner({ user, addMemory }) {
               { label: 'TOTAL', field: 'receiptData.total', value: er.receiptData.total },
             ].map(f => (
               <div key={f.field} style={{ marginBottom: 8 }}>
-                <label style={{ color: colors.textMuted, fontSize: 9, fontFamily: monoFont, letterSpacing: 1, display: 'block', marginBottom: 2 }}>
+                <label style={{ color: colors.textMuted, fontSize: 11, fontFamily: monoFont, letterSpacing: 1, display: 'block', marginBottom: 2 }}>
                   {f.label}
                 </label>
                 <input
@@ -656,7 +656,7 @@ export default function Scanner({ user, addMemory }) {
                 />
               </div>
             ))}
-            <label style={{ color: colors.textMuted, fontSize: 9, fontFamily: monoFont, letterSpacing: 1, display: 'block', marginBottom: 4, marginTop: 8 }}>
+            <label style={{ color: colors.textMuted, fontSize: 11, fontFamily: monoFont, letterSpacing: 1, display: 'block', marginBottom: 4, marginTop: 8 }}>
               LINE ITEMS
             </label>
             {(er.receiptData.items || []).map((item, i) => (
@@ -705,7 +705,7 @@ export default function Scanner({ user, addMemory }) {
               { label: 'PHONE', field: 'cardData.phone', value: er.cardData.phone },
             ].map(f => (
               <div key={f.field} style={{ marginBottom: 8 }}>
-                <label style={{ color: colors.textMuted, fontSize: 9, fontFamily: monoFont, letterSpacing: 1, display: 'block', marginBottom: 2 }}>
+                <label style={{ color: colors.textMuted, fontSize: 11, fontFamily: monoFont, letterSpacing: 1, display: 'block', marginBottom: 2 }}>
                   {f.label}
                 </label>
                 <input
@@ -788,18 +788,18 @@ export default function Scanner({ user, addMemory }) {
 
         <div style={{ display: 'flex', gap: 0 }}>
           <button onClick={confirmResult} style={{
-            flex: 1, padding: 10,
+            flex: 1, padding: '12px 16px', minHeight: 44,
             background: colors.primaryDim,
             border: `1px solid ${colors.primary}`,
-            color: colors.primary, fontSize: 11, cursor: 'pointer',
-            fontFamily: monoFont, letterSpacing: 2,
+            color: colors.primary, fontSize: 13, cursor: 'pointer',
+            fontFamily: monoFont, letterSpacing: 1, borderRadius: 8,
           }}>CONFIRM DATA</button>
           <button onClick={() => { setEditingResult(null); setResult(null) }} style={{
-            flex: 1, padding: 10,
+            flex: 1, padding: '12px 16px', minHeight: 44,
             background: 'transparent',
             border: `1px solid ${colors.border}`,
-            color: colors.textMuted, fontSize: 11, cursor: 'pointer',
-            fontFamily: monoFont, letterSpacing: 2,
+            color: colors.textMuted, fontSize: 13, cursor: 'pointer',
+            fontFamily: monoFont, letterSpacing: 1, borderRadius: 8,
           }}>DISCARD</button>
         </div>
       </div>
@@ -834,7 +834,7 @@ export default function Scanner({ user, addMemory }) {
                 </span>
                 {result.type || 'EXTRACTED DATA'}
               </span>
-              <span style={{ color: colors.textMuted, fontSize: 9, fontFamily: monoFont }}>
+              <span style={{ color: colors.textMuted, fontSize: 11, fontFamily: monoFont }}>
                 {result.items?.length || 0} items
               </span>
             </div>
@@ -848,7 +848,7 @@ export default function Scanner({ user, addMemory }) {
                   display: 'flex', alignItems: 'flex-start', gap: 10,
                 }}>
                   <span style={{
-                    fontSize: 9, padding: '2px 6px',
+                    fontSize: 11, padding: '4px 8px',
                     background: colors.primaryDim,
                     border: `1px solid ${colors.border}`,
                     color: colors.primary,
@@ -871,7 +871,7 @@ export default function Scanner({ user, addMemory }) {
                       background: added ? colors.primaryDim : 'transparent',
                       border: `1px solid ${added ? colors.primary : colors.border}`,
                       color: added ? colors.primary : colors.textMuted,
-                      fontSize: 9, cursor: added ? 'default' : 'pointer',
+                      fontSize: 11, cursor: added ? 'default' : 'pointer', minHeight: 44, borderRadius: 8,
                       fontFamily: monoFont,
                     }}>{added ? 'ADDED' : 'ADD'}</button>
                   )}
@@ -892,8 +892,8 @@ export default function Scanner({ user, addMemory }) {
     return (
       <div style={{ marginTop: 20 }}>
         <div style={{
-          color: colors.textMuted, fontSize: 9, marginBottom: 8,
-          fontFamily: monoFont, letterSpacing: 2,
+          color: colors.textMuted, fontSize: 13, marginBottom: 8,
+          fontFamily: monoFont, letterSpacing: 1,
         }}>SCAN HISTORY</div>
 
         {/* Search within history */}
@@ -921,7 +921,7 @@ export default function Scanner({ user, addMemory }) {
           const st = doc.scanType || 'document'
           return (
             <button key={doc.id || i} onClick={() => setResult(doc)} style={{
-              width: '100%', padding: '10px 14px', marginBottom: 4,
+              width: '100%', padding: '12px 14px', marginBottom: 6, minHeight: 44, borderRadius: 8,
               background: 'transparent',
               border: `1px solid ${colors.border}`,
               color: colors.text, fontSize: 12, cursor: 'pointer',
@@ -934,14 +934,14 @@ export default function Scanner({ user, addMemory }) {
               <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {doc.type || doc.doc_type || st.toUpperCase()} — {doc.items?.length || 0} items
               </span>
-              <span style={{ color: colors.textMuted, fontSize: 9, fontFamily: monoFont, flexShrink: 0 }}>
+              <span style={{ color: colors.textMuted, fontSize: 11, fontFamily: monoFont, flexShrink: 0 }}>
                 {doc.source || ''}
               </span>
             </button>
           )
         })}
         {filteredHistory.length === 0 && historySearch && (
-          <div style={{ color: colors.textMuted, fontSize: 10, fontFamily: monoFont, padding: 12, textAlign: 'center' }}>
+          <div style={{ color: colors.textMuted, fontSize: 11, fontFamily: monoFont, padding: 12, textAlign: 'center' }}>
             No scans match "{historySearch}"
           </div>
         )}
@@ -1092,10 +1092,10 @@ export default function Scanner({ user, addMemory }) {
       {/* New scan button */}
       {(result || editingResult) && !scanning && (
         <button onClick={() => { setResult(null); setEditingResult(null); setTextInput('') }} style={{
-          width: '100%', padding: 8, marginTop: 12,
+          width: '100%', padding: '12px 16px', marginTop: 12, minHeight: 44,
           background: 'transparent', border: `1px solid ${colors.border}`,
-          color: colors.textMuted, fontSize: 10, cursor: 'pointer',
-          fontFamily: monoFont, letterSpacing: 1,
+          color: colors.textMuted, fontSize: 13, cursor: 'pointer',
+          fontFamily: monoFont, letterSpacing: 1, borderRadius: 8,
         }}>NEW SCAN</button>
       )}
 
