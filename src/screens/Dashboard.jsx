@@ -36,6 +36,9 @@ export default function Dashboard({ user, navigate, addMemory, startFocusMode })
   const [weather, setWeather] = useState(null)
   const [currentTime, setCurrentTime] = useState(new Date())
   const [systemUptime] = useState(() => Date.now())
+  const [quickAction, setQuickAction] = useState(null) // 'task' | 'reminder' | 'note' | null
+  const [quickInput, setQuickInput] = useState('')
+  const [quickConfirm, setQuickConfirm] = useState(null)
 
   // Live clock
   useEffect(() => {
@@ -435,6 +438,100 @@ export default function Dashboard({ user, navigate, addMemory, startFocusMode })
           })}
         </button>
       )}
+
+      {/* Quick Actions — big inline create buttons */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+          {[
+            { key: 'task', label: '+ Task', col: colors.primary, placeholder: 'Task name...' },
+            { key: 'reminder', label: '+ Reminder', col: colors.secondary, placeholder: 'Remind me to...' },
+            { key: 'note', label: '+ Note', col: colors.success, placeholder: 'Quick note...' },
+          ].map(qa => (
+            <div key={qa.key} style={{ position: 'relative' }}>
+              {quickAction === qa.key ? (
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault()
+                    const text = quickInput.trim()
+                    if (!text) return
+                    try {
+                      if (qa.key === 'task') {
+                        await db.tasks.create({ title: text, priority: 'medium', category: 'personal' })
+                      } else if (qa.key === 'reminder') {
+                        const remindAt = new Date(Date.now() + 60 * 60 * 1000)
+                        await db.reminders.create({
+                          text,
+                          date: remindAt.toISOString().split('T')[0],
+                          time: remindAt.toTimeString().slice(0, 5),
+                        })
+                      } else if (qa.key === 'note') {
+                        await db.notes.create({ title: text, body: '', category: 'ideas' })
+                      }
+                      setQuickInput('')
+                      setQuickAction(null)
+                      setQuickConfirm(qa.key === 'task' ? 'Task added!' : qa.key === 'reminder' ? 'Reminder set!' : 'Note saved!')
+                      setTimeout(() => setQuickConfirm(null), 2000)
+                      // Refresh data
+                      const updated = qa.key === 'task' ? await db.tasks.list().catch(() => null)
+                        : qa.key === 'reminder' ? await db.reminders.list().catch(() => null)
+                        : null
+                      if (qa.key === 'task' && updated) setTasks(updated)
+                      if (qa.key === 'reminder' && updated) setReminders(updated)
+                    } catch {}
+                  }}
+                  style={{
+                    display: 'flex', height: 56,
+                    background: `${qa.col}15`,
+                    border: `1px solid ${qa.col}60`,
+                    borderRadius: 12, overflow: 'hidden',
+                  }}
+                >
+                  <input
+                    autoFocus
+                    value={quickInput}
+                    onChange={e => setQuickInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Escape') { setQuickAction(null); setQuickInput('') } }}
+                    onBlur={() => { if (!quickInput.trim()) { setQuickAction(null); setQuickInput('') } }}
+                    placeholder={qa.placeholder}
+                    style={{
+                      flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                      color: colors.text, fontSize: 14, padding: '0 14px',
+                      fontFamily: "'Exo 2', sans-serif",
+                    }}
+                  />
+                  <button type="submit" style={{
+                    background: qa.col, border: 'none', color: '#000',
+                    fontSize: 14, fontWeight: 700, padding: '0 16px',
+                    cursor: 'pointer', fontFamily: "'Exo 2', sans-serif",
+                  }}>Add</button>
+                </form>
+              ) : (
+                <button
+                  onClick={() => { setQuickAction(qa.key); setQuickInput('') }}
+                  style={{
+                    width: '100%', height: 56, display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
+                    background: `${qa.col}10`,
+                    border: `1px solid ${qa.col}30`,
+                    borderRadius: 12, cursor: 'pointer',
+                    color: qa.col, fontSize: 16, fontWeight: 600,
+                    fontFamily: "'Exo 2', sans-serif",
+                    touchAction: 'manipulation',
+                  }}
+                >{qa.label}</button>
+              )}
+            </div>
+          ))}
+        </div>
+        {quickConfirm && (
+          <div style={{
+            textAlign: 'center', marginTop: 8, padding: '8px 0',
+            color: colors.success, fontSize: 14, fontWeight: 600,
+            fontFamily: "'Exo 2', sans-serif",
+            animation: 'pulse 0.5s ease-in-out',
+          }}>{quickConfirm}</div>
+        )}
+      </div>
 
       {/* Modules — BIG touch targets, 3-column, emoji icons */}
       <div style={{ marginBottom: 24 }}>

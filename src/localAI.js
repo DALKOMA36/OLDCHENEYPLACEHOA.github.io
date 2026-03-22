@@ -70,6 +70,15 @@ const INTENTS = [
   // Identity
   { intent: 'who_are_you', patterns: [/who are you/i, /what are you/i, /what('s|s| is) your name/i] },
   { intent: 'who_am_i', patterns: [/who am i/i, /what('s|s| is) my name/i, /my profile/i] },
+
+  // Daily summary
+  { intent: 'daily_summary', patterns: [/brief me/i, /daily (brief|summary|report)/i, /what('s|s| is)\s*(happening|going on)/i, /give me a (rundown|summary|brief|overview)/i, /status report/i] },
+
+  // Compliments / moods
+  { intent: 'compliment', patterns: [/you('re| are)\s*(awesome|great|amazing|the best|incredible|helpful)/i, /good (job|work)/i, /nice work/i] },
+  { intent: 'bored', patterns: [/i('m| am)\s*bored/i, /nothing to do/i, /entertain me/i] },
+  { intent: 'stressed', patterns: [/i('m| am)\s*(stressed|overwhelmed|anxious|tired|exhausted)/i, /too much (to do|going on)/i] },
+  { intent: 'motivate', patterns: [/motivate me/i, /inspire me/i, /i need (motivation|encouragement|a push)/i, /i('m| am) (stuck|unmotivated|lazy)/i] },
 ]
 
 export function classifyIntent(text) {
@@ -441,6 +450,72 @@ export function generateLocalResponse(text, user) {
 • Focus: "Suit up"
 
 For complex questions, I'll use the cloud AI.`
+
+    // ---- Daily Summary ----
+    case 'daily_summary': {
+      const events = getEvents(todayStr)
+      const tasks = getTasks()
+      const pending = tasks.filter(t => !t.completed)
+      const habits = getHabits()
+      const habitsDone = habits.filter(h => h.log?.[todayStr]).length
+      const reminders = getReminders().filter(r => !r.dismissed)
+
+      const parts = []
+      if (events.length > 0) parts.push(`${events.length} event${events.length > 1 ? 's' : ''} today`)
+      else parts.push('No events today')
+      parts.push(`${pending.length} pending task${pending.length !== 1 ? 's' : ''}`)
+      if (habits.length > 0) parts.push(`Habits: ${habitsDone}/${habits.length} done`)
+      if (reminders.length > 0) parts.push(`${reminders.length} active reminder${reminders.length > 1 ? 's' : ''}`)
+
+      const nextEvent = events.filter(e => {
+        if (!e.time) return false
+        const [h, m] = e.time.split(':').map(Number)
+        const t = new Date(); t.setHours(h, m, 0, 0)
+        return t > now
+      }).sort((a, b) => (a.time || '').localeCompare(b.time || ''))[0]
+
+      let summary = `Here's your status, ${name}:\n\n${parts.join(' • ')}`
+      if (nextEvent) summary += `\n\nNext up: "${nextEvent.title}" at ${nextEvent.time}.`
+      if (pending.length > 0) summary += `\n\nTop task: "${pending[0].title}".`
+      return summary
+    }
+
+    // ---- Emotional / conversational ----
+    case 'compliment':
+      return pick([
+        "Much appreciated, sir. I aim to be useful.",
+        "Thank you. I'll add that to my performance review.",
+        "High praise. I'll try not to let it go to my circuits.",
+        "That means a lot. Well, as much as anything can to an AI.",
+      ])
+
+    case 'bored':
+      return pick([
+        `You have ${getTasks().filter(t => !t.completed).length} pending tasks. Just saying.`,
+        "Bored? I can think of a few productive things. Check your tasks, or shall I suggest something?",
+        "Perhaps try the Reader? Or I could quiz you on something you've been reading.",
+        "Boredom is the mind's way of asking for a challenge, sir.",
+      ])
+
+    case 'stressed': {
+      const pending = getTasks().filter(t => !t.completed)
+      const high = pending.filter(t => t.priority === 'high')
+      return pick([
+        `I hear you. You have ${pending.length} tasks — let's prioritize. ${high.length > 0 ? `${high.length} are high priority. Focus there first.` : 'None are high priority, so take it one at a time.'}`,
+        "Take a breath, sir. We'll handle it systematically. What's the one thing weighing on you most?",
+        "Might I suggest Focus Mode? Clear the distractions, tackle one thing at a time. Say 'suit up' when ready.",
+        "You've handled worse. Let's break it down — what's the most urgent thing right now?",
+      ])
+    }
+
+    case 'motivate':
+      return pick([
+        "You didn't build this app by being lazy. Get up and make it happen, sir.",
+        "The only way out is through. Pick one task, finish it. Momentum builds itself.",
+        "Tony Stark built an arc reactor in a cave. You can do this.",
+        "Sir, with respect — stop thinking about it and start doing it. I'll be here when you need me.",
+        "Every expert was once a beginner. Every day you show up is a win. Now let's get to work.",
+      ])
 
     default:
       return null

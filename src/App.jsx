@@ -67,6 +67,8 @@ export default function App() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [transitioning, setTransitioning] = useState(false)
   const [transitionTarget, setTransitionTarget] = useState(null)
+  const [isOfflineState, setIsOfflineState] = useState(!navigator.onLine)
+  const [syncToast, setSyncToast] = useState(null) // null | { message, fading }
   const [authState, setAuthState] = useState('checking') // checking, login, register, authenticated
   const [user, setUser] = useState({
     name: '',
@@ -147,6 +149,39 @@ export default function App() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
+  }, [])
+
+  // Online/offline sync
+  useEffect(() => {
+    const handleOffline = () => setIsOfflineState(true)
+    const handleOnline = async () => {
+      setIsOfflineState(false)
+      try {
+        const results = await syncQueue(db)
+        if (results && results.length > 0) {
+          setSyncToast({ message: `Back online — syncing ${results.length} queued actions...`, fading: false })
+          setTimeout(() => {
+            setSyncToast({ message: 'Synced!', fading: false })
+            setTimeout(() => setSyncToast(prev => prev ? { ...prev, fading: true } : null), 2000)
+            setTimeout(() => setSyncToast(null), 3000)
+          }, 1000)
+        } else {
+          setSyncToast({ message: 'Back online!', fading: false })
+          setTimeout(() => setSyncToast(prev => prev ? { ...prev, fading: true } : null), 2000)
+          setTimeout(() => setSyncToast(null), 3000)
+        }
+      } catch {
+        setSyncToast({ message: 'Back online — sync failed', fading: false })
+        setTimeout(() => setSyncToast(prev => prev ? { ...prev, fading: true } : null), 2000)
+        setTimeout(() => setSyncToast(null), 3000)
+      }
+    }
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
   }, [])
 
   const updateUser = useCallback((updates) => {
@@ -451,6 +486,31 @@ export default function App() {
           }}>{SCREENS[screen]?.label}</div>
         )}
       </div>
+
+      {/* Offline indicator bar */}
+      {isOfflineState && (
+        <div style={{
+          background: '#d32f2f', color: '#fff', textAlign: 'center',
+          padding: '4px 0', fontSize: 11, fontWeight: 700,
+          fontFamily: "'JetBrains Mono', monospace",
+          letterSpacing: 2, zIndex: 99,
+        }}>OFFLINE</div>
+      )}
+
+      {/* Sync toast notification */}
+      {syncToast && (
+        <div style={{
+          position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)',
+          background: colors.surface, color: colors.primary,
+          border: `1px solid ${colors.primary}`, borderRadius: 8,
+          padding: '10px 20px', fontSize: 12, fontWeight: 600,
+          fontFamily: "'JetBrains Mono', monospace",
+          zIndex: 10000, boxShadow: `0 4px 20px rgba(0,0,0,0.5), ${colors.glow}`,
+          transition: 'opacity 1s ease',
+          opacity: syncToast.fading ? 0 : 1,
+          whiteSpace: 'nowrap',
+        }}>{syncToast.message}</div>
+      )}
 
       {/* Screen transition */}
       <ScreenTransition active={transitioning} onComplete={() => {

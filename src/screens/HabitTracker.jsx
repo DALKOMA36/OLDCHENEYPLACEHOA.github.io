@@ -127,6 +127,81 @@ export default function HabitTracker({ user }) {
         ))}
       </div>
 
+      {/* Weekly completion bar chart */}
+      {habits.length > 0 && (() => {
+        const dayLabels = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+        const now = new Date()
+        const dayOfWeek = now.getDay() // 0=Sun
+        // Build dates for Mon-Sun of current week
+        const monday = new Date(now)
+        monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7))
+        const weekDates = Array.from({ length: 7 }, (_, i) => {
+          const d = new Date(monday)
+          d.setDate(monday.getDate() + i)
+          return getDateStr(d)
+        })
+        const dayCounts = weekDates.map(date =>
+          habits.filter(h => h.log[date]).length
+        )
+        const maxCount = Math.max(1, ...dayCounts)
+        const barW = 100 / 7
+        const chartH = 80
+        const labelH = 16
+        const totalH = chartH + labelH + 4
+        return (
+          <div style={{
+            padding: 16, marginBottom: 16, borderRadius: 10,
+            background: colors.surfaceLight, border: `1px solid ${colors.border}`,
+          }}>
+            <div style={{
+              color: colors.textMuted, fontSize: 11, marginBottom: 10,
+              fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+            }}>WEEKLY COMPLETIONS</div>
+            <svg viewBox={`0 0 100 ${totalH}`} width="100%" style={{ display: 'block' }}>
+              {dayCounts.map((count, i) => {
+                const barH = maxCount > 0 ? (count / maxCount) * chartH : 0
+                const x = i * barW + barW * 0.15
+                const w = barW * 0.7
+                const y = chartH - barH
+                const ratio = habits.length > 0 ? count / habits.length : 0
+                const barColor = ratio >= 1 ? colors.success : ratio > 0 ? colors.warning : colors.border
+                const isToday = weekDates[i] === today
+                return (
+                  <g key={i}>
+                    {/* background track */}
+                    <rect x={x} y={0} width={w} height={chartH} rx={2}
+                      fill={colors.border} opacity="0.2" />
+                    {/* bar */}
+                    {barH > 0 && (
+                      <rect x={x} y={y} width={w} height={barH} rx={2}
+                        fill={barColor} opacity="0.85" />
+                    )}
+                    {/* count label */}
+                    {count > 0 && (
+                      <text x={x + w / 2} y={y - 2} textAnchor="middle"
+                        fill={colors.textSecondary} fontSize="5"
+                        fontFamily="JetBrains Mono, monospace">{count}</text>
+                    )}
+                    {/* day label */}
+                    <text x={x + w / 2} y={chartH + labelH - 3} textAnchor="middle"
+                      fill={isToday ? colors.primary : colors.textMuted} fontSize="4.5"
+                      fontFamily="JetBrains Mono, monospace"
+                      fontWeight={isToday ? '600' : '400'}>
+                      {dayLabels[i]}
+                    </text>
+                    {/* today indicator */}
+                    {isToday && (
+                      <rect x={x + w / 2 - 1.5} y={chartH + labelH} width={3} height={1}
+                        rx={0.5} fill={colors.primary} />
+                    )}
+                  </g>
+                )
+              })}
+            </svg>
+          </div>
+        )
+      })()}
+
       {/* Add habit */}
       {showAdd && (
         <div style={{

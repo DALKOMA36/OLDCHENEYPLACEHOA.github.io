@@ -286,6 +286,72 @@ export default function Finance({ user }) {
               </div>
             )
           })}
+          {/* Donut Chart */}
+          {Object.keys(catSpend).length > 0 && (() => {
+            const spendCats = CATEGORIES.filter(c => c.id !== 'income' && catSpend[c.id])
+              .sort((a, b) => (catSpend[b.id] || 0) - (catSpend[a.id] || 0))
+            const total = spendCats.reduce((s, c) => s + (catSpend[c.id] || 0), 0)
+            const cx = 50, cy = 50, r = 36, stroke = 12
+            let cumAngle = -90 // start from top
+            const slices = spendCats.map(cat => {
+              const val = catSpend[cat.id] || 0
+              const angle = (val / total) * 360
+              const startAngle = cumAngle
+              cumAngle += angle
+              const endAngle = cumAngle
+              const startRad = (Math.PI / 180) * startAngle
+              const endRad = (Math.PI / 180) * endAngle
+              const x1 = cx + r * Math.cos(startRad)
+              const y1 = cy + r * Math.sin(startRad)
+              const x2 = cx + r * Math.cos(endRad)
+              const y2 = cy + r * Math.sin(endRad)
+              const largeArc = angle > 180 ? 1 : 0
+              const d = spendCats.length === 1
+                ? `M ${cx + r} ${cy} A ${r} ${r} 0 1 1 ${cx + r - 0.001} ${cy}`
+                : `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`
+              return { d, color: cat.color, name: cat.name, val, pct: Math.round((val / total) * 100) }
+            })
+            return (
+              <div style={{
+                padding: 16, marginTop: 12, borderRadius: 10,
+                background: colors.surfaceLight, border: `1px solid ${colors.border}`,
+              }}>
+                <div style={{
+                  color: colors.textMuted, fontSize: 11, marginBottom: 12,
+                  fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+                }}>SPENDING DISTRIBUTION</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <svg viewBox="0 0 100 100" width="120" height="120" style={{ flexShrink: 0 }}>
+                    {slices.map((s, i) => (
+                      <path key={i} d={s.d} fill="none" stroke={s.color} strokeWidth={stroke}
+                        strokeLinecap="butt" opacity="0.85" />
+                    ))}
+                    <text x={cx} y={cy - 4} textAnchor="middle" fill={colors.text}
+                      fontSize="11" fontFamily="Rajdhani, sans-serif" fontWeight="300">
+                      {formatMoney(total)}
+                    </text>
+                    <text x={cx} y={cy + 8} textAnchor="middle" fill={colors.textMuted}
+                      fontSize="5" fontFamily="JetBrains Mono, monospace">
+                      TOTAL
+                    </text>
+                  </svg>
+                  <div style={{ flex: 1 }}>
+                    {slices.map((s, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+                        <span style={{ color: colors.textSecondary, fontSize: 11, fontFamily: "'Exo 2', sans-serif", flex: 1 }}>
+                          {s.name}
+                        </span>
+                        <span style={{ color: colors.textMuted, fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
+                          {s.pct}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
           {Object.keys(catSpend).length === 0 && (
             <div style={{ textAlign: 'center', padding: 30, color: colors.textMuted, fontSize: 12, fontFamily: "'Exo 2', sans-serif" }}>
               No expenses this month. Clean slate.
