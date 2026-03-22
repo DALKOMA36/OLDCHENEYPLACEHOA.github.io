@@ -70,11 +70,14 @@ export default function Dashboard({ user, navigate, addMemory, startFocusMode })
                 45: 'Foggy', 48: 'Fog', 51: 'Light Drizzle', 53: 'Drizzle', 55: 'Heavy Drizzle',
                 61: 'Light Rain', 63: 'Rain', 65: 'Heavy Rain', 71: 'Light Snow', 73: 'Snow',
                 75: 'Heavy Snow', 80: 'Showers', 81: 'Heavy Showers', 95: 'Thunderstorm' }
-              setWeather({
+              const w = {
                 temp: Math.round(data.current.temperature_2m),
                 desc: codes[data.current.weathercode] || 'Unknown',
                 wind: Math.round(data.current.windspeed_10m),
-              })
+              }
+              setWeather(w)
+              // Cache for local AI
+              try { localStorage.setItem('jarvis_weather_cache', JSON.stringify(w)) } catch {}
             }
           }).catch(() => {})
       }, () => {})

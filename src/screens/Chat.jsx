@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { colors, loadState, saveState } from '../constants'
 import { db } from '../db'
-import { isOffline, parseOfflineCommand, cacheResponse, findCachedResponse, queueAction, learnPattern, logFeatureAttempt, getMemoriesForContext, extractMemoriesFromChat } from '../offline'
+import { isOffline, parseOfflineCommand, cacheResponse, findCachedResponse, queueAction, learnPattern, logFeatureAttempt, getMemoriesForContext, extractMemoriesFromChat, addLongTermMemory, searchMemories } from '../offline'
+import { generateLocalResponse, needsCloudAI } from '../localAI'
 
 const defaultGreeting = (name) => ({
   role: 'ai',
@@ -280,7 +281,52 @@ export default function Chat({ user, addMemory, navigate, startFocusMode }) {
       return
     }
 
-    // ---- Try offline command first ----
+    // ---- LOCAL AI FIRST — no API call unless needed ----
+    const localResult = generateLocalResponse(text, user)
+
+    if (localResult) {
+      // Local AI handled it — no cloud needed
+      const isAction = typeof localResult === 'object' && localResult.action
+      const response = isAction ? localResult.response : localResult
+
+      // Execute actions
+      if (isAction) {
+        if (localResult.action === 'create_task') {
+          try { await db.tasks.create(localResult.data) } catch { queueAction({ type: 'task', data: localResult.data }) }
+          learnPattern('task_created', localResult.data)
+        } else if (localResult.action === 'create_reminder') {
+          try { await db.reminders.create(localResult.data) } catch { queueAction({ type: 'reminder', data: localResult.data }) }
+        } else if (localResult.action === 'navigate') {
+          setTimeout(() => navigate(localResult.screen), 500)
+        } else if (localResult.action === 'focus_mode') {
+          setTimeout(() => startFocusMode?.(), 500)
+        } else if (localResult.action === 'timer') {
+          setTimeout(() => {
+            if ('speechSynthesis' in window) {
+              const u = new SpeechSynthesisUtterance("Timer complete, sir.")
+              window.speechSynthesis.speak(u)
+            }
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification('J.A.R.V.I.S.', { body: 'Timer complete.' })
+            }
+          }, localResult.duration)
+        }
+      }
+
+      const aiMsg = {
+        role: 'ai', text: response,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        local: true, // flag that this was handled locally
+      }
+      setMessages(prev => addMsg(prev, aiMsg))
+
+      // Learn from every interaction
+      addLongTermMemory(text, 'query', 'chat')
+      setTyping(false)
+      return
+    }
+
+    // ---- Legacy offline commands (fallback) ----
     const offlineCmd = parseOfflineCommand(text)
 
     if (offlineCmd) {
