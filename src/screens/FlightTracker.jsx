@@ -119,7 +119,7 @@ export default function FlightTracker({ user }) {
         aeroFetch(`/airports/${code}/flights/departures`).catch(() => null),
         aeroFetch(`/airports/${code}/flights/arrivals`).catch(() => null),
         aeroFetch(`/airports/${code}/flights/scheduled_departures`).catch(() => null),
-        aeroFetch(`/airports/${code}/weather/observations`).catch(() => null),
+        aeroFetch(`/airports/${code}/weather/observations?temperature_units=F`).catch(() => null),
         aeroFetch(`/airports/${code}/delays`).catch(() => null),
       ])
       setAirportData({
@@ -413,7 +413,7 @@ export default function FlightTracker({ user }) {
                   {airportData.weather.temp_air && (
                     <div>
                       <div style={{ color: colors.text, fontSize: 18, fontWeight: 600, fontFamily: "'Rajdhani', sans-serif" }}>
-                        {Math.round(airportData.weather.temp_air * 9/5 + 32)}°F
+                        {Math.round(airportData.weather.temp_air)}°F
                       </div>
                       <div style={{ color: colors.textMuted, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>TEMP</div>
                     </div>
