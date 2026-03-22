@@ -17,7 +17,7 @@ async function aeroFetch(path) {
 }
 
 export default function FlightTracker({ user }) {
-  const [tab, setTab] = useState('search') // search, tracked, airports
+  const [tab, setTab] = useState('search') // search, tracked, airports, board
   const [query, setQuery] = useState('')
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -26,6 +26,7 @@ export default function FlightTracker({ user }) {
   const [selectedFlight, setSelectedFlight] = useState(null)
   const [airportQuery, setAirportQuery] = useState('')
   const [airportData, setAirportData] = useState(null)
+  const [boardType, setBoardType] = useState('departures') // departures, arrivals, scheduled
 
   useEffect(() => { saveState('tracked_flights', trackedFlights) }, [trackedFlights])
 
@@ -113,17 +114,21 @@ export default function FlightTracker({ user }) {
     setAirportData(null)
     try {
       const code = airportQuery.trim().toUpperCase()
-      const [info, flights, weather, delays] = await Promise.all([
+      const [info, deps, arrs, schedDeps, weather, delays] = await Promise.all([
         aeroFetch(`/airports/${code}`).catch(() => null),
         aeroFetch(`/airports/${code}/flights/departures`).catch(() => null),
+        aeroFetch(`/airports/${code}/flights/arrivals`).catch(() => null),
+        aeroFetch(`/airports/${code}/flights/scheduled_departures`).catch(() => null),
         aeroFetch(`/airports/${code}/weather/observations`).catch(() => null),
         aeroFetch(`/airports/${code}/delays`).catch(() => null),
       ])
       setAirportData({
         info,
-        departures: flights?.departures?.slice(0, 15) || flights?.scheduled_departures?.slice(0, 15) || [],
+        departures: deps?.departures?.slice(0, 20) || [],
+        arrivals: arrs?.arrivals?.slice(0, 20) || [],
+        scheduled: schedDeps?.scheduled_departures?.slice(0, 20) || [],
         weather: weather?.observations?.[0] || null,
-        delays: delays,
+        delays,
       })
     } catch (err) {
       setError(err.message)
@@ -222,7 +227,7 @@ export default function FlightTracker({ user }) {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        {[['search', '🔍 Search'], ['tracked', `📌 Tracked (${trackedFlights.length})`], ['airports', '🏢 Airports']].map(([t, label]) => (
+        {[['search', '🔍 Search'], ['tracked', `📌 Tracked (${trackedFlights.length})`], ['airports', '🏢 Airport']].map(([t, label]) => (
           <button key={t} onClick={() => setTab(t)} style={{
             flex: 1, padding: '12px 8px', borderRadius: 10,
             background: tab === t ? colors.primaryDim : 'rgba(255,255,255,0.02)',
@@ -455,12 +460,25 @@ export default function FlightTracker({ user }) {
             </div>
           )}
 
-          {airportData?.departures?.length > 0 && (
+          {/* Board type toggle */}
+          {airportData?.info && (
+            <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+              {[['departures', 'Departures'], ['arrivals', 'Arrivals'], ['scheduled', 'Scheduled']].map(([t, label]) => (
+                <button key={t} onClick={() => setBoardType(t)} style={{
+                  flex: 1, padding: '10px 8px', borderRadius: 8,
+                  background: boardType === t ? colors.primaryDim : 'rgba(255,255,255,0.02)',
+                  border: `1px solid ${boardType === t ? colors.primary : colors.border}`,
+                  color: boardType === t ? colors.primary : colors.textMuted,
+                  fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                  fontFamily: "'Exo 2', sans-serif", minHeight: 44,
+                }}>{label} ({(airportData[t] || []).length})</button>
+              ))}
+            </div>
+          )}
+
+          {(airportData?.[boardType]?.length > 0) && (
             <div>
-              <div style={{ color: colors.textMuted, fontSize: 12, marginBottom: 8, fontWeight: 600, fontFamily: "'Exo 2', sans-serif" }}>
-                DEPARTURES
-              </div>
-              {airportData.departures.map((f, i) => (
+              {airportData[boardType].map((f, i) => (
                 <div key={i} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   padding: 12, marginBottom: 4, borderRadius: 8,
@@ -471,15 +489,19 @@ export default function FlightTracker({ user }) {
                       {f.ident}
                     </div>
                     <div style={{ color: colors.textMuted, fontSize: 11, fontFamily: "'Exo 2', sans-serif" }}>
-                      → {f.destination?.code_iata || '???'}
+                      {boardType === 'arrivals'
+                        ? `from ${f.origin?.code_iata || '???'}`
+                        : `→ ${f.destination?.code_iata || '???'}`}
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ color: colors.text, fontSize: 13, fontFamily: "'JetBrains Mono', monospace" }}>
-                      {f.scheduled_out ? new Date(f.scheduled_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                      {(f.scheduled_out || f.scheduled_in || f.estimated_out || f.estimated_in)
+                        ? new Date(f.scheduled_out || f.scheduled_in || f.estimated_out || f.estimated_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        : '—'}
                     </div>
                     <div style={{
-                      color: f.status === 'En Route' ? colors.success : colors.textMuted,
+                      color: f.status === 'En Route' ? colors.success : f.status === 'Arrived' ? colors.primary : colors.textMuted,
                       fontSize: 10, fontFamily: "'JetBrains Mono', monospace",
                     }}>{f.status || ''}</div>
                   </div>
