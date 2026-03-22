@@ -369,76 +369,77 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', minHeight: '100dvh', background: colors.bg, display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
+      {/* Header — clean, big tap targets */}
       <div style={{
         background: colors.surface,
         borderBottom: `1px solid ${colors.border}`,
         position: 'relative', zIndex: 100,
+        paddingTop: 'env(safe-area-inset-top, 0)',
       }}>
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0 8px',
-          paddingTop: 'env(safe-area-inset-top, 0)',
+          padding: '6px 12px',
         }}>
-          {/* Back button */}
+          {/* Back button — big and obvious */}
           {screen !== 'dashboard' ? (
             <button onClick={() => navigate('dashboard')} style={{
-              background: 'none', border: 'none', color: colors.primary,
-              fontSize: 18, cursor: 'pointer', padding: '14px 10px',
+              background: 'rgba(0, 212, 255, 0.08)', border: `1px solid ${colors.border}`,
+              color: colors.primary, borderRadius: 12,
+              fontSize: 20, cursor: 'pointer', padding: '10px 16px',
               fontFamily: "'JetBrains Mono', monospace",
-              WebkitTapHighlightColor: 'rgba(0,212,255,0.2)',
-              minWidth: 44, minHeight: 44,
-            }}>{'<'}</button>
+              WebkitTapHighlightColor: 'rgba(0,212,255,0.3)',
+              minWidth: 50, minHeight: 48, touchAction: 'manipulation',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>{'←'}</button>
           ) : (
-            <div style={{ width: 44 }} />
+            <div style={{ width: 50 }} />
           )}
 
-          {/* JARVIS button — center, big tap target */}
+          {/* JARVIS button — center, very obvious */}
           <button
-            onClick={() => {
-              setAssistantActive(!assistantActive)
-            }}
+            onClick={() => setAssistantActive(!assistantActive)}
             style={{
-              background: assistantActive ? 'rgba(0, 230, 118, 0.12)' : 'rgba(0, 212, 255, 0.06)',
-              border: `1px solid ${assistantActive ? 'rgba(0, 230, 118, 0.4)' : 'rgba(0, 212, 255, 0.2)'}`,
-              cursor: 'pointer',
-              padding: '10px 20px',
+              background: assistantActive ? 'rgba(0, 230, 118, 0.15)' : 'rgba(0, 212, 255, 0.08)',
+              border: `2px solid ${assistantActive ? colors.success : colors.primary}`,
+              borderRadius: 16, cursor: 'pointer',
+              padding: '12px 28px',
               color: assistantActive ? colors.success : colors.primary,
-              fontSize: 15, fontWeight: 600,
+              fontSize: 18, fontWeight: 700,
               fontFamily: "'JetBrains Mono', monospace",
-              letterSpacing: 3,
-              textShadow: assistantActive ? `0 0 10px ${colors.success}` : `0 0 6px ${colors.primary}30`,
+              letterSpacing: 4,
+              textShadow: `0 0 12px ${assistantActive ? colors.success : colors.primary}40`,
               WebkitTapHighlightColor: 'rgba(0,212,255,0.3)',
-              minHeight: 44,
-              touchAction: 'manipulation',
+              minHeight: 48, touchAction: 'manipulation',
+              transition: 'all 0.2s ease',
+              boxShadow: assistantActive ? `0 0 20px ${colors.success}30` : `0 0 15px ${colors.primary}15`,
             }}
           >
             {assistantActive ? '● JARVIS' : 'JARVIS'}
           </button>
 
-          {/* Settings */}
+          {/* Settings — gear icon, big target */}
           <button
             onClick={() => navigate('settings')}
             style={{
-              background: 'none', border: 'none',
-              color: colors.textMuted, fontSize: 10, cursor: 'pointer',
-              padding: '14px 10px', fontFamily: "'JetBrains Mono', monospace",
-              letterSpacing: 1, minWidth: 44, minHeight: 44,
+              background: 'rgba(255,255,255,0.03)', border: `1px solid ${colors.border}`,
+              color: colors.textMuted, fontSize: 16, cursor: 'pointer', borderRadius: 12,
+              padding: '10px 14px', minWidth: 50, minHeight: 48,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               WebkitTapHighlightColor: 'rgba(0,212,255,0.2)',
+              touchAction: 'manipulation',
             }}
-          >SYS</button>
+          >⚙</button>
         </div>
 
-        {/* Screen name + status */}
+        {/* Screen name — only when not on dashboard */}
         {screen !== 'dashboard' && (
           <div style={{
-            textAlign: 'center', padding: '0 16px 6px',
-            color: colors.textSecondary, fontSize: 10,
-            fontFamily: "'JetBrains Mono', monospace",
-            letterSpacing: 1, textTransform: 'uppercase',
+            textAlign: 'center', padding: '0 16px 8px',
+            color: colors.textSecondary, fontSize: 13, fontWeight: 500,
+            fontFamily: "'Exo 2', sans-serif",
+            letterSpacing: 1,
           }}>{SCREENS[screen]?.label}</div>
         )}
-        <StatusBar />
       </div>
 
       {/* Full-screen overlays */}
@@ -461,10 +462,30 @@ export default function App() {
       {/* No bottom nav — Dashboard is the hub, header has back button */}
 
       <style>{`
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        input:focus, textarea:focus { outline: none; border-color: ${colors.primary} !important; box-shadow: ${colors.glow} !important; }
+        @keyframes glow { 0%, 100% { box-shadow: 0 0 5px ${colors.primary}20; } 50% { box-shadow: 0 0 15px ${colors.primary}40; } }
+        @keyframes scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
+
+        /* Make ALL screens animate in */
+        main > * { animation: fadeIn 0.25s ease; }
+
+        /* Big touch targets everywhere */
+        button { min-height: 36px; }
+
+        /* Smooth borders */
+        * { border-radius: inherit; }
+
+        /* Input focus glow */
+        input:focus, textarea:focus, select:focus {
+          outline: none;
+          border-color: ${colors.primary} !important;
+          box-shadow: 0 0 0 2px ${colors.primary}25 !important;
+        }
+
+        /* Nice scrollbars */
         ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(0, 212, 255, 0.15); border-radius: 1px; }

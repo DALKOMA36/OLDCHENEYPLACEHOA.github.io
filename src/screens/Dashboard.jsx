@@ -189,45 +189,52 @@ export default function Dashboard({ user, navigate, addMemory, startFocusMode })
   const uptimeMinutes = Math.floor((Date.now() - systemUptime) / 60000)
   const memory = loadState('jarvis_learned', {})
 
+  // Module grid — icons + labels, big touch targets
+  const MODULES = [
+    { icon: '✓', label: 'Tasks', key: 'tasks', col: colors.primary, count: briefing.tasks },
+    { icon: '📅', label: 'Calendar', key: 'calendar', col: colors.secondary, count: briefing.events },
+    { icon: '⏰', label: 'Reminders', key: 'reminders', col: colors.success, count: briefing.reminders },
+    { icon: '💬', label: 'Messages', key: 'channels', col: colors.primary },
+    { icon: '🚂', label: 'Trains', key: 'trains', col: colors.secondary },
+    { icon: '🍽', label: 'Meals', key: 'meals', col: colors.warning },
+    { icon: '📷', label: 'Scanner', key: 'scanner', col: colors.primary },
+    { icon: '📖', label: 'Reader', key: 'reader', col: colors.success },
+    { icon: '✈', label: 'Travel', key: 'travel', col: colors.secondary },
+    { icon: '🔄', label: 'Habits', key: 'habits', col: colors.success },
+    { icon: '💰', label: 'Finance', key: 'finance', col: colors.warning },
+    { icon: '🎵', label: 'Media', key: 'media', col: colors.primary },
+    { icon: '📝', label: 'Notes', key: 'notes', col: colors.secondary },
+    { icon: '🔧', label: 'Apps', key: 'builder', col: colors.primary },
+    { icon: '🎯', label: 'Focus', key: '__focus__', col: colors.danger },
+  ]
+
   return (
-    <div style={{ padding: 16 }}>
-      {/* Greeting + Time */}
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <h1 style={{
-              color: colors.text, fontSize: 22, fontWeight: 500,
-              fontFamily: "'Exo 2', sans-serif", marginBottom: 4,
+    <div style={{ padding: '16px 16px 40px' }}>
+      {/* Greeting — big and warm */}
+      <div style={{ marginBottom: 24, textAlign: 'center' }}>
+        <h1 style={{
+          color: colors.text, fontSize: 26, fontWeight: 600,
+          fontFamily: "'Exo 2', sans-serif", marginBottom: 6,
+        }}>
+          {greetings(user.name)}
+        </h1>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12 }}>
+          <span style={{
+            color: colors.primary, fontSize: 22, fontWeight: 300,
+            fontFamily: "'Rajdhani', sans-serif",
+            textShadow: `0 0 10px ${colors.primary}40`,
+          }}>
+            {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+          {weather && (
+            <span style={{
+              color: colors.textSecondary, fontSize: 14,
+              fontFamily: "'Exo 2', sans-serif",
             }}>
-              {greetings(user.name)}
-            </h1>
-            <p style={{
-              color: colors.textMuted, fontSize: 11,
-              fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
-            }}>{briefing.date.toUpperCase()}</p>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{
-              color: colors.primary, fontSize: 20, fontWeight: 300,
-              fontFamily: "'Rajdhani', sans-serif",
-              textShadow: `0 0 10px ${colors.primary}40`,
-            }}>
-              {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-            </div>
-            {weather && (
-              <div style={{
-                color: colors.textSecondary, fontSize: 10,
-                fontFamily: "'JetBrains Mono', monospace",
-              }}>
-                {weather.temp}°F // {weather.desc}
-              </div>
-            )}
-          </div>
+              {weather.temp}°F {weather.desc}
+            </span>
+          )}
         </div>
-        <p style={{
-          color: colors.textMuted, fontSize: 9, marginTop: 4,
-          fontFamily: "'JetBrains Mono', monospace", fontStyle: 'italic',
-        }}>{getSubGreeting()}</p>
       </div>
 
       {/* AI Briefing — moved to top for prominence */}
@@ -254,7 +261,7 @@ export default function Dashboard({ user, navigate, addMemory, startFocusMode })
         </div>
       )}
 
-      {/* Smart Suggestions */}
+      {/* Smart Suggestions — as swipeable cards */}
       {(() => {
         const suggestions = generateSuggestions(user)
         if (suggestions.length === 0) return null
@@ -264,27 +271,30 @@ export default function Dashboard({ user, navigate, addMemory, startFocusMode })
           memory: '#bb86fc',
         }
         return (
-          <div style={{ marginBottom: 16 }}>
-            <h3 style={sectionHeader}>JARVIS SUGGESTS</h3>
-            {suggestions.map((s, i) => (
-              <button key={i} onClick={() => s.action && navigate(s.action)} style={{
-                display: 'flex', alignItems: 'flex-start', gap: 10, width: '100%',
-                padding: '10px 12px', marginBottom: 4, textAlign: 'left',
-                background: `${typeColors[s.type] || colors.primary}08`,
-                border: `1px solid ${typeColors[s.type] || colors.primary}25`,
-                cursor: s.action ? 'pointer' : 'default',
-              }}>
-                <div style={{
-                  width: 4, height: 4, borderRadius: '50%', marginTop: 6, flexShrink: 0,
-                  background: typeColors[s.type] || colors.primary,
-                  boxShadow: `0 0 4px ${typeColors[s.type] || colors.primary}`,
-                }} />
-                <span style={{
-                  color: colors.text, fontSize: 12, lineHeight: 1.5,
-                  fontFamily: "'Exo 2', sans-serif",
-                }}>{s.text}</span>
-              </button>
-            ))}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '4px 0', scrollSnapType: 'x mandatory' }}>
+              {suggestions.map((s, i) => (
+                <button key={i} onClick={() => s.action && navigate(s.action)} style={{
+                  flexShrink: 0, width: '75vw', maxWidth: 300,
+                  padding: '14px 16px', textAlign: 'left',
+                  background: `${typeColors[s.type] || colors.primary}10`,
+                  border: `1px solid ${typeColors[s.type] || colors.primary}30`,
+                  borderRadius: 12,
+                  cursor: s.action ? 'pointer' : 'default',
+                  scrollSnapAlign: 'start',
+                  touchAction: 'pan-x',
+                }}>
+                  <div style={{
+                    color: typeColors[s.type] || colors.primary, fontSize: 10, fontWeight: 600,
+                    fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1, marginBottom: 6,
+                  }}>JARVIS</div>
+                  <span style={{
+                    color: colors.text, fontSize: 14, lineHeight: 1.5,
+                    fontFamily: "'Exo 2', sans-serif",
+                  }}>{s.text}</span>
+                </button>
+              ))}
+            </div>
           </div>
         )
       })()}
@@ -425,48 +435,44 @@ export default function Dashboard({ user, navigate, addMemory, startFocusMode })
         </button>
       )}
 
-      {/* All Modules — single unified grid */}
-      <div style={{ marginBottom: 20 }}>
-        <h3 style={sectionHeader}>MODULES</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-          {[
-            ['TK', 'Tasks', 'tasks', colors.primary],
-            ['CL', 'Calendar', 'calendar', colors.secondary],
-            ['RM', 'Reminders', 'reminders', colors.success],
-            ['MS', 'Messages', 'channels', colors.primary],
-            ['TR', 'Trains', 'trains', colors.secondary],
-            ['ML', 'Meals', 'meals', colors.warning],
-            ['SC', 'Scanner', 'scanner', colors.primary],
-            ['RD', 'Reader', 'reader', colors.success],
-            ['TV', 'Travel', 'travel', colors.secondary],
-            ['HB', 'Habits', 'habits', colors.success],
-            ['FN', 'Finance', 'finance', colors.warning],
-            ['MD', 'Media', 'media', colors.primary],
-            ['NT', 'Notes', 'notes', colors.secondary],
-            ['AP', 'Apps', 'builder', colors.primary],
-            ['FO', 'Focus', '__focus__', colors.danger],
-            ['SY', 'Settings', 'settings', colors.textMuted],
-            ['AS', 'Work', '__arrow__', '#e67e22'],
-          ].map(([icon, label, target, col]) => (
-            <button key={target} onClick={() => {
-              if (target === '__focus__') startFocusMode?.()
-              else if (target === '__arrow__') window.open('https://customer.arrowstagelines.com/driverportal/diary', '_blank')
-              else navigate(target)
-            }} style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-              padding: '12px 8px', background: 'transparent',
-              border: `1px solid ${colors.border}`, color: col, cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}>
+      {/* Modules — BIG touch targets, 3-column, emoji icons */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+          {[...MODULES, { icon: '🚗', label: 'Work', key: '__arrow__', col: '#e67e22' }].map(mod => (
+            <button
+              key={mod.key}
+              onClick={() => {
+                if (mod.key === '__focus__') startFocusMode?.()
+                else if (mod.key === '__arrow__') window.open('https://customer.arrowstagelines.com/driverportal/diary', '_blank')
+                else navigate(mod.key)
+              }}
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                justifyContent: 'center', gap: 6,
+                padding: '18px 8px',
+                background: 'rgba(255,255,255,0.02)',
+                border: `1px solid ${colors.border}`,
+                borderRadius: 14, cursor: 'pointer',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: `${mod.col}30`,
+                transition: 'all 0.15s ease',
+                position: 'relative', minHeight: 80,
+              }}
+            >
+              {mod.count > 0 && (
+                <div style={{
+                  position: 'absolute', top: 6, right: 8,
+                  background: mod.col, color: '#000', fontWeight: 700,
+                  fontSize: 10, width: 20, height: 20, borderRadius: 10,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}>{mod.count}</div>
+              )}
+              <span style={{ fontSize: 28 }}>{mod.icon}</span>
               <span style={{
-                fontSize: 12, fontWeight: 600,
-                fontFamily: "'JetBrains Mono', monospace",
-                textShadow: `0 0 8px ${col}40`,
-              }}>{icon}</span>
-              <span style={{
-                fontSize: 8, color: colors.textMuted,
-                fontFamily: "'JetBrains Mono', monospace", letterSpacing: 0.5,
-              }}>{label}</span>
+                fontSize: 12, color: colors.text, fontWeight: 500,
+                fontFamily: "'Exo 2', sans-serif",
+              }}>{mod.label}</span>
             </button>
           ))}
         </div>
@@ -528,20 +534,23 @@ export default function Dashboard({ user, navigate, addMemory, startFocusMode })
 }
 
 const cardStyle = {
-  padding: 14, background: colors.surfaceLight,
-  border: `1px solid ${colors.border}`, marginBottom: 6,
+  padding: 16, background: colors.surfaceLight,
+  border: `1px solid ${colors.border}`, borderRadius: 10,
+  marginBottom: 8,
 }
 
 const linkBtn = {
-  background: 'none', border: 'none', color: colors.textMuted,
-  fontSize: 9, cursor: 'pointer',
-  fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
+  background: 'rgba(0,212,255,0.08)', border: `1px solid ${colors.border}`,
+  borderRadius: 8, color: colors.primary,
+  fontSize: 12, cursor: 'pointer', padding: '8px 14px',
+  fontFamily: "'Exo 2', sans-serif", fontWeight: 500,
+  touchAction: 'manipulation', minHeight: 36,
 }
 
 const sectionHeader = {
-  color: colors.textMuted, fontSize: 10,
-  fontFamily: "'JetBrains Mono', monospace",
-  fontWeight: 600, marginBottom: 10, letterSpacing: 2,
+  color: colors.textMuted, fontSize: 12, fontWeight: 600,
+  fontFamily: "'Exo 2', sans-serif",
+  marginBottom: 10, letterSpacing: 1, textTransform: 'uppercase',
 }
 
 const vitalStyle = {
