@@ -366,61 +366,77 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', minHeight: '100dvh', background: colors.bg, display: 'flex', flexDirection: 'column' }}>
-      {/* Combined Header + Status */}
-      <header style={{
+      {/* Header */}
+      <div style={{
         background: colors.surface,
         borderBottom: `1px solid ${colors.border}`,
-        position: 'sticky', top: 0, zIndex: 100,
-        backdropFilter: 'blur(12px)',
-        boxShadow: `0 1px 20px rgba(0, 212, 255, 0.05)`,
+        position: 'relative', zIndex: 100,
       }}>
-        {/* Main header row */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '12px 16px',
+          padding: '0 8px',
+          paddingTop: 'env(safe-area-inset-top, 0)',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {screen !== 'dashboard' && (
-              <button onClick={() => navigate('dashboard')} style={{
-                background: 'none', border: 'none', color: colors.primary,
-                fontSize: 16, cursor: 'pointer', padding: '4px 8px', margin: '-4px -8px',
-                fontFamily: "'JetBrains Mono', monospace",
-              }}>{'<'}</button>
-            )}
-            <button onClick={() => setAssistantActive(!assistantActive)} style={{
-              background: assistantActive ? `${colors.success}15` : 'none',
-              border: assistantActive ? `1px solid ${colors.success}40` : '1px solid transparent',
+          {/* Back button */}
+          {screen !== 'dashboard' ? (
+            <button onClick={() => navigate('dashboard')} style={{
+              background: 'none', border: 'none', color: colors.primary,
+              fontSize: 18, cursor: 'pointer', padding: '14px 10px',
+              fontFamily: "'JetBrains Mono', monospace",
+              WebkitTapHighlightColor: 'rgba(0,212,255,0.2)',
+              minWidth: 44, minHeight: 44,
+            }}>{'<'}</button>
+          ) : (
+            <div style={{ width: 44 }} />
+          )}
+
+          {/* JARVIS button — center, big tap target */}
+          <button
+            onClick={() => {
+              setAssistantActive(!assistantActive)
+            }}
+            style={{
+              background: assistantActive ? 'rgba(0, 230, 118, 0.12)' : 'rgba(0, 212, 255, 0.06)',
+              border: `1px solid ${assistantActive ? 'rgba(0, 230, 118, 0.4)' : 'rgba(0, 212, 255, 0.2)'}`,
               cursor: 'pointer',
-              padding: '6px 12px',
-              color: assistantActive ? colors.success : colors.primary, fontSize: 15, fontWeight: 600,
+              padding: '10px 20px',
+              color: assistantActive ? colors.success : colors.primary,
+              fontSize: 15, fontWeight: 600,
               fontFamily: "'JetBrains Mono', monospace",
               letterSpacing: 3,
               textShadow: assistantActive ? `0 0 10px ${colors.success}` : `0 0 6px ${colors.primary}30`,
-            }}>
-              {assistantActive && <span style={{ marginRight: 6, fontSize: 8, verticalAlign: 'middle' }}>●</span>}
-              JARVIS
-            </button>
-          </div>
-          <div style={{
-            color: colors.textSecondary, fontSize: 11,
-            fontFamily: "'JetBrains Mono', monospace",
-            letterSpacing: 1, textTransform: 'uppercase',
-          }}>
-            {screen === 'dashboard' ? '' : SCREENS[screen]?.label}
-          </div>
+              WebkitTapHighlightColor: 'rgba(0,212,255,0.3)',
+              minHeight: 44,
+              touchAction: 'manipulation',
+            }}
+          >
+            {assistantActive ? '● JARVIS' : 'JARVIS'}
+          </button>
+
+          {/* Settings */}
           <button
             onClick={() => navigate('settings')}
             style={{
-              background: 'none', border: `1px solid ${colors.border}`,
-              color: colors.textMuted, fontSize: 9, cursor: 'pointer',
-              padding: '6px 10px', fontFamily: "'JetBrains Mono', monospace",
-              letterSpacing: 1,
+              background: 'none', border: 'none',
+              color: colors.textMuted, fontSize: 10, cursor: 'pointer',
+              padding: '14px 10px', fontFamily: "'JetBrains Mono', monospace",
+              letterSpacing: 1, minWidth: 44, minHeight: 44,
+              WebkitTapHighlightColor: 'rgba(0,212,255,0.2)',
             }}
           >SYS</button>
         </div>
-        {/* Status strip */}
+
+        {/* Screen name + status */}
+        {screen !== 'dashboard' && (
+          <div style={{
+            textAlign: 'center', padding: '0 16px 6px',
+            color: colors.textSecondary, fontSize: 10,
+            fontFamily: "'JetBrains Mono', monospace",
+            letterSpacing: 1, textTransform: 'uppercase',
+          }}>{SCREENS[screen]?.label}</div>
+        )}
         <StatusBar />
-      </header>
+      </div>
 
       {/* Full-screen overlays */}
       {booting && <BootSequence user={user} onComplete={() => setBooting(false)} />}

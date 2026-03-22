@@ -381,21 +381,24 @@ export default function Voice({ user, addMemory, navigate, startFocusMode }) {
     setCommandPreview(null)
 
     const recognition = new SpeechRecognition()
-    recognition.continuous = false
+    recognition.continuous = true
     recognition.interimResults = true
     recognition.lang = 'en-US'
+    recognition.maxAlternatives = 1
+
+    let finalTranscript = ''
 
     recognition.onresult = (event) => {
       let interim = ''
-      let final = ''
-      for (let i = 0; i < event.results.length; i++) {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const t = event.results[i][0].transcript
         if (event.results[i].isFinal) {
-          final += event.results[i][0].transcript
+          finalTranscript += t + ' '
         } else {
-          interim += event.results[i][0].transcript
+          interim = t
         }
       }
-      const current = final || interim
+      const current = (finalTranscript + interim).trim()
       setTranscript(current)
       // Live command detection preview
       const cmd = parseCommand(current)
@@ -404,23 +407,31 @@ export default function Voice({ user, addMemory, navigate, startFocusMode }) {
 
     recognition.onerror = (event) => {
       if (event.error === 'aborted') return
-      if (event.error === 'audio-capture') {
-        setError('Microphone not available. Close other apps using the mic, or try reloading the page. Make sure mic permissions are granted in your browser settings.')
-      } else if (event.error === 'not-allowed') {
-        setError('Microphone access denied. Please allow microphone access in your browser and try again.')
-      } else if (event.error === 'no-speech') {
-        // Silent — just restart
-        setError('')
+      if (event.error === 'no-speech') {
+        // No speech detected — restart silently
         try { recognition.start() } catch {}
         return
+      }
+      if (event.error === 'audio-capture') {
+        setError('Microphone not available. Make sure no other app is using the mic, then reload this page.')
+      } else if (event.error === 'not-allowed') {
+        setError('Microphone blocked. Allow mic access in browser settings and reload.')
       } else {
-        setError(`Voice error: ${event.error}. Try reloading the page.`)
+        setError(`Voice error: ${event.error}`)
       }
       setListening(false)
       stopMicAnalyser()
     }
 
     recognition.onend = () => {
+      // On mobile, recognition can end unexpectedly — auto-restart if still supposed to be listening
+      if (recognitionRef.current === recognition && !processing) {
+        try { recognition.start() } catch {
+          setListening(false)
+          stopMicAnalyser()
+        }
+        return
+      }
       setListening(false)
       stopMicAnalyser()
     }
@@ -432,8 +443,10 @@ export default function Voice({ user, addMemory, navigate, startFocusMode }) {
   }
 
   const stopListening = async () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop()
+    const rec = recognitionRef.current
+    recognitionRef.current = null // prevent auto-restart in onend
+    if (rec) {
+      try { rec.stop() } catch {}
     }
     setListening(false)
     stopMicAnalyser()
