@@ -227,43 +227,33 @@ export default function Settings({ user, updateUser, addMemory }) {
         </div>
       </Section>
 
-      {/* Integrations */}
-      <Section title="EXTERNAL LINKS">
-        {integrations.map(int => (
-          <div key={int.key} style={{
+      {/* Quick Links — real links, not fake toggles */}
+      <Section title="QUICK LINKS">
+        {[
+          { name: 'Google Calendar', url: 'https://calendar.google.com', icon: 'GC', col: '#4285f4' },
+          { name: 'iCloud Calendar', url: 'https://www.icloud.com/calendar', icon: 'AC', col: '#a0a0a0' },
+          { name: 'Outlook Calendar', url: 'https://outlook.live.com/calendar', icon: 'OL', col: '#0078d4' },
+          { name: 'Gmail', url: 'https://mail.google.com', icon: 'GM', col: '#ea4335' },
+          { name: 'Spotify', url: 'https://open.spotify.com', icon: 'SP', col: '#1db954' },
+          { name: 'Google Maps', url: 'https://maps.google.com', icon: 'MP', col: '#34a853' },
+          { name: 'Instacart', url: 'https://www.instacart.com', icon: 'IC', col: '#43b02a' },
+        ].map(link => (
+          <button key={link.name} onClick={() => window.open(link.url, '_blank')} style={{
             display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px',
             borderBottom: `1px solid ${colors.border}`,
+            width: '100%', background: 'transparent', border: 'none', borderBottom: `1px solid ${colors.border}`,
+            cursor: 'pointer', textAlign: 'left',
           }}>
             <span style={{
               fontSize: 10, width: 24, textAlign: 'center',
               fontFamily: "'JetBrains Mono', monospace",
-              color: colors.textMuted, fontWeight: 600,
-            }}>{int.icon}</span>
+              color: link.col, fontWeight: 600,
+            }}>{link.icon}</span>
             <div style={{ flex: 1 }}>
-              <div style={{ color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif" }}>{int.name}</div>
-              <div style={{
-                color: colors.textMuted, fontSize: 10,
-                fontFamily: "'JetBrains Mono', monospace",
-              }}>{int.desc}</div>
+              <div style={{ color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif" }}>{link.name}</div>
             </div>
-            <button onClick={() => toggleIntegration(int.key)} style={{
-              width: 40, height: 20, border: 'none', cursor: 'pointer',
-              background: user.integrations?.[int.key]
-                ? `linear-gradient(90deg, ${colors.primary}40, ${colors.primary})`
-                : `rgba(255,255,255,0.05)`,
-              position: 'relative', transition: 'background 0.2s',
-              outline: `1px solid ${user.integrations?.[int.key] ? colors.primary : colors.border}`,
-            }}>
-              <span style={{
-                position: 'absolute', top: 2,
-                left: user.integrations?.[int.key] ? 22 : 2,
-                width: 16, height: 16,
-                background: user.integrations?.[int.key] ? colors.primary : colors.textMuted,
-                transition: 'left 0.2s',
-                boxShadow: user.integrations?.[int.key] ? `0 0 6px ${colors.primary}` : 'none',
-              }} />
-            </button>
-          </div>
+            <span style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace" }}>OPEN →</span>
+          </button>
         ))}
       </Section>
 
