@@ -317,6 +317,7 @@ export default function Tasks({ user, addMemory }) {
             JARVIS v4.0
           </span>
         </h2>
+        </h2>
         <div style={{ display: 'flex', gap: 6 }}>
           <button onClick={() => { setSelectionMode(!selectionMode); setSelectedIds(new Set()) }} style={{
             padding: '8px 12px', background: selectionMode ? colors.primaryDim : colors.surfaceLight,

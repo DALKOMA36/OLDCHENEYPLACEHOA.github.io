@@ -24,6 +24,7 @@ import StatusBar from './StatusBar'
 import JarvisAssistant from './JarvisAssistant'
 import FocusMode from './FocusMode'
 import UniversalSearch from './UniversalSearch'
+import ScreenTransition from './ScreenTransition'
 import { syncQueue, isOffline } from './offline'
 import { db, auth } from './db'
 import { colors, loadState, saveState } from './constants'
@@ -62,6 +63,8 @@ export default function App() {
   const [focusMode, setFocusMode] = useState(false)
   const [assistantActive, setAssistantActive] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [transitioning, setTransitioning] = useState(false)
+  const [transitionTarget, setTransitionTarget] = useState(null)
   const [authState, setAuthState] = useState('checking') // checking, login, register, authenticated
   const [user, setUser] = useState({
     name: '',
@@ -119,7 +122,12 @@ export default function App() {
     }, 500)
   }, [user, authState])
 
-  const navigate = useCallback((s) => { setScreen(s); setMenuOpen(false) }, [])
+  const navigate = useCallback((s) => {
+    if (s === screen) return
+    setTransitionTarget(s)
+    setTransitioning(true)
+    setMenuOpen(false)
+  }, [screen])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -441,6 +449,13 @@ export default function App() {
           }}>{SCREENS[screen]?.label}</div>
         )}
       </div>
+
+      {/* Screen transition */}
+      <ScreenTransition active={transitioning} onComplete={() => {
+        if (transitionTarget) setScreen(transitionTarget)
+        setTransitioning(false)
+        setTransitionTarget(null)
+      }} />
 
       {/* Full-screen overlays */}
       {booting && <BootSequence user={user} onComplete={() => setBooting(false)} />}
