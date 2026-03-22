@@ -1,7 +1,23 @@
 // D1 Database API client for Jarvis
 // Replaces localStorage with Cloudflare D1 via Pages Functions API
+// All create actions automatically teach JARVIS via learnFromAction
 
 const API_BASE = '/api'
+
+// Lazy import to avoid circular deps — loaded on first use
+let _learnFromAction = null
+function learn(type, data) {
+  if (!_learnFromAction) {
+    try {
+      import('./offline.js').then(m => {
+        _learnFromAction = m.learnFromAction
+        _learnFromAction(type, data)
+      })
+    } catch {}
+  } else {
+    try { _learnFromAction(type, data) } catch {}
+  }
+}
 
 // Auth token management
 export function getToken() {
@@ -99,7 +115,7 @@ export const db = {
   // ---- Events ----
   events: {
     list: (date) => apiFetch(`/events${date ? `?date=${date}` : ''}`),
-    create: (event) => apiFetch('/events', { method: 'POST', body: event }),
+    create: (event) => { learn('event_created', event); return apiFetch('/events', { method: 'POST', body: event }) },
     update: (event) => apiFetch('/events', { method: 'PUT', body: event }),
     delete: (id) => apiFetch(`/events?id=${id}`, { method: 'DELETE' }),
   },
@@ -107,7 +123,7 @@ export const db = {
   // ---- Tasks ----
   tasks: {
     list: () => apiFetch('/tasks'),
-    create: (task) => apiFetch('/tasks', { method: 'POST', body: task }),
+    create: (task) => { learn('task_created', task); return apiFetch('/tasks', { method: 'POST', body: task }) },
     update: (task) => apiFetch('/tasks', { method: 'PUT', body: task }),
     delete: (id) => apiFetch(`/tasks?id=${id}`, { method: 'DELETE' }),
   },
@@ -115,7 +131,7 @@ export const db = {
   // ---- Reminders ----
   reminders: {
     list: () => apiFetch('/reminders'),
-    create: (reminder) => apiFetch('/reminders', { method: 'POST', body: reminder }),
+    create: (reminder) => { learn('reminder_created', reminder); return apiFetch('/reminders', { method: 'POST', body: reminder }) },
     update: (reminder) => apiFetch('/reminders', { method: 'PUT', body: reminder }),
     delete: (id) => apiFetch(`/reminders?id=${id}`, { method: 'DELETE' }),
   },
@@ -172,7 +188,7 @@ export const db = {
   // ---- Trips ----
   trips: {
     list: () => apiFetch('/trips'),
-    create: (trip) => apiFetch('/trips', { method: 'POST', body: trip }),
+    create: (trip) => { learn('trip_created', trip); return apiFetch('/trips', { method: 'POST', body: trip }) },
     update: (trip) => apiFetch('/trips', { method: 'PUT', body: trip }),
     delete: (id) => apiFetch(`/trips?id=${id}`, { method: 'DELETE' }),
   },
@@ -268,7 +284,7 @@ export const db = {
   finance: {
     transactions: () => apiFetch('/finance?type=transactions'),
     budgets: () => apiFetch('/finance?type=budgets'),
-    addTransaction: (txn) => apiFetch('/finance?type=transaction', { method: 'POST', body: txn }),
+    addTransaction: (txn) => { learn(txn.amount >= 0 ? 'income_logged' : 'expense_logged', txn); return apiFetch('/finance?type=transaction', { method: 'POST', body: txn }) },
     setBudget: (budget) => apiFetch('/finance?type=budget', { method: 'POST', body: budget }),
     deleteTransaction: (id) => apiFetch(`/finance?id=${id}`, { method: 'DELETE' }),
   },
@@ -276,7 +292,7 @@ export const db = {
   // ---- Notes ----
   notes: {
     list: () => apiFetch('/notes'),
-    create: (note) => apiFetch('/notes', { method: 'POST', body: note }),
+    create: (note) => { learn('note_created', note); return apiFetch('/notes', { method: 'POST', body: note }) },
     update: (note) => apiFetch('/notes', { method: 'PUT', body: note }),
     delete: (id) => apiFetch(`/notes?id=${id}`, { method: 'DELETE' }),
   },
@@ -285,8 +301,8 @@ export const db = {
   media: {
     feeds: () => apiFetch('/media?type=feeds'),
     places: () => apiFetch('/media?type=places'),
-    addFeed: (feed) => apiFetch('/media?type=feed', { method: 'POST', body: feed }),
-    addPlace: (place) => apiFetch('/media?type=place', { method: 'POST', body: place }),
+    addFeed: (feed) => { learn('podcast_added', feed); return apiFetch('/media?type=feed', { method: 'POST', body: feed }) },
+    addPlace: (place) => { learn('place_saved', place); return apiFetch('/media?type=place', { method: 'POST', body: place }) },
     updatePlace: (place) => apiFetch('/media', { method: 'PUT', body: place }),
     deleteFeed: (id) => apiFetch(`/media?type=feed&id=${id}`, { method: 'DELETE' }),
     deletePlace: (id) => apiFetch(`/media?type=place&id=${id}`, { method: 'DELETE' }),
