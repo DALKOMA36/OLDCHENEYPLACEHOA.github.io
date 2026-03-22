@@ -313,21 +313,20 @@ export default function Tasks({ user, addMemory }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h2 style={{ color: colors.text, fontSize: 20, fontWeight: 700 }}>
           Tasks
-          <span style={{ color: colors.primary, fontSize: 11, fontWeight: 400, marginLeft: 8, letterSpacing: 1 }}>
+          <span style={{ color: colors.primary, fontSize: 12, fontWeight: 400, marginLeft: 8, letterSpacing: 1 }}>
             JARVIS v4.0
           </span>
         </h2>
-        </h2>
         <div style={{ display: 'flex', gap: 6 }}>
           <button onClick={() => { setSelectionMode(!selectionMode); setSelectedIds(new Set()) }} style={{
-            padding: '8px 12px', background: selectionMode ? colors.primaryDim : colors.surfaceLight,
+            padding: '10px 14px', background: selectionMode ? colors.primaryDim : colors.surfaceLight,
             color: selectionMode ? colors.primary : colors.textSecondary,
             border: `1px solid ${selectionMode ? colors.primary : colors.border}`,
-            borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+            borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', minHeight: 44,
           }}>{selectionMode ? 'Cancel' : 'Select'}</button>
           <button onClick={() => setShowAdd(true)} style={{
-            padding: '8px 16px', background: colors.gradient1, color: '#fff',
-            border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+            padding: '12px 16px', background: colors.gradient1, color: '#fff',
+            border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', minHeight: 44,
           }}>+ Task</button>
         </div>
       </div>
@@ -344,7 +343,7 @@ export default function Tasks({ user, addMemory }) {
             borderRadius: 10, textAlign: 'center',
           }}>
             <div style={{ color: c, fontSize: 20, fontWeight: 700 }}>{n}</div>
-            <div style={{ color: colors.textSecondary, fontSize: 10 }}>{l}</div>
+            <div style={{ color: colors.textSecondary, fontSize: 12 }}>{l}</div>
           </div>
         ))}
       </div>
@@ -353,10 +352,10 @@ export default function Tasks({ user, addMemory }) {
       <div style={{ display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto', alignItems: 'center' }}>
         {['all', 'pending', 'completed', 'delegated'].map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{
-            padding: '6px 14px', background: filter === f ? colors.primary : colors.surfaceLight,
+            padding: '10px 16px', background: filter === f ? colors.primary : colors.surfaceLight,
             border: `1px solid ${filter === f ? colors.primary : colors.border}`,
             borderRadius: 20, color: filter === f ? '#fff' : colors.textSecondary,
-            fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit',
+            fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit', minHeight: 44,
             textTransform: 'capitalize',
           }}>{f}</button>
         ))}
@@ -365,8 +364,8 @@ export default function Tasks({ user, addMemory }) {
             value={sortBy}
             onChange={e => setSortBy(e.target.value)}
             style={{
-              padding: '6px 10px', background: colors.surfaceLight, border: `1px solid ${colors.border}`,
-              borderRadius: 8, color: colors.textSecondary, fontSize: 11, fontFamily: 'inherit',
+              padding: '10px 12px', background: colors.surfaceLight, border: `1px solid ${colors.border}`,
+              borderRadius: 8, color: colors.textSecondary, fontSize: 12, fontFamily: 'inherit', minHeight: 44,
               cursor: 'pointer', appearance: 'auto',
             }}
           >
@@ -393,7 +392,7 @@ export default function Tasks({ user, addMemory }) {
             <div key={t.id} style={{
               background: colors.surfaceLight,
               border: `1px solid ${selectedIds.has(t.id) ? colors.primary : colors.border}`,
-              borderRadius: 10, marginBottom: 8, opacity: t.completed ? 0.6 : 1,
+              borderRadius: 10, marginBottom: 10, opacity: t.completed ? 0.6 : 1,
               transition: 'border-color 0.15s',
             }}>
               <div style={{
@@ -432,28 +431,28 @@ export default function Tasks({ user, addMemory }) {
                   {/* Tags row */}
                   <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                     <span style={{
-                      fontSize: 10, padding: '2px 6px', borderRadius: 6,
+                      fontSize: 11, padding: '3px 8px', borderRadius: 6,
                       background: `${priorityColors[t.priority]}22`, color: priorityColors[t.priority],
                     }}>{t.priority}</span>
                     <span style={{
-                      fontSize: 10, padding: '2px 6px', borderRadius: 6,
+                      fontSize: 11, padding: '3px 8px', borderRadius: 6,
                       background: `${colors.primary}22`, color: colors.primaryLight,
                     }}>{t.category}</span>
                     {t.assignee && (
                       <span style={{
-                        fontSize: 10, padding: '2px 6px', borderRadius: 6,
+                        fontSize: 11, padding: '3px 8px', borderRadius: 6,
                         background: `${colors.secondary}22`, color: colors.secondary,
                       }}>{'\u2192'} {t.assignee}</span>
                     )}
                     {t.dueDate && (
                       <span style={{
-                        fontSize: 10, padding: '2px 6px', borderRadius: 6,
+                        fontSize: 11, padding: '3px 8px', borderRadius: 6,
                         background: `${colors.warning}22`, color: colors.warning,
                       }}>{t.dueDate}</span>
                     )}
                     {t.recurring && (
                       <span style={{
-                        fontSize: 10, padding: '2px 6px', borderRadius: 6,
+                        fontSize: 11, padding: '3px 8px', borderRadius: 6,
                         background: `${colors.accent}22`, color: colors.accent,
                       }}>{'\u21BB'} Recurring</span>
                     )}
@@ -466,7 +465,7 @@ export default function Tasks({ user, addMemory }) {
                           return next
                         })
                       }} style={{
-                        fontSize: 10, padding: '2px 8px', borderRadius: 6,
+                        fontSize: 11, padding: '3px 10px', borderRadius: 6,
                         background: subsDone === subs.length ? `${colors.success}22` : `${colors.primary}15`,
                         color: subsDone === subs.length ? colors.success : colors.primaryLight,
                         border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600,
@@ -551,9 +550,9 @@ export default function Tasks({ user, addMemory }) {
                     return next
                   })
                 }} style={{
-                  display: 'block', width: '100%', padding: '6px 14px',
+                  display: 'block', width: '100%', padding: '10px 14px',
                   background: 'transparent', border: 'none', borderTop: `1px solid ${colors.border}`,
-                  color: colors.textMuted, fontSize: 10, cursor: 'pointer', fontFamily: 'inherit',
+                  color: colors.textMuted, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', minHeight: 44,
                   textAlign: 'left', paddingLeft: 50,
                 }}>+ Add subtasks</button>
               )}
@@ -604,8 +603,8 @@ export default function Tasks({ user, addMemory }) {
       }}>
         <span style={{ color: colors.secondary, fontSize: 16, flexShrink: 0 }}>{'\u22B6'}</span>
         <div>
-          <div style={{ color: colors.secondary, fontSize: 11, fontWeight: 600 }}>DELEGATION</div>
-          <div style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>
+          <div style={{ color: colors.secondary, fontSize: 13, fontWeight: 600 }}>DELEGATION</div>
+          <div style={{ color: colors.textSecondary, fontSize: 14, marginTop: 2 }}>
             Assign tasks to circle members. They'll get notified via SMS even if they don't use the app.
           </div>
         </div>
@@ -709,7 +708,7 @@ export default function Tasks({ user, addMemory }) {
               marginBottom: 10, padding: 10, background: colors.surface,
               border: `1px solid ${colors.border}`, borderRadius: 10,
             }}>
-              <div style={{ color: colors.textSecondary, fontSize: 11, fontWeight: 600, marginBottom: 6, letterSpacing: 0.5 }}>
+              <div style={{ color: colors.textSecondary, fontSize: 13, fontWeight: 600, marginBottom: 6, letterSpacing: 0.5 }}>
                 SUBTASKS
               </div>
               {(newTask.subtasks || []).map((s, i) => (
@@ -792,5 +791,5 @@ const inputStyle = {
 }
 const actionBtn = {
   flex: 1, padding: '12px 16px', border: 'none', borderRadius: 10,
-  fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+  fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', minHeight: 44,
 }

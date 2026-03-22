@@ -718,8 +718,8 @@ export default function MealPlanner({ user, addMemory }) {
 }
 
 const tabBtn = {
-  padding: '6px 14px', border: 'none', borderRadius: 8,
-  fontSize: 12, cursor: 'pointer', fontFamily: 'inherit',
+  padding: '12px 16px', border: 'none', borderRadius: 8,
+  fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', minHeight: 44,
 }
 const modalOverlay = {
   position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)',
@@ -730,8 +730,8 @@ const modalContent = {
   border: `1px solid ${colors.border}`, maxHeight: '70vh', overflowY: 'auto',
 }
 const inputStyle = {
-  width: '100%', padding: '10px 12px', marginBottom: 8,
+  width: '100%', padding: '12px 14px', marginBottom: 8,
   background: colors.surfaceLight, border: `1px solid ${colors.border}`,
-  borderRadius: 8, color: colors.text, fontSize: 13, fontFamily: 'inherit',
+  borderRadius: 8, color: colors.text, fontSize: 14, fontFamily: 'inherit',
   outline: 'none', boxSizing: 'border-box',
 }

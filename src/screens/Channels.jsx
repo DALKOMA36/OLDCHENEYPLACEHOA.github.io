@@ -260,11 +260,11 @@ export default function Channels({ user, addMemory }) {
   return (
     <div style={{ padding: 16 }}>
       <h2 style={{
-        color: colors.primary, fontSize: 11, fontWeight: 600, marginBottom: 2,
-        fontFamily: "'JetBrains Mono', monospace", letterSpacing: 3,
+        color: colors.primary, fontSize: 13, fontWeight: 600, marginBottom: 2,
+        fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
       }}>JARVIS COMMS ARRAY</h2>
       <p style={{
-        color: colors.textMuted, fontSize: 10, marginBottom: 12,
+        color: colors.textMuted, fontSize: 12, marginBottom: 12,
         fontFamily: "'JetBrains Mono', monospace",
       }}>Secure multi-channel communications // +1 (402) 585-0056</p>
 
@@ -281,11 +281,11 @@ export default function Channels({ user, addMemory }) {
             if (v === 'email') fetchEmails()
             if (v === 'threads') refreshMessages()
           }} style={{
-            flex: '1 1 auto', padding: '8px 6px',
+            flex: '1 1 auto', padding: '10px 6px', minHeight: 44,
             background: view === v ? colors.primaryDim : 'transparent',
             color: view === v ? colors.primary : colors.textMuted,
             border: 'none', borderBottom: view === v ? `2px solid ${colors.primary}` : '2px solid transparent',
-            fontSize: 9, cursor: 'pointer', minWidth: 60,
+            fontSize: 11, cursor: 'pointer', minWidth: 60, borderRadius: 0,
             fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
             transition: 'all 0.15s ease',
           }}>{label}</button>
@@ -303,7 +303,7 @@ export default function Channels({ user, addMemory }) {
               <label style={labelStyle}>RECIPIENT</label>
               <button onClick={() => setShowContactPicker(!showContactPicker)} style={{
                 background: 'transparent', border: `1px solid ${colors.border}`,
-                color: colors.secondary, fontSize: 9, cursor: 'pointer', padding: '2px 8px',
+                color: colors.secondary, fontSize: 11, cursor: 'pointer', padding: '8px 12px', minHeight: 36, borderRadius: 8,
                 fontFamily: "'JetBrains Mono', monospace",
               }}>{showContactPicker ? 'CLOSE' : 'CONTACTS'}</button>
             </div>
@@ -349,7 +349,7 @@ export default function Channels({ user, addMemory }) {
               <label style={labelStyle}>MESSAGE</label>
               <button onClick={aiDraft} disabled={drafting} style={{
                 background: 'transparent', border: `1px solid ${colors.border}`,
-                color: colors.textMuted, fontSize: 9, cursor: 'pointer', padding: '2px 8px',
+                color: colors.textMuted, fontSize: 11, cursor: 'pointer', padding: '8px 12px', minHeight: 36, borderRadius: 8,
                 fontFamily: "'JetBrains Mono', monospace",
               }}>{drafting ? 'JARVIS DRAFTING...' : 'AI DRAFT'}</button>
             </div>
@@ -367,11 +367,11 @@ export default function Channels({ user, addMemory }) {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
               {MESSAGE_TEMPLATES.map(t => (
                 <button key={t.id} onClick={() => setMessage(t.body)} style={{
-                  padding: '5px 10px',
+                  padding: '8px 12px', minHeight: 44, borderRadius: 8,
                   background: message === t.body ? colors.primaryDim : 'transparent',
                   border: `1px solid ${message === t.body ? colors.primary : colors.border}`,
                   color: message === t.body ? colors.primary : colors.textMuted,
-                  fontSize: 8, cursor: 'pointer',
+                  fontSize: 11, cursor: 'pointer',
                   fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
                   transition: 'all 0.15s ease',
                 }}>{t.label}</button>
@@ -382,21 +382,21 @@ export default function Channels({ user, addMemory }) {
           {/* Send + Schedule buttons */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <button onClick={sendSMS} disabled={!to || !message || sending} style={{
-              flex: 1, padding: 12,
+              flex: 1, padding: '12px 16px', minHeight: 44, borderRadius: 8,
               background: to && message && !sending ? colors.primaryDim : 'transparent',
               border: `1px solid ${to && message && !sending ? colors.primary : colors.border}`,
               color: to && message && !sending ? colors.primary : colors.textMuted,
-              fontSize: 11, cursor: to && message && !sending ? 'pointer' : 'default',
-              fontFamily: "'JetBrains Mono', monospace", letterSpacing: 2,
+              fontSize: 12, cursor: to && message && !sending ? 'pointer' : 'default',
+              fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
               transition: 'all 0.15s ease',
             }}>{sending ? 'TRANSMITTING...' : 'SEND NOW'}</button>
 
             <button onClick={() => setShowSchedule(!showSchedule)} disabled={!to || !message} style={{
-              padding: '12px 16px',
+              padding: '12px 16px', minHeight: 44, borderRadius: 8,
               background: showSchedule ? colors.secondaryDim : 'transparent',
               border: `1px solid ${to && message ? colors.secondary : colors.border}`,
               color: to && message ? colors.secondary : colors.textMuted,
-              fontSize: 10, cursor: to && message ? 'pointer' : 'default',
+              fontSize: 11, cursor: to && message ? 'pointer' : 'default',
               fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
               transition: 'all 0.15s ease',
             }}>SCHEDULE</button>
@@ -516,7 +516,7 @@ export default function Channels({ user, addMemory }) {
                             {msg.sent_at ? new Date(msg.sent_at).toLocaleString() : ''}
                           </span>
                         </div>
-                        <div style={{ color: colors.text, fontSize: 11, fontFamily: "'Exo 2', sans-serif" }}>{msg.message}</div>
+                        <div style={{ color: colors.text, fontSize: 14, fontFamily: "'Exo 2', sans-serif" }}>{msg.message}</div>
                       </div>
                     )
                   })}
@@ -550,7 +550,7 @@ export default function Channels({ user, addMemory }) {
                   {msg.channel === 'sms_auto' ? 'AUTO-REPLY' : 'SMS'}
                 </span>
               </div>
-              <div style={{ color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif" }}>{msg.message}</div>
+              <div style={{ color: colors.text, fontSize: 14, fontFamily: "'Exo 2', sans-serif" }}>{msg.message}</div>
               <div style={{ color: colors.textMuted, fontSize: 9, marginTop: 4, fontFamily: "'JetBrains Mono', monospace" }}>
                 {msg.sent_at ? new Date(msg.sent_at).toLocaleString() : ''}
               </div>
@@ -576,14 +576,14 @@ export default function Channels({ user, addMemory }) {
                 </span>
                 <span style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace" }}>INBOUND</span>
               </div>
-              <div style={{ color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif" }}>{msg.message}</div>
+              <div style={{ color: colors.text, fontSize: 14, fontFamily: "'Exo 2', sans-serif" }}>{msg.message}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
                 <span style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace" }}>
                   {msg.sent_at ? new Date(msg.sent_at).toLocaleString() : ''}
                 </span>
                 <button onClick={() => { setTo(msg.recipient); setView('compose') }} style={{
                   background: 'transparent', border: `1px solid ${colors.border}`,
-                  color: colors.primary, fontSize: 8, cursor: 'pointer', padding: '2px 8px',
+                  color: colors.primary, fontSize: 11, cursor: 'pointer', padding: '8px 12px', minHeight: 36, borderRadius: 8,
                   fontFamily: "'JetBrains Mono', monospace",
                 }}>REPLY</button>
               </div>
@@ -651,9 +651,10 @@ export default function Channels({ user, addMemory }) {
                   <div style={{ color: colors.textMuted, fontSize: 9, fontFamily: "'JetBrains Mono', monospace", marginBottom: 8 }}>
                     {selectedEmail.date ? new Date(selectedEmail.date).toLocaleString() : ''}
                   </div>
-                  <div style={{ color: colors.text, fontSize: 12, fontFamily: "'Exo 2', sans-serif", lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                  <div style={{ color: colors.text, fontSize: 14, fontFamily: "'Exo 2', sans-serif", lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
                     {selectedEmail.body || selectedEmail.preview || selectedEmail.snippet || 'No content available.'}
                   </div>
+
                 </div>
               )}
 
@@ -838,30 +839,30 @@ function EmptyState({ text }) {
 
 // ── Style constants ──
 const labelStyle = {
-  color: colors.textMuted, fontSize: 9,
+  color: colors.textMuted, fontSize: 11,
   fontFamily: "'JetBrains Mono', monospace",
-  letterSpacing: 1, display: 'block', marginBottom: 4,
+  letterSpacing: 1, display: 'block', marginBottom: 6,
 }
 
 const inputStyle = {
-  width: '100%', padding: '10px 12px',
+  width: '100%', padding: '12px 14px', minHeight: 44,
   background: colors.surface,
   border: `1px solid ${colors.border}`,
-  color: colors.text, fontSize: 13,
+  color: colors.text, fontSize: 14, borderRadius: 8,
   fontFamily: "'Exo 2', sans-serif",
   boxSizing: 'border-box',
 }
 
 const refreshBtnStyle = {
-  padding: '6px 14px',
+  padding: '12px 16px', minHeight: 44, borderRadius: 8,
   background: 'transparent', border: `1px solid ${colors.border}`,
-  color: colors.textMuted, fontSize: 9, cursor: 'pointer',
+  color: colors.textMuted, fontSize: 11, cursor: 'pointer',
   fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1,
 }
 
 const smallBtnStyle = {
-  padding: '3px 8px',
+  padding: '8px 12px', minHeight: 36, borderRadius: 8,
   background: 'transparent', border: `1px solid ${colors.border}`,
-  color: colors.textMuted, fontSize: 8, cursor: 'pointer',
+  color: colors.textMuted, fontSize: 11, cursor: 'pointer',
   fontFamily: "'JetBrains Mono', monospace",
 }

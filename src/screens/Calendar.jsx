@@ -267,7 +267,7 @@ export default function Calendar({ user, addMemory }) {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h2 style={{ color: colors.text, fontSize: 20, fontWeight: 700 }}>
-          <span style={{ color: colors.accent, fontWeight: 300, fontSize: 12, letterSpacing: 2, display: 'block', marginBottom: 2 }}>J.A.R.V.I.S.</span>
+          <span style={{ color: colors.accent, fontWeight: 300, fontSize: 12, letterSpacing: 1, display: 'block', marginBottom: 2 }}>J.A.R.V.I.S.</span>
           Calendar
         </h2>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -282,7 +282,7 @@ export default function Calendar({ user, addMemory }) {
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         {['Personal', 'Work', 'Family', 'School'].map((cal, i) => (
           <span key={cal} style={{
-            padding: '4px 10px', borderRadius: 12, fontSize: 11,
+            padding: '6px 12px', borderRadius: 12, fontSize: 12,
             background: `${calColors[i]}22`, color: calColors[i], border: `1px solid ${calColors[i]}44`,
           }}>{cal}</span>
         ))}

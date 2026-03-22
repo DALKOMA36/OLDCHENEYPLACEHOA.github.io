@@ -484,8 +484,8 @@ export default function App() {
         @keyframes glow { 0%, 100% { box-shadow: 0 0 5px ${colors.primary}20; } 50% { box-shadow: 0 0 15px ${colors.primary}40; } }
         @keyframes scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
 
-        /* Make ALL screens animate in */
-        main > * { animation: fadeIn 0.25s ease; }
+        /* Make ALL screens animate in — longer, more dramatic */
+        main > * { animation: fadeIn 0.5s ease; }
 
         /* Big touch targets everywhere */
         button { min-height: 36px; }
